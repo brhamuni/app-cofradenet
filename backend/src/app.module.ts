@@ -9,11 +9,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       type: 'postgres',
       host: 'localhost',
       port: 5432,
-      username: 'your_username',
-      password: 'your_password',
-      database: 'your_database',
-      autoLoadEntities: true,
-      synchronize: true,
+      username: 'postgres', // Este es el usuario por defecto
+      password: '***REMOVED***', // La que pusiste en la instalación
+      database: 'cofradenet_db', // El nombre que creamos en pgAdmin
+      autoLoadEntities: true, // Esto busca tus clases @Entity automáticamente
+      synchronize: true, // ¡Magia! Crea las tablas solo mirando tus clases
     }),
   ],
   controllers: [AppController],
