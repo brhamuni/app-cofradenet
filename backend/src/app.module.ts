@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CiudadesModule } from './ciudades/ciudades.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       autoLoadEntities: true, // Esto busca tus clases @Entity automáticamente
       synchronize: true, // ¡Magia! Crea las tablas solo mirando tus clases
     }),
+    CiudadesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
