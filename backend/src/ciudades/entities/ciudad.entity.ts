@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 @Entity('ciudades')
 export class Ciudad {
@@ -13,4 +14,7 @@ export class Ciudad {
 
     @Column()
     provincia: string;
+
+    @OneToMany(() => Hermandad, (hermandad) => hermandad.ciudad)
+    hermandades: Hermandad[];
 }

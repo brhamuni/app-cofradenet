@@ -3,20 +3,26 @@ import { CreateCiudadeDto } from './dto/create-ciudade.dto';
 import { UpdateCiudadeDto } from './dto/update-ciudade.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Ciudad } from './entities/ciudad.entity';
-import { Repository } from 'typeorm/browser/repository/Repository.js';
-import { Like } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 
 @Injectable()
 export class CiudadesService {
     constructor(
         @InjectRepository(Ciudad)
-        private ciudadRepository: Repository<Ciudad>,
+        private readonly ciudadRepository: Repository<Ciudad>,
     ) {}
 
-    async buscarPorNombre(ciudad: string): Promise<Ciudad[]> {
+    async buscarPorNombre(nombre: string): Promise<Ciudad[]> {
+        if (!nombre || nombre.trim() === '') {
+            return [];
+        }
+
         return await this.ciudadRepository.find({
             where: {
-                nombre: Like(`%${ciudad}%`),
+                nombre: ILike(`%${nombre}%`),
+            },
+            order: {
+                nombre: 'ASC',
             },
         });
     }
