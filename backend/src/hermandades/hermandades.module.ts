@@ -1,17 +1,13 @@
 import { Module } from '@nestjs/common';
 import { HermandadesService } from './hermandades.service';
 import { HermandadesController } from './hermandades.controller';
-<<<<<<< HEAD
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Hermandad } from './entities/hermandad.entity';
-
+import { Ciudad } from '../ciudades/entities/ciudad.entity';
 @Module({
-    imports: [TypeOrmModule.forFeature([Hermandad])],
-=======
-
-@Module({
->>>>>>> 43cc433e3cd9796186fa6b717e6bff6c29e816e3
+    imports: [TypeOrmModule.forFeature([Hermandad, Ciudad])],
     controllers: [HermandadesController],
     providers: [HermandadesService],
+    exports: [TypeOrmModule],
 })
 export class HermandadesModule {}

@@ -17,6 +17,7 @@ export class HermandadesController {
 
     @Post()
     create(@Body() createHermandadeDto: CreateHermandadDto) {
+        console.log('Creating hermandad with data:', createHermandadeDto);
         return this.hermandadesService.create(createHermandadeDto);
     }
 
@@ -32,10 +33,10 @@ export class HermandadesController {
 
     @Patch(':id')
     update(
-        @Param('id') id: string,
+        @Param('id') id: number,
         @Body() updateHermandadeDto: UpdateHermandadDto,
     ) {
-        return this.hermandadesService.update(+id, updateHermandadeDto);
+        return this.hermandadesService.update(id, updateHermandadeDto);
     }
 
     @Delete(':id')

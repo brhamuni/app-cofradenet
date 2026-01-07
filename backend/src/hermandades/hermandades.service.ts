@@ -1,15 +1,42 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateHermandadDto } from './dto/create-hermandad.dto';
 import { UpdateHermandadDto } from './dto/update-hermandad.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Hermandad } from './entities/hermandad.entity';
+import { Ciudad } from '../ciudades/entities/ciudad.entity';
 
 @Injectable()
 export class HermandadesService {
-    create(createHermandadeDto: CreateHermandadDto) {
-        return 'This action adds a new hermandade';
+    constructor(
+        @InjectRepository(Hermandad)
+        private readonly hermandadRepository: Repository<Hermandad>,
+        @InjectRepository(Ciudad)
+        private readonly ciudadRepository: Repository<Ciudad>,
+    ) {}
+
+    async create(createHermandadDto: CreateHermandadDto) {
+        const ciudad = await this.ciudadRepository.findOneBy({
+            id: createHermandadDto.ciudadId,
+        });
+
+        if (!ciudad) {
+            throw new NotFoundException(
+                'La ciudad con ID ${createHermandadDto.ciudadId} no existe',
+            );
+        }
+
+        const hermandad = this.hermandadRepository.create({
+            ...createHermandadDto,
+            ciudad: ciudad,
+        });
+        return this.hermandadRepository.save(hermandad);
     }
 
-    findAll() {
-        return `This action returns all hermandades`;
+    async findAll() {
+        return await this.hermandadRepository.find({
+            relations: ['ciudad', 'usuario'],
+        });
     }
 
     findOne(id: number) {

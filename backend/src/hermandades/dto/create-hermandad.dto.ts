@@ -8,4 +8,5 @@ export class CreateHermandadDto {
     descripcion?: string;
     imagenEscudo?: string;
     ciudadId: number;
+    usuarioId?: number;
 }

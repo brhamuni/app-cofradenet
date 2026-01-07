@@ -1,6 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    ManyToOne,
+    OneToOne,
+    JoinColumn,
+} from 'typeorm';
 import { Ciudad } from '../../ciudades/entities/ciudad.entity';
-
+import { Usuario } from '@backend/usuarios/entities/usuario.entity';
 @Entity('hermandades')
 export class Hermandad {
     @PrimaryGeneratedColumn()
@@ -35,4 +42,11 @@ export class Hermandad {
         eager: true,
     })
     ciudad: Ciudad;
+
+    @OneToOne(() => Usuario, {
+        nullable: true,
+        onDelete: 'SET NULL',
+    })
+    @JoinColumn()
+    usuario: Usuario;
 }
