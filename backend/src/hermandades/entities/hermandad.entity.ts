@@ -37,16 +37,22 @@ export class Hermandad {
     @Column({ nullable: true })
     imagenEscudo: string;
 
+    @Column({ nullable: true })
+    ciudadId: number;
+
     @ManyToOne(() => Ciudad, (ciudad) => ciudad.hermandades, {
         onDelete: 'CASCADE',
         eager: true,
     })
+    @JoinColumn({ name: 'ciudadId' })
     ciudad: Ciudad;
 
+    @Column({ nullable: true })
+    usuarioId: number;
     @OneToOne(() => Usuario, {
         nullable: true,
         onDelete: 'SET NULL',
     })
-    @JoinColumn()
+    @JoinColumn({ name: 'usuarioId' })
     usuario: Usuario;
 }

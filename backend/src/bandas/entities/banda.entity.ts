@@ -19,7 +19,13 @@ export class Banda {
     estiloMusical: string;
 
     @Column({ nullable: true })
+    direccion: string;
+
+    @Column({ nullable: true })
     localidad: string;
+
+    @Column({ nullable: true })
+    codigoPostal: string;
 
     @Column({ nullable: true })
     numeroComponentes: number;
@@ -27,10 +33,12 @@ export class Banda {
     @Column({ nullable: true })
     imagenLogo: string;
 
+    @Column({ nullable: true })
+    usuarioId: number;
     @OneToOne(() => Usuario, {
         nullable: true,
         onDelete: 'SET NULL',
     })
-    @JoinColumn()
+    @JoinColumn({ name: 'usuarioId' })
     usuario: Usuario;
 }
