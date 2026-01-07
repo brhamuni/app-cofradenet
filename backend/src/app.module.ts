@@ -6,9 +6,14 @@ import { CiudadesModule } from './ciudades/ciudades.module';
 import { HermandadesModule } from './hermandades/hermandades.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { BandasModule } from './bandas/bandas.module';
+import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
     imports: [
+        ConfigModule.forRoot({
+            isGlobal: true,
+        }),
         TypeOrmModule.forRoot({
             type: 'postgres',
             host: 'localhost',
@@ -23,6 +28,7 @@ import { BandasModule } from './bandas/bandas.module';
         HermandadesModule,
         UsuariosModule,
         BandasModule,
+        AuthModule,
     ],
     controllers: [AppController],
     providers: [AppService],
