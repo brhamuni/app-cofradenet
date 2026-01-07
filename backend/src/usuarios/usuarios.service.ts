@@ -19,6 +19,7 @@ export class UsuariosService {
     ) {}
 
     async create(createUsuarioDto: CreateUsuarioDto) {
+        console.log('Creando usuario:', createUsuarioDto);
         const { password, ...datosUsuario } = createUsuarioDto;
 
         const existeEmail = await this.usuariosRepo.findOneBy({
@@ -32,10 +33,11 @@ export class UsuariosService {
         const existeUsername = await this.usuariosRepo.findOneBy({
             username: datosUsuario.username,
         });
+
         if (existeUsername) {
             throw new BadRequestException('El username ya está en uso');
         }
-        const salt = await bcrypt.genSalt(100);
+        const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const nuevoUsuario = this.usuariosRepo.create({
@@ -48,16 +50,21 @@ export class UsuariosService {
         if (usuarioGuardado.rol === RolUsuario.HERMANDAD) {
             const nuevaHermandad = this.hermandadesRepo.create({
                 nombre: `Hermandad ${usuarioGuardado.nombre}`,
-                templo: 'Templo por definir',
+                templo: createUsuarioDto.templo || 'Templo por definir',
+                diaSalida: createUsuarioDto.diaSalida || 'Día por definir',
                 usuarioId: usuarioGuardado.id,
+                ciudadId: createUsuarioDto.ciudadId,
             });
             await this.hermandadesRepo.save(nuevaHermandad);
         }
 
         if (usuarioGuardado.rol === RolUsuario.BANDA) {
             const nuevaBanda = this.bandasRepo.create({
-                nombre: `Banda ${usuarioGuardado.nombre}`,
-                direccion: 'Dirección por definir',
+                nombre: createUsuarioDto.nombre,
+                estiloMusical:
+                    createUsuarioDto.estiloMusical || 'No especificado',
+                localidad: createUsuarioDto.localidad || 'No especificada',
+                direccion: createUsuarioDto.direccion || 'No especificada',
                 usuarioId: usuarioGuardado.id,
             });
             await this.bandasRepo.save(nuevaBanda);
@@ -67,7 +74,9 @@ export class UsuariosService {
     }
 
     async findAll() {
-        return await this.usuariosRepo.find();
+        return await this.usuariosRepo.find({
+            relations: ['hermandad', 'banda'],
+        });
     }
 
     async findOne(id: number) {

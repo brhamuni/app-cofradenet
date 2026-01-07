@@ -9,7 +9,7 @@ import { ILike, Repository } from 'typeorm';
 export class CiudadesService {
     constructor(
         @InjectRepository(Ciudad)
-        private readonly ciudadRepository: Repository<Ciudad>,
+        private readonly ciudadRepo: Repository<Ciudad>,
     ) {}
 
     async buscarPorNombre(nombre: string): Promise<Ciudad[]> {
@@ -17,7 +17,7 @@ export class CiudadesService {
             return [];
         }
 
-        return await this.ciudadRepository.find({
+        return await this.ciudadRepo.find({
             where: {
                 nombre: ILike(`%${nombre}%`),
             },
@@ -28,11 +28,12 @@ export class CiudadesService {
     }
 
     create(createCiudadeDto: CreateCiudadeDto) {
-        return 'This action adds a new ciudade';
+        const nuevaCiudad = this.ciudadRepo.create(createCiudadeDto);
+        return this.ciudadRepo.save(nuevaCiudad);
     }
 
     findAll() {
-        return this.ciudadRepository.find();
+        return this.ciudadRepo.find();
     }
 
     findOne(id: number) {

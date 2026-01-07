@@ -5,4 +5,5 @@ export class CreateBandaDto {
     numeroComponentes?: number;
     imagenLogo?: string;
     usuarioId?: number;
+    ciudadId?: number;
 }

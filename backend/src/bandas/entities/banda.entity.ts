@@ -1,3 +1,4 @@
+import { Ciudad } from '@backend/ciudades/entities/ciudad.entity';
 import { Usuario } from '@backend/usuarios/entities/usuario.entity';
 import {
     PrimaryGeneratedColumn,
@@ -5,6 +6,7 @@ import {
     Entity,
     OneToOne,
     JoinColumn,
+    ManyToOne,
 } from 'typeorm';
 
 @Entity('bandas')
@@ -41,4 +43,14 @@ export class Banda {
     })
     @JoinColumn({ name: 'usuarioId' })
     usuario: Usuario;
+
+    @Column({ nullable: true })
+    ciudadId: number;
+
+    @ManyToOne(() => Ciudad, (ciudad) => ciudad.hermandades, {
+        onDelete: 'CASCADE',
+        eager: true,
+    })
+    @JoinColumn({ name: 'ciudadId' })
+    ciudad: Ciudad;
 }

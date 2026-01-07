@@ -5,5 +5,16 @@ export class CreateUsuarioDto {
     username: string;
     email: string;
     password: string;
-    rol?: RolUsuario;
+    rol: RolUsuario;
+
+    ciudadId?: number;
+    direccion?: string;
+
+    //Campos adicionales para bandas
+    estiloMusical?: string;
+    localidad?: string;
+
+    //Campos adicionales para hermandades
+    templo?: string;
+    diaSalida?: string;
 }
