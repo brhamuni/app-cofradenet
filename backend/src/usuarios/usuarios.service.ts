@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import * as bcrypt from 'bcrypt';
@@ -7,6 +11,7 @@ import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
 import { RolUsuario, Usuario } from './entities/usuario.entity';
 import { Repository } from 'typeorm';
 import { Banda } from '@backend/bandas/entities/banda.entity';
+import { LoginUsuarioDto } from './dto/login-usuario';
 @Injectable()
 export class UsuariosService {
     constructor(
@@ -89,5 +94,33 @@ export class UsuariosService {
 
     remove(id: number) {
         return `This action removes a #${id} usuario`;
+    }
+
+    async login(loginDTO: LoginUsuarioDto) {
+        const { username, password } = loginDTO;
+        const usuario = await this.usuariosRepo
+            .createQueryBuilder('usuario')
+            .addSelect('usuario.password')
+            .where('usuario.username = :val', { val: username })
+            .orWhere('usuario.email = :val', { val: username })
+            .getOne();
+        if (!usuario) {
+            throw new UnauthorizedException('El login no existe');
+        }
+
+        const passwordValido = await bcrypt.compare(password, usuario.password);
+        if (!passwordValido) {
+            throw new UnauthorizedException('Contraseña incorrecta');
+        }
+        const { password: _, ...usuarioSinPassword } = usuario;
+
+        return {
+            mensaje: 'Login exitoso',
+            usuario: {
+                id: usuarioSinPassword.id,
+                nombre: usuarioSinPassword.nombre,
+                rol: usuarioSinPassword.rol,
+            },
+        };
     }
 }
