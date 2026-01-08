@@ -8,6 +8,8 @@ import { UsuariosModule } from './usuarios/usuarios.module';
 import { BandasModule } from './bandas/bandas.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { AdminModule } from './admin/admin.module';
+import { MarchasModule } from './marchas/marchas.module';
 
 @Module({
     imports: [
@@ -29,6 +31,8 @@ import { ConfigModule } from '@nestjs/config';
         UsuariosModule,
         BandasModule,
         AuthModule,
+        AdminModule,
+        MarchasModule,
     ],
     controllers: [AppController],
     providers: [AppService],

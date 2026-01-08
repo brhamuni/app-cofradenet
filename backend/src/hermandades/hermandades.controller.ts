@@ -6,12 +6,16 @@ import {
     Patch,
     Param,
     Delete,
+    UseGuards,
 } from '@nestjs/common';
 import { HermandadesService } from './hermandades.service';
 import { CreateHermandadDto } from './dto/create-hermandad.dto';
 import { UpdateHermandadDto } from './dto/update-hermandad.dto';
+import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
+import { RolesGuard } from '@backend/auth/guards/roles.guard';
 
 @Controller('hermandades')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class HermandadesController {
     constructor(private readonly hermandadesService: HermandadesService) {}
 
