@@ -6,23 +6,38 @@ import {
     Patch,
     Param,
     Delete,
+    UseGuards,
+    Req,
+    Query,
+    ParseIntPipe,
 } from '@nestjs/common';
 import { ProcesionesService } from './procesiones.service';
-import { CreateProcesioneDto } from './dto/create-procesione.dto';
-import { UpdateProcesioneDto } from './dto/update-procesione.dto';
+import { CreateProcesionDto } from './dto/create-procesion.dto';
+import { UpdateProcesionDto } from './dto/update-procesion.dto';
+import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
+import { RolesGuard } from '@backend/auth/guards/roles.guard';
+import { Roles } from '@backend/auth/decorators/roles.decorator';
+import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
 
 @Controller('procesiones')
 export class ProcesionesController {
     constructor(private readonly procesionesService: ProcesionesService) {}
 
     @Post()
-    create(@Body() createProcesioneDto: CreateProcesioneDto) {
-        return this.procesionesService.create(createProcesioneDto);
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
+    create(@Body() createProcesionDto: CreateProcesionDto, @Req() req) {
+        return this.procesionesService.create(createProcesionDto, req.user);
     }
 
     @Get()
     findAll() {
         return this.procesionesService.findAll();
+    }
+
+    @Get('buscar')
+    async buscar(@Query('ciudadId', ParseIntPipe) ciudadId: number) {
+        return this.procesionesService.buscarPorCiudad(ciudadId);
     }
 
     @Get(':id')
@@ -33,9 +48,9 @@ export class ProcesionesController {
     @Patch(':id')
     update(
         @Param('id') id: string,
-        @Body() updateProcesioneDto: UpdateProcesioneDto,
+        @Body() updateProcesionDto: UpdateProcesionDto,
     ) {
-        return this.procesionesService.update(+id, updateProcesioneDto);
+        return this.procesionesService.update(+id, updateProcesionDto);
     }
 
     @Delete(':id')

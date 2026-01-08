@@ -5,9 +5,11 @@ import {
     ManyToOne,
     OneToOne,
     JoinColumn,
+    OneToMany,
 } from 'typeorm';
 import { Ciudad } from '../../ciudades/entities/ciudad.entity';
 import { Usuario } from '@backend/usuarios/entities/usuario.entity';
+import { Procesion } from '@backend/procesiones/entities/procesion.entity';
 @Entity('hermandades')
 export class Hermandad {
     @PrimaryGeneratedColumn()
@@ -55,4 +57,9 @@ export class Hermandad {
     })
     @JoinColumn({ name: 'usuarioId' })
     usuario: Usuario;
+
+    @OneToMany(() => Procesion, (p) => p.hermandad)
+    procesiones: Procesion[];
+
+    proximaProcesion?: Procesion | null;
 }
