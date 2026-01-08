@@ -52,29 +52,33 @@ export class ProcesionesService {
         });
     }
 
-    async findOne(id: number) {
-        const hoy = new Date().toISOString().split('T')[0];
+    async buscarPorHermandad(id: number) {
+        return await this.procesionRepo.find({
+            where: {
+                hermandad: { id: id },
+            },
+            // Traemos el itinerario por si el frontend quiere mostrar los mapas en el listado
+            relations: ['itinerario'],
+            // Ordenamos: primero lo más próximo en el calendario
+            order: {
+                fecha: 'ASC',
+                horaSalida: 'ASC',
+            },
+        });
+    }
 
-        const hermandad = await this.hermandadRepo.findOne({
+    async findOne(id: number) {
+        const procesion = await this.procesionRepo.findOne({
             where: { id },
-            relations: ['procesiones'],
+            relations: ['hermandad', 'itinerario'],
         });
 
-        if (!hermandad) throw new NotFoundException('Hermandad no encontrada');
+        if (!procesion) throw new NotFoundException('La procesión no existe');
 
-        // Filtramos la procesión más cercana a partir de hoy
-        const proximas = hermandad.procesiones
-            .filter((p) => p.fecha >= hoy)
-            .sort(
-                (a, b) =>
-                    a.fecha.localeCompare(b.fecha) ||
-                    a.horaSalida.localeCompare(b.horaSalida),
-            );
+        // Nos aseguramos de que el itinerario vaya siempre ordenado para el mapa
+        procesion.itinerario.sort((a, b) => a.orden - b.orden);
 
-        // Asignamos la primera de la lista o sino null
-        hermandad.proximaProcesion = proximas.length > 0 ? proximas[0] : null;
-
-        return hermandad;
+        return procesion;
     }
 
     async buscarPorCiudad(ciudadId: number) {
