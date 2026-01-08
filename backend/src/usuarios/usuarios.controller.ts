@@ -16,7 +16,6 @@ import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
 import { RolUsuario } from './entities/usuario.entity';
 @Controller('usuarios')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsuariosController {
     constructor(private readonly usuariosService: UsuariosService) {}
 
@@ -37,6 +36,7 @@ export class UsuariosController {
     }
 
     @Patch(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     update(
         @Param('id') id: number,
         @Body() updateUsuarioDto: UpdateUsuarioDto,

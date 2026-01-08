@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { AdminModule } from './admin/admin.module';
 import { MarchasModule } from './marchas/marchas.module';
+import { ProcesionesModule } from './procesiones/procesiones.module';
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { MarchasModule } from './marchas/marchas.module';
         AuthModule,
         AdminModule,
         MarchasModule,
+        ProcesionesModule,
     ],
     controllers: [AppController],
     providers: [AppService],

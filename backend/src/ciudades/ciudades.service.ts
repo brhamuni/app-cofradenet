@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCiudadeDto } from './dto/create-ciudade.dto';
 import { UpdateCiudadeDto } from './dto/update-ciudade.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Ciudad } from './entities/ciudad.entity';
-import { ILike, Repository } from 'typeorm';
+import { ILike, Repository, Like } from 'typeorm';
 
 @Injectable()
 export class CiudadesService {
@@ -25,6 +25,19 @@ export class CiudadesService {
                 nombre: 'ASC',
             },
         });
+    }
+
+    async buscarHermandadesPorCiudad(nombreCiudad: string) {
+        const ciudad = await this.ciudadRepo.findOne({
+            where: { nombre: Like(`%${nombreCiudad}%`) },
+            relations: ['hermandades'],
+        });
+
+        if (!ciudad) {
+            throw new NotFoundException('Ciudad no encontrada');
+        }
+
+        return ciudad.hermandades;
     }
 
     create(createCiudadeDto: CreateCiudadeDto) {

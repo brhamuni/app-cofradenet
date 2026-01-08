@@ -31,6 +31,11 @@ export class CiudadesController {
         return this.ciudadesService.buscarPorNombre(nombre);
     }
 
+    @Get(':nombre/hermandades')
+    getHermandades(@Param('nombre') nombreCiudad: string) {
+        return this.ciudadesService.buscarHermandadesPorCiudad(nombreCiudad);
+    }
+
     @Patch(':id')
     update(
         @Param('id') id: string,
