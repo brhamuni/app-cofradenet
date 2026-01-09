@@ -1,3 +1,4 @@
+import { Banda } from '@backend/bandas/entities/banda.entity';
 import { Usuario } from '@backend/usuarios/entities/usuario.entity';
 import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 
@@ -31,4 +32,8 @@ export class Marcha {
     //Relacion para los usuarios que tienen esta marcha como favorita
     @ManyToMany(() => Usuario, (usuario) => usuario.favoritas)
     leGustaA: Usuario[];
+
+    //Relacion para la banda que tocan esta marcha
+    @ManyToMany(() => Banda, (banda) => banda.repertorio)
+    bandas: Banda[];
 }

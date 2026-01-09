@@ -6,4 +6,6 @@ export class CreateBandaDto {
     imagenLogo?: string;
     usuarioId?: number;
     ciudadId?: number;
+    historia?: string;
+    repertorioIds?: number[];
 }

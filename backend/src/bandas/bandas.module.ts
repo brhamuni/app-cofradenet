@@ -3,9 +3,10 @@ import { BandasService } from './bandas.service';
 import { BandasController } from './bandas.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Banda } from './entities/banda.entity';
+import { Marcha } from '@backend/marchas/entities/marcha.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Banda])],
+    imports: [TypeOrmModule.forFeature([Banda, Marcha])],
     controllers: [BandasController],
     providers: [BandasService],
     exports: [TypeOrmModule],

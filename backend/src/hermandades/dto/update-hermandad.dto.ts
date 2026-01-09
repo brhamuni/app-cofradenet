@@ -18,4 +18,12 @@ export class UpdateHermandadDto extends PartialType(CreateHermandadDto) {
     @IsUrl()
     @IsOptional()
     escudoUrl?: string;
+
+    @IsString()
+    @IsOptional()
+    historia?: string;
+
+    @IsString()
+    @IsOptional()
+    patrimonio?: string;
 }

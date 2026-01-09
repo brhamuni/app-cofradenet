@@ -9,4 +9,6 @@ export class CreateHermandadDto {
     imagenEscudo?: string;
     ciudadId: number;
     usuarioId?: number;
+    historia?: string;
+    patrimonio?: string;
 }

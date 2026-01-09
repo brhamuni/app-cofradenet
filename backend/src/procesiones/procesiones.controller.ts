@@ -59,7 +59,9 @@ export class ProcesionesController {
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.procesionesService.remove(+id);
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
+    async remove(@Param('id', ParseIntPipe) id: number, @Req() req) {
+        return this.procesionesService.remove(id, req.user);
     }
 }

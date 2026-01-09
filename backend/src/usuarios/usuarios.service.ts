@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import * as bcrypt from 'bcrypt';
@@ -73,9 +77,97 @@ export class UsuariosService {
         return usuarioGuardado;
     }
 
+    async toggleFavoritoHermandad(userId: number, hermandadId: number) {
+        const usuario = await this.usuariosRepo.findOne({
+            where: { id: userId },
+            relations: ['hermandadesFavoritas'],
+        });
+
+        if (!usuario) {
+            throw new NotFoundException('Usuario no encontrado');
+        }
+
+        const hermandad = await this.hermandadesRepo.findOneBy({
+            id: hermandadId,
+        });
+        if (!hermandad) throw new NotFoundException('Hermandad no encontrada');
+
+        const index = usuario.hermandadesFavoritas.findIndex(
+            (h) => h.id === hermandadId,
+        );
+
+        if (index >= 0) {
+            // Si ya está, la quitamos
+            usuario.hermandadesFavoritas.splice(index, 1);
+        } else {
+            // Si no está, la añadimos
+            usuario.hermandadesFavoritas.push(hermandad);
+        }
+
+        await this.usuariosRepo.save(usuario);
+        return {
+            message:
+                index >= 0 ? 'Eliminada de favoritos' : 'Añadida a favoritos',
+            favorito: index < 0,
+        };
+    }
+
+    async toggleFavoritoBanda(userId: number, bandaId: number) {
+        const usuario = await this.usuariosRepo.findOne({
+            where: { id: userId },
+            relations: ['bandasFavoritas'],
+        });
+
+        if (!usuario) throw new NotFoundException('Usuario no encontrado');
+
+        const banda = await this.bandasRepo.findOne({
+            where: { id: bandaId },
+        });
+
+        if (!banda) throw new NotFoundException('Banda no encontrada');
+
+        //Inicializamos las bandas si no tiene ninguna
+        if (!usuario.bandasFavoritas) usuario.bandasFavoritas = [];
+
+        const index = usuario.bandasFavoritas.findIndex(
+            (b) => b.id === bandaId,
+        );
+
+        if (index >= 0) {
+            usuario.bandasFavoritas.splice(index, 1);
+        } else {
+            usuario.bandasFavoritas.push(banda);
+        }
+
+        await this.usuariosRepo.save(usuario);
+
+        //Si el indice es mayor o igual que 0 es, mensage de que teniamos la banda y la hemos eliminado
+        //Si el indice es igual a 0, mensage de que no teniamos la banda y la hemos añadido
+        // Tambien devolvemos el estado final, si es favorito o no haciendo la misma comprobacion
+        return {
+            message:
+                index >= 0
+                    ? 'Banda eliminada de favoritos'
+                    : 'Banda añadida a favoritos',
+            favorito: index < 0,
+        };
+    }
+
     async findAll() {
         return await this.usuariosRepo.find({
             relations: ['hermandad', 'banda'],
+        });
+    }
+
+    async getPerfil(userId: number) {
+        return await this.usuariosRepo.findOne({
+            where: { id: userId },
+            relations: [
+                'hermandadesFavoritas',
+                'bandasFavoritas',
+                'ciudadResidencia',
+            ],
+            select: ['id', 'username', 'rol'],
         });
     }
 

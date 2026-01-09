@@ -7,6 +7,8 @@ import {
     Param,
     Delete,
     UseGuards,
+    ParseIntPipe,
+    Req,
 } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
@@ -42,6 +44,22 @@ export class UsuariosController {
         @Body() updateUsuarioDto: UpdateUsuarioDto,
     ) {
         return this.usuariosService.update(id, updateUsuarioDto);
+    }
+
+    @Get('perfil')
+    obtenerPerfil(@Req() req) {
+        return this.usuariosService.getPerfil(req.user.id);
+    }
+
+    @Post('favoritos/hermandad/:id')
+    toggleHermandad(@Param('id', ParseIntPipe) id: number, @Req() req) {
+        return this.usuariosService.toggleFavoritoHermandad(req.user.id, id);
+    }
+
+    @Post('favoritos/banda/:id')
+    @UseGuards(JwtAuthGuard)
+    toggleBanda(@Param('id', ParseIntPipe) id: number, @Req() req) {
+        return this.usuariosService.toggleFavoritoBanda(req.user.id, id);
     }
 
     @Delete(':id')

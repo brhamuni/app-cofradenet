@@ -7,8 +7,10 @@ import {
     OneToOne,
     ManyToMany,
     JoinTable,
+    ManyToOne,
 } from 'typeorm';
 import { Marcha } from '@backend/marchas/entities/marcha.entity';
+import { Ciudad } from '@backend/ciudades/entities/ciudad.entity';
 
 export enum RolUsuario {
     ADMIN = 'admin',
@@ -54,6 +56,17 @@ export class Usuario {
     repertorio: Marcha[];
 
     @ManyToMany(() => Marcha)
-    @JoinTable({ name: 'usuarios_favoritas' })
+    @JoinTable({ name: 'usuarios_marchas_favoritas' })
     favoritas: Marcha[];
+
+    @ManyToOne(() => Ciudad, { nullable: true })
+    ciudadResidencia: Ciudad;
+
+    @ManyToMany(() => Hermandad)
+    @JoinTable({ name: 'usuarios_favoritos_hermandades' })
+    hermandadesFavoritas: Hermandad[];
+
+    @ManyToMany(() => Banda)
+    @JoinTable({ name: 'usuarios_favoritos_bandas' })
+    bandasFavoritas: Banda[];
 }

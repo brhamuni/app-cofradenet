@@ -9,19 +9,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Hermandad } from './entities/hermandad.entity';
 import { Ciudad } from '../ciudades/entities/ciudad.entity';
-import { Usuario } from '@backend/usuarios/entities/usuario.entity';
+import { RolUsuario, Usuario } from '@backend/usuarios/entities/usuario.entity';
 
 @Injectable()
 export class HermandadesService {
     constructor(
         @InjectRepository(Hermandad)
-        private readonly hermandadRepository: Repository<Hermandad>,
+        private readonly hermandadRepo: Repository<Hermandad>,
         @InjectRepository(Ciudad)
-        private readonly ciudadRepository: Repository<Ciudad>,
+        private readonly ciudadRepo: Repository<Ciudad>,
     ) {}
 
     async create(createHermandadDto: CreateHermandadDto) {
-        const ciudad = await this.ciudadRepository.findOneBy({
+        const ciudad = await this.ciudadRepo.findOneBy({
             id: createHermandadDto.ciudadId,
         });
 
@@ -31,40 +31,54 @@ export class HermandadesService {
             );
         }
 
-        const hermandad = this.hermandadRepository.create({
+        const hermandad = this.hermandadRepo.create({
             ...createHermandadDto,
             ciudad: ciudad,
         });
-        return this.hermandadRepository.save(hermandad);
+        return this.hermandadRepo.save(hermandad);
     }
 
     async findAll() {
-        return await this.hermandadRepository.find({
+        return await this.hermandadRepo.find({
             relations: ['ciudad', 'usuario'],
         });
     }
 
-    findOne(id: number) {
-        return `This action returns a #${id} hermandade`;
+    async findOne(id: number) {
+        const hermandad = await this.hermandadRepo.findOne({
+            where: { id },
+            relations: ['ciudad', 'procesiones'],
+        });
+        if (!hermandad) throw new NotFoundException('Hermandad no encontrada');
+        return hermandad;
     }
 
-    async updatePerfil(usuarioId: number, updateDto: UpdateHermandadDto) {
-        // 1. Buscamos la hermandad cuyo administrador sea el usuario logueado
-        const hermandad = await this.hermandadRepository.findOne({
-            where: { usuario: { id: usuarioId } },
+    async updatePerfil(id: number, updateDto: UpdateHermandadDto, user: any) {
+        const hermandad = await this.hermandadRepo.findOne({
+            where: { id },
+            relations: ['usuario'],
         });
 
-        // 2. Si no existe, lanzamos un error claro
         if (!hermandad) {
             throw new NotFoundException(
-                `No se encontró una hermandad gestionada por el usuario con ID ${usuarioId}`,
+                'La hermandad que intentas editar no existe',
             );
         }
 
+        // SEGURIDAD: Comprobamos si es el dueño o un administrador global
+        if (
+            user.rol !== RolUsuario.HERMANDAD ||
+            (user.rol !== RolUsuario.ADMIN && hermandad.usuario?.id !== user.id)
+        ) {
+            throw new ForbiddenException(
+                'No tienes permiso para gestionar el perfil de esta cofradía',
+            );
+        }
+
+        // Actualizamos los campos recibidos
         Object.assign(hermandad, updateDto);
 
-        // 4. Guardamos y devolvemos la entidad actualizada
-        return await this.hermandadRepository.save(hermandad);
+        return await this.hermandadRepo.save(hermandad);
     }
 
     remove(id: number) {

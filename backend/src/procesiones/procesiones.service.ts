@@ -102,7 +102,38 @@ export class ProcesionesService {
         return `This action updates a #${id} procesione`;
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} procesione`;
+    async remove(id: number, user: any) {
+        // 1. Cargamos la procesión y la relación 'usuario' dentro de 'hermandad'
+        const procesion = await this.procesionRepo.findOne({
+            where: { id },
+            relations: ['hermandad', 'hermandad.usuario'], // <--- Cambiado a 'usuario'
+        });
+
+        if (!procesion) {
+            throw new NotFoundException('Procesión no encontrada');
+        }
+
+        // 2. Verificamos permisos
+        // Si es ADMIN, permitimos borrar siempre
+        if (user.rol === RolUsuario.ADMIN) {
+            await this.procesionRepo.remove(procesion);
+            return { message: 'Procesión eliminada por el administrador' };
+        }
+
+        // 3. Si es HERMANDAD, comprobamos que el ID del usuario de la hermandad
+        // coincida con el ID del usuario logueado (req.user.id)
+        if (
+            !procesion.hermandad.usuario ||
+            procesion.hermandad.usuario.id !== user.id
+        ) {
+            throw new ForbiddenException(
+                'No tienes permiso para borrar esta procesión',
+            );
+        }
+
+        // 4. Borrado físico (esto borrará también los puntos_itinerario por el cascade)
+        await this.procesionRepo.remove(procesion);
+
+        return { message: 'Procesión eliminada correctamente' };
     }
 }

@@ -1,4 +1,5 @@
 import { Ciudad } from '@backend/ciudades/entities/ciudad.entity';
+import { Marcha } from '@backend/marchas/entities/marcha.entity';
 import { Usuario } from '@backend/usuarios/entities/usuario.entity';
 import {
     PrimaryGeneratedColumn,
@@ -7,6 +8,8 @@ import {
     OneToOne,
     JoinColumn,
     ManyToOne,
+    ManyToMany,
+    JoinTable,
 } from 'typeorm';
 
 @Entity('bandas')
@@ -53,4 +56,15 @@ export class Banda {
     })
     @JoinColumn({ name: 'ciudadId' })
     ciudad: Ciudad;
+
+    @Column({ type: 'text', nullable: true })
+    historia: string;
+
+    @ManyToMany(() => Marcha, (marcha) => marcha.bandas)
+    @JoinTable({
+        name: 'repertorios_bandas', // Nombre de la tabla intermedia
+        joinColumn: { name: 'bandaId', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'marchaId', referencedColumnName: 'id' },
+    })
+    repertorio: Marcha[];
 }

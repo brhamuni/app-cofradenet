@@ -8,6 +8,7 @@ import {
     Delete,
     UseGuards,
     Req,
+    ParseIntPipe,
 } from '@nestjs/common';
 import { HermandadesService } from './hermandades.service';
 import { CreateHermandadDto } from './dto/create-hermandad.dto';
@@ -38,10 +39,15 @@ export class HermandadesController {
         return this.hermandadesService.findOne(+id);
     }
 
-    @Patch('perfil')
-    @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD) // Tu Guard verifica que el usuario tenga este rol
-    updateMyHermandad(@Req() req, @Body() updateDto: UpdateHermandadDto) {
-        return this.hermandadesService.updatePerfil(req.user.id, updateDto);
+    @Patch(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
+    update(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() updateDto: UpdateHermandadDto,
+        @Req() req,
+    ) {
+        return this.hermandadesService.updatePerfil(id, updateDto, req.user);
     }
 
     @Delete(':id')

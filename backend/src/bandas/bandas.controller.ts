@@ -7,6 +7,8 @@ import {
     Param,
     Delete,
     UseGuards,
+    ParseIntPipe,
+    Req,
 } from '@nestjs/common';
 import { BandasService } from './bandas.service';
 import { CreateBandaDto } from './dto/create-banda.dto';
@@ -17,7 +19,6 @@ import { Roles } from '@backend/auth/decorators/roles.decorator';
 import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
 
 @Controller('bandas')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class BandasController {
     constructor(private readonly bandasService: BandasService) {}
 
@@ -31,15 +32,25 @@ export class BandasController {
         return this.bandasService.findAll();
     }
 
+    @Get('ciudad/:id')
+    findByCiudad(@Param('id', ParseIntPipe) id: number) {
+        return this.bandasService.findAllByCiudad(id);
+    }
+
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.bandasService.findOne(+id);
+    findOne(@Param('id', ParseIntPipe) id: number) {
+        return this.bandasService.findOne(id);
     }
 
     @Patch(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
-    update(@Param('id') id: string, @Body() updateBandaDto: UpdateBandaDto) {
-        return this.bandasService.update(+id, updateBandaDto);
+    update(
+        @Param('id') id: string,
+        @Body() updateBandaDto: UpdateBandaDto,
+        @Req() req,
+    ) {
+        return this.bandasService.update(+id, updateBandaDto, req.user);
     }
 
     @Delete(':id')
