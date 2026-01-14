@@ -3,19 +3,15 @@ import { CreateParticipacionDto } from './dto/create-participacion.dto';
 import { UpdateParticipacionDto } from './dto/update-participacion.dto';
 import { Participacion } from './entities/participacion.entity';
 import { Procesion } from '@backend/procesiones/entities/procesion.entity';
-import { Repository } from 'typeorm/browser';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Banda } from '@backend/bandas/entities/banda.entity';
 
 @Injectable()
 export class ParticipacionesService {
     constructor(
-        @InjectRepository(Procesion)
-        private readonly procesionRepo: Repository<Procesion>,
         @InjectRepository(Participacion)
         private readonly participacionRepo: Repository<Participacion>,
-        @InjectRepository(Banda)
-        private readonly bandaRepo: Repository<Banda>,
     ) {}
     create(createParticipacioneDto: CreateParticipacionDto) {
         return 'This action adds a new participacione';

@@ -6,6 +6,7 @@ import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
 import { PuntoItinerario } from './entities/punto-itinerario.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Participacion } from '@backend/participaciones/entities/participacion.entity';
+import { Banda } from '@backend/bandas/entities/banda.entity';
 
 @Module({
     imports: [
@@ -14,6 +15,7 @@ import { Participacion } from '@backend/participaciones/entities/participacion.e
             PuntoItinerario,
             Hermandad,
             Participacion,
+            Banda,
         ]),
     ],
     controllers: [ProcesionesController],
