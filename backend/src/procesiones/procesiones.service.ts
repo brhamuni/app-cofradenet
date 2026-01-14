@@ -10,15 +10,20 @@ import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { Procesion } from './entities/procesion.entity';
 import { RolUsuario, Usuario } from '@backend/usuarios/entities/usuario.entity';
+import { Banda } from '@backend/bandas/entities/banda.entity';
+import { Participacion } from '@backend/participaciones/entities/participacion.entity';
 
 @Injectable()
 export class ProcesionesService {
     constructor(
         @InjectRepository(Procesion)
         private readonly procesionRepo: Repository<Procesion>,
-
         @InjectRepository(Hermandad)
         private readonly hermandadRepo: Repository<Hermandad>,
+        @InjectRepository(Banda)
+        private readonly bandaRepo: Repository<Banda>,
+        @InjectRepository(Participacion)
+        private readonly participacionRepo: Repository<Participacion>,
     ) {}
 
     async create(createProcesionDto: CreateProcesionDto, req: any) {
@@ -135,5 +140,56 @@ export class ProcesionesService {
         await this.procesionRepo.remove(procesion);
 
         return { message: 'Procesión eliminada correctamente' };
+    }
+
+    async asignarBanda(
+        procesionId: number,
+        bandaId: number,
+        anio: number,
+        ubicacion: string,
+    ) {
+        const procesion = await this.procesionRepo.findOne({
+            where: { id: procesionId },
+        });
+
+        if (!procesion) {
+            throw new NotFoundException(
+                'No se ha podido encontrar ninguna procesion',
+            );
+        }
+
+        const banda = await this.bandaRepo.findOne({
+            where: { id: bandaId },
+        });
+
+        const nuevaParticipacion = this.participacionRepo.create({
+            procesion: { id: procesionId },
+            banda: { id: bandaId },
+            anio,
+            ubicacion,
+        });
+
+        return await this.participacionRepo.save(nuevaParticipacion);
+    }
+
+    async findOneByProcesion(id: number, anio: number) {
+        return await this.procesionRepo
+            .findOne({
+                where: { id },
+                relations: {
+                    participaciones: {
+                        banda: true,
+                    },
+                },
+            })
+            .then((procesion) => {
+                if (procesion) {
+                    procesion.participaciones =
+                        procesion.participaciones.filter(
+                            (p) => p.anio === anio,
+                        );
+                }
+                return procesion;
+            });
     }
 }

@@ -84,4 +84,15 @@ export class HermandadesService {
     remove(id: number) {
         return `This action removes a #${id} hermandade`;
     }
+
+    async updateLogo(id: number, rutaImagen: string) {
+        const hermandad = await this.hermandadRepo.findOneBy({ id });
+
+        if (!hermandad) {
+            throw new NotFoundException('Hermandad no encontrada');
+        }
+
+        hermandad.imagenEscudo = rutaImagen; // Guardamos la ruta
+        return await this.hermandadRepo.save(hermandad);
+    }
 }

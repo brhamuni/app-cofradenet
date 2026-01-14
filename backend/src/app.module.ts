@@ -11,7 +11,9 @@ import { ConfigModule } from '@nestjs/config';
 import { AdminModule } from './admin/admin.module';
 import { MarchasModule } from './marchas/marchas.module';
 import { ProcesionesModule } from './procesiones/procesiones.module';
-
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { ParticipacionesModule } from './participaciones/participaciones.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -27,6 +29,10 @@ import { ProcesionesModule } from './procesiones/procesiones.module';
             autoLoadEntities: true, // Esto busca tus clases @Entity automáticamente
             synchronize: true, // ¡Magia! Crea las tablas solo mirando tus clases
         }),
+        ServeStaticModule.forRoot({
+            rootPath: join(__dirname, '..', 'uploads'),
+            serveRoot: '/uploads',
+        }),
         CiudadesModule,
         HermandadesModule,
         UsuariosModule,
@@ -35,6 +41,7 @@ import { ProcesionesModule } from './procesiones/procesiones.module';
         AdminModule,
         MarchasModule,
         ProcesionesModule,
+        ParticipacionesModule,
     ],
     controllers: [AppController],
     providers: [AppService],

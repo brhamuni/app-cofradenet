@@ -9,6 +9,9 @@ import {
     UseGuards,
     Req,
     ParseIntPipe,
+    UseInterceptors,
+    BadRequestException,
+    UploadedFile,
 } from '@nestjs/common';
 import { HermandadesService } from './hermandades.service';
 import { CreateHermandadDto } from './dto/create-hermandad.dto';
@@ -17,6 +20,9 @@ import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
 import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 @Controller('hermandades')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -53,5 +59,46 @@ export class HermandadesController {
     @Delete(':id')
     remove(@Param('id') id: string) {
         return this.hermandadesService.remove(+id);
+    }
+
+    @Post(':id/logo')
+    @UseGuards(JwtAuthGuard)
+    @UseInterceptors(
+        FileInterceptor('file', {
+            storage: diskStorage({
+                destination: './uploads', // Carpeta donde se guardan
+                filename: (req, file, cb) => {
+                    // Generamos un nombre único: timestamp + extensión original
+                    const uniqueSuffix =
+                        Date.now() + '-' + Math.round(Math.random() * 1e9);
+                    const ext = extname(file.originalname);
+                    cb(null, `hermandad-${uniqueSuffix}${ext}`);
+                },
+            }),
+            fileFilter: (req, file, cb) => {
+                // Validamos que sea una imagen
+                if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+                    return cb(
+                        new BadRequestException('Solo se permiten imágenes'),
+                        false,
+                    );
+                }
+                cb(null, true);
+            },
+        }),
+    )
+    uploadLogo(
+        @Param('id', ParseIntPipe) id: number,
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        if (!file)
+            throw new BadRequestException('No se ha subido ningún archivo');
+
+        // Llamamos al servicio para que guarde la RUTA en la base de datos
+        // La ruta que guardamos es relativa: 'uploads/nombre-archivo.jpg'
+        return this.hermandadesService.updateLogo(
+            id,
+            `uploads/${file.filename}`,
+        );
     }
 }

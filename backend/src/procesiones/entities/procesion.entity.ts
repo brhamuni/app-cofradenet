@@ -7,6 +7,7 @@ import {
     PrimaryGeneratedColumn,
 } from 'typeorm';
 import { PuntoItinerario } from './punto-itinerario.entity';
+import { Participacion } from '@backend/participaciones/entities/participacion.entity';
 
 @Entity('procesiones')
 export class Procesion {
@@ -35,4 +36,7 @@ export class Procesion {
         cascade: true,
     })
     itinerario: PuntoItinerario[];
+
+    @OneToMany(() => Participacion, (participacion) => participacion.procesion)
+    participaciones: Participacion[];
 }

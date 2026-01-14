@@ -64,4 +64,19 @@ export class ProcesionesController {
     async remove(@Param('id', ParseIntPipe) id: number, @Req() req) {
         return this.procesionesService.remove(id, req.user);
     }
+
+    @Post(':id/asignar-banda')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
+    asignarBanda(
+        @Param('id', ParseIntPipe) procesionId: number,
+        @Body() body: { bandaId: number; anio: number; ubicacion: string },
+    ) {
+        return this.procesionesService.asignarBanda(
+            procesionId,
+            body.bandaId,
+            body.anio,
+            body.ubicacion,
+        );
+    }
 }

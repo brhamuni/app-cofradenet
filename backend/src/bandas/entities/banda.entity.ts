@@ -1,5 +1,6 @@
 import { Ciudad } from '@backend/ciudades/entities/ciudad.entity';
 import { Marcha } from '@backend/marchas/entities/marcha.entity';
+import { Participacion } from '@backend/participaciones/entities/participacion.entity';
 import { Usuario } from '@backend/usuarios/entities/usuario.entity';
 import {
     PrimaryGeneratedColumn,
@@ -10,6 +11,7 @@ import {
     ManyToOne,
     ManyToMany,
     JoinTable,
+    OneToMany,
 } from 'typeorm';
 
 @Entity('bandas')
@@ -67,4 +69,7 @@ export class Banda {
         inverseJoinColumn: { name: 'marchaId', referencedColumnName: 'id' },
     })
     repertorio: Marcha[];
+
+    @OneToMany(() => Participacion, (participacion) => participacion.banda)
+    participaciones: Participacion[];
 }
