@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { PuntoItinerario } from './punto-itinerario.entity';
 import { Participacion } from '@backend/participaciones/entities/participacion.entity';
+import { Itinerario } from '@backend/itinerarios/entities/itinerario.entity';
 
 @Entity('procesiones')
 export class Procesion {
@@ -39,4 +40,7 @@ export class Procesion {
 
     @OneToMany(() => Participacion, (participacion) => participacion.procesion)
     participaciones: Participacion[];
+
+    @OneToMany(() => Itinerario, (itinerario)=> itinerario.procesion)
+    itinerarios: Itinerario[];
 }

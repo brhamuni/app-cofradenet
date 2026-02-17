@@ -192,4 +192,20 @@ export class ProcesionesService {
                 return procesion;
             });
     }
+
+    async obtenerFichaPorAnio(procesionId: number, anio: number) {
+        const ficha = await this.procesionRepo.createQueryBuilder('procesion')
+        .leftJoinAndSelect('procesion.hermandad', 'hermandad')
+        .leftJoinAndSelect('procesion.itinerarios', 'itinerario', 'itinerario.anio = :anio', { anio })
+        .leftJoinAndSelect('procesion.participaciones', 'participacion', 'participacion.anio = :anio', { anio })
+        .leftJoinAndSelect('participacion.banda', 'banda')
+        .where('procesion.id = :procesionId', { procesionId })
+        .getOne();
+
+        if (!ficha) {
+        throw new NotFoundException(`Procesión con ID ${procesionId} no encontrada`);
+        }
+
+        return ficha;
+    }
 }

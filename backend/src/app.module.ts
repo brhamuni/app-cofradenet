@@ -15,6 +15,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ParticipacionesModule } from './participaciones/participaciones.module';
 import { EventosModule } from './eventos/eventos.module';
+import { ItinerariosModule } from './itinerarios/itinerarios.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -29,6 +30,7 @@ import { EventosModule } from './eventos/eventos.module';
             database: 'cofradenet_db', // El nombre que creamos en pgAdmin
             autoLoadEntities: true, // Esto busca tus clases @Entity automáticamente
             synchronize: true, // ¡Magia! Crea las tablas solo mirando tus clases
+            
         }),
         ServeStaticModule.forRoot({
             rootPath: join(__dirname, '..', 'uploads'),
@@ -44,6 +46,7 @@ import { EventosModule } from './eventos/eventos.module';
         ProcesionesModule,
         ParticipacionesModule,
         EventosModule,
+        ItinerariosModule,
     ],
     controllers: [AppController],
     providers: [AppService],
