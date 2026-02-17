@@ -2,8 +2,9 @@ import {
     IsString,
     IsNotEmpty,
     IsDateString,
-    IsOptional,
     MinLength,
+    IsOptional,
+    IsInt,
 } from 'class-validator';
 
 export class CreateEventoDto {
@@ -12,13 +13,7 @@ export class CreateEventoDto {
     @MinLength(5, { message: 'El título debe tener al menos 5 caracteres' })
     titulo: string;
 
-    @IsDateString(
-        {},
-        {
-            message:
-                'La fecha debe tener formato ISO 8601 (Ej: 2026-03-15T19:30:00)',
-        },
-    )
+    @IsDateString({}, { message: 'La fecha debe tener formato ISO 8601' })
     @IsNotEmpty()
     fechaHora: string;
 
@@ -27,8 +22,14 @@ export class CreateEventoDto {
     lugar: string;
 
     @IsString()
+    @IsOptional() // <--- IMPORTANTE: Esto evita el error de "must be a string" si no lo envías
     descripcion?: string;
 
     @IsString()
-    tipo?: string; // Por defecto será 'concierto' si no se envía
+    @IsOptional()
+    tipo?: string;
+
+    @IsInt({ message: 'El ID de la banda debe ser un número entero' })
+    @IsNotEmpty({ message: 'La banda es obligatoria' })
+    bandaId: number; // <--- Asegúrate de que esta línea esté presente
 }

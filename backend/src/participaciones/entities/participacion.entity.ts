@@ -11,7 +11,7 @@ import {
 @Entity('participaciones')
 export class Participacion {
     @PrimaryGeneratedColumn()
-    id: string;
+    id: number;
 
     @Column()
     anio: number;
@@ -20,7 +20,7 @@ export class Participacion {
     ubicacion: string;
 
     @Column()
-    bandaId: string;
+    bandaId: number;
 
     @ManyToOne(() => Banda, (banda) => banda.participaciones, {
         onDelete: 'CASCADE',
@@ -29,7 +29,7 @@ export class Participacion {
     banda: Banda;
 
     @Column()
-    procesionId: string;
+    procesionId: number;
 
     @ManyToOne(() => Procesion, (procesion) => procesion.participaciones, {
         onDelete: 'CASCADE',

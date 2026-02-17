@@ -1,19 +1,19 @@
-import { IsNumber, IsString, IsNotEmpty } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export class CreateParticipacionDto {
-    @IsNumber()
-    @IsNotEmpty({ message: 'El año es obligatorio' })
+    @IsInt()
+    @IsNotEmpty()
     anio: number;
 
-    @IsString({ message: 'La ubicación debe ser un texto' })
-    @IsNotEmpty({ message: 'La ubicación es obligatoria' })
-    ubicacion: string;
+    @IsString()
+    @IsOptional()
+    posicion?: string; // Ej: "Tras el paso de Cristo"
 
-    @IsNumber()
-    @IsNotEmpty({ message: 'El bandaId es obligatorio' })
-    bandaId: number;
-
-    @IsNumber()
-    @IsNotEmpty({ message: 'El procesionId es obligatorio' })
+    @IsInt()
+    @IsNotEmpty()
     procesionId: number;
+
+    @IsInt()
+    @IsNotEmpty()
+    bandaId: number;
 }

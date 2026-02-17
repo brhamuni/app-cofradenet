@@ -1,35 +1,48 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateParticipacionDto } from './dto/create-participacion.dto';
-import { UpdateParticipacionDto } from './dto/update-participacion.dto';
-import { Participacion } from './entities/participacion.entity';
-import { Procesion } from '@backend/procesiones/entities/procesion.entity';
-import { Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Banda } from '@backend/bandas/entities/banda.entity';
+import { Repository } from 'typeorm';
+import { CreateParticipacionDto } from './dto/create-participacion.dto';
+import { UpdateParticipacionDto } from './dto/update-participacion.dto'; // <-- Revisa que este nombre coincida con tu archivo
+import { Participacion } from './entities/participacion.entity';
 
 @Injectable()
 export class ParticipacionesService {
     constructor(
         @InjectRepository(Participacion)
-        private readonly participacionRepo: Repository<Participacion>,
+        private readonly participacionRepository: Repository<Participacion>,
     ) {}
-    create(createParticipacioneDto: CreateParticipacionDto) {
-        return 'This action adds a new participacione';
+
+    async create(createParticipacionDto: CreateParticipacionDto) {
+        // TypeORM necesita que los datos coincidan con la Entidad
+        const nueva = this.participacionRepository.create(
+            createParticipacionDto,
+        );
+        return await this.participacionRepository.save(nueva);
     }
 
     findAll() {
-        return `This action returns all participaciones`;
+        return this.participacionRepository.find({
+            relations: ['banda', 'procesion'],
+        });
     }
 
     findOne(id: number) {
-        return `This action returns a #${id} participacione`;
+        return this.participacionRepository.findOne({
+            where: { id },
+            relations: ['banda', 'procesion'],
+        });
     }
 
-    update(id: number, updateParticipacioneDto: UpdateParticipacionDto) {
-        return `This action updates a #${id} participacione`;
+    async update(id: number, updateParticipacionDto: UpdateParticipacionDto) {
+        await this.participacionRepository.update(id, updateParticipacionDto);
+        return this.findOne(id);
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} participacione`;
+    // CAMBIA string por number aquí 👇
+    async remove(id: number) {
+        const participacion = await this.findOne(id);
+        if (participacion) {
+            return await this.participacionRepository.remove(participacion);
+        }
     }
 }

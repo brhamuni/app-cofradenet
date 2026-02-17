@@ -6,32 +6,29 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn,
 } from 'typeorm';
-
 @Entity('eventos')
 export class Evento {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column()
-    titulo: string; // Ej: "Certamen Santa Cecilia"
+    titulo: string; // Asegúrate de que se llame TITULO, no nombre
 
-    @Column({ type: 'timestamp' }) // Guardamos fecha y hora exacta
-    fechaHora: Date;
+    @Column({ type: 'timestamp' })
+    fechaHora: Date; // Asegúrate de que se llame FECHAHORA
 
     @Column()
-    lugar: string; // Ej: "Plaza de España, Sevilla"
+    lugar: string;
 
-    @Column({ type: 'text', nullable: true })
-    descripcion: string; // Repertorio, notas, etc.
+    @Column({ nullable: true })
+    descripcion: string;
 
-    @Column({ default: 'concierto' })
-    tipo: string; // 'concierto', 'ensayo_puertas_abiertas', 'boda', etc.
+    @Column({ nullable: true })
+    tipo: string;
 
-    // Relación: Muchas actuaciones pertenecen a una Banda
     @Column()
     bandaId: number;
 
-    @ManyToOne(() => Banda, (banda) => banda.eventos, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'bandaId' })
+    @ManyToOne(() => Banda, (banda) => banda.eventos)
     banda: Banda;
 }

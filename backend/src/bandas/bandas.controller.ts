@@ -72,4 +72,9 @@ export class BandasController {
     verAgenda(@Param('id', ParseIntPipe) id: number) {
         return this.bandasService.obtenerEventos(id);
     }
+
+    @Get(':id/agenda/:anio')
+    getAgenda(@Param('id') id: string, @Param('anio') anio: string) {
+        return this.bandasService.findAgenda(+id, +anio);
+    }
 }
