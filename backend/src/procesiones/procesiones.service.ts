@@ -194,16 +194,38 @@ export class ProcesionesService {
     }
 
     async obtenerFichaPorAnio(procesionId: number, anio: number) {
-        const ficha = await this.procesionRepo.createQueryBuilder('procesion')
-        .leftJoinAndSelect('procesion.hermandad', 'hermandad')
-        .leftJoinAndSelect('procesion.itinerarios', 'itinerario', 'itinerario.anio = :anio', { anio })
-        .leftJoinAndSelect('procesion.participaciones', 'participacion', 'participacion.anio = :anio', { anio })
-        .leftJoinAndSelect('participacion.banda', 'banda')
-        .where('procesion.id = :procesionId', { procesionId })
-        .getOne();
+        const ficha = await this.procesionRepo
+            .createQueryBuilder('procesion')
+            .leftJoinAndSelect('procesion.hermandad', 'hermandad')
+            .leftJoinAndSelect(
+                'procesion.itinerarios',
+                'itinerario',
+                'itinerario.anio = :anio',
+                { anio },
+            )
+            .leftJoinAndSelect(
+                'procesion.participaciones',
+                'participacion',
+                'participacion.anio = :anio',
+                { anio },
+            )
+            .leftJoinAndSelect('participacion.banda', 'banda')
+            .where('procesion.id = :procesionId', { procesionId })
+            .getOne();
 
         if (!ficha) {
-        throw new NotFoundException(`Procesión con ID ${procesionId} no encontrada`);
+            throw new NotFoundException(
+                `Procesión con ID ${procesionId} no encontrada`,
+            );
+        }
+
+        if (
+            ficha.itinerarios.length === 0 &&
+            ficha.participaciones.length === 0
+        ) {
+            throw new NotFoundException(
+                `La procesión no tiene datos registrados para el año ${anio}`,
+            );
         }
 
         return ficha;

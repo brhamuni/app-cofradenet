@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsArray, MinLength } from 'class-validator';
+import {
+    IsString,
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    IsArray,
+    MinLength,
+} from 'class-validator';
 
 export class CreateBandaDto {
     @IsString({ message: 'El nombre debe ser un texto' })

@@ -1,6 +1,11 @@
-import { Procesion } from "@backend/procesiones/entities/procesion.entity";
-import { text } from "stream/consumers";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Procesion } from '@backend/procesiones/entities/procesion.entity';
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('itinerarios')
 export class Itinerario {
@@ -10,21 +15,21 @@ export class Itinerario {
     @Column()
     anio: number;
 
-    @Column({type: 'time', nullable: true})
+    @Column({ type: 'time', nullable: true })
     horarioSalida: string;
 
-    @Column({type: 'time', nullable: true})
+    @Column({ type: 'time', nullable: true })
     horarioEntrada: string;
 
-    @Column({type: 'text', nullable:true})
+    @Column({ type: 'text', nullable: true })
     recorrido: string;
 
     @Column()
-    procesionId: number;   
-    
-    @ManyToOne(() => Procesion, (procesion) => procesion.itinerarios, {onDelete:'CASCADE'})
-    @JoinColumn({name:'procesionId'})
+    procesionId: number;
+
+    @ManyToOne(() => Procesion, (procesion) => procesion.itinerarios, {
+        onDelete: 'CASCADE',
+    })
+    @JoinColumn({ name: 'procesionId' })
     procesion: Procesion;
-
-
 }

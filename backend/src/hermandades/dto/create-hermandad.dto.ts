@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, MinLength } from 'class-validator';
+import {
+    IsString,
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    MinLength,
+} from 'class-validator';
 
 export class CreateHermandadDto {
     @IsString({ message: 'El nombre debe ser un texto' })

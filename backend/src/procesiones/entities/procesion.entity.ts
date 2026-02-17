@@ -41,6 +41,6 @@ export class Procesion {
     @OneToMany(() => Participacion, (participacion) => participacion.procesion)
     participaciones: Participacion[];
 
-    @OneToMany(() => Itinerario, (itinerario)=> itinerario.procesion)
+    @OneToMany(() => Itinerario, (itinerario) => itinerario.procesion)
     itinerarios: Itinerario[];
 }

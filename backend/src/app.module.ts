@@ -30,7 +30,6 @@ import { ItinerariosModule } from './itinerarios/itinerarios.module';
             database: 'cofradenet_db', // El nombre que creamos en pgAdmin
             autoLoadEntities: true, // Esto busca tus clases @Entity automáticamente
             synchronize: true, // ¡Magia! Crea las tablas solo mirando tus clases
-            
         }),
         ServeStaticModule.forRoot({
             rootPath: join(__dirname, '..', 'uploads'),

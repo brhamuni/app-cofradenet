@@ -3,18 +3,18 @@ import { ItinerariosController } from './itinerarios.controller';
 import { ItinerariosService } from './itinerarios.service';
 
 describe('ItinerariosController', () => {
-  let controller: ItinerariosController;
+    let controller: ItinerariosController;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [ItinerariosController],
-      providers: [ItinerariosService],
-    }).compile();
+    beforeEach(async () => {
+        const module: TestingModule = await Test.createTestingModule({
+            controllers: [ItinerariosController],
+            providers: [ItinerariosService],
+        }).compile();
 
-    controller = module.get<ItinerariosController>(ItinerariosController);
-  });
+        controller = module.get<ItinerariosController>(ItinerariosController);
+    });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
+    it('should be defined', () => {
+        expect(controller).toBeDefined();
+    });
 });

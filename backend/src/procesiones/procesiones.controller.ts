@@ -82,9 +82,9 @@ export class ProcesionesController {
 
     @Get(':id/ficha/:anio')
     obtenerFichaCompleta(
-        @Param('id',ParseIntPipe) id: number,
-        @Param('anio',ParseIntPipe) anio: number
-    ){
+        @Param('id', ParseIntPipe) id: number,
+        @Param('anio', ParseIntPipe) anio: number,
+    ) {
         return this.procesionesService.obtenerFichaPorAnio(id, anio);
     }
 }

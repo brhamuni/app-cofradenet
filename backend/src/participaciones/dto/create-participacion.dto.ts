@@ -9,11 +9,11 @@ export class CreateParticipacionDto {
     @IsNotEmpty({ message: 'La ubicación es obligatoria' })
     ubicacion: string;
 
-    @IsString()
+    @IsNumber()
     @IsNotEmpty({ message: 'El bandaId es obligatorio' })
-    bandaId: string;
+    bandaId: number;
 
-    @IsString()
+    @IsNumber()
     @IsNotEmpty({ message: 'El procesionId es obligatorio' })
-    procesionId: string;
+    procesionId: number;
 }
