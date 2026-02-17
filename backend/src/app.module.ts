@@ -14,6 +14,7 @@ import { ProcesionesModule } from './procesiones/procesiones.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ParticipacionesModule } from './participaciones/participaciones.module';
+import { EventosModule } from './eventos/eventos.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -42,6 +43,7 @@ import { ParticipacionesModule } from './participaciones/participaciones.module'
         MarchasModule,
         ProcesionesModule,
         ParticipacionesModule,
+        EventosModule,
     ],
     controllers: [AppController],
     providers: [AppService],

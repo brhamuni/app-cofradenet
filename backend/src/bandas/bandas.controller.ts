@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
 import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
+import { CreateEventoDto } from '@backend/eventos/dto/create-evento.dto';
 
 @Controller('bandas')
 export class BandasController {
@@ -57,5 +58,18 @@ export class BandasController {
     @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
     remove(@Param('id') id: string) {
         return this.bandasService.remove(+id);
+    }
+
+    @Post('/:id/eventos')
+    crearEvento(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() createEventoDto: CreateEventoDto,
+    ) {
+        return this.bandasService.crearEvento(id, createEventoDto);
+    }
+
+    @Get(':id/eventos')
+    verAgenda(@Param('id', ParseIntPipe) id: number) {
+        return this.bandasService.obtenerEventos(id);
     }
 }

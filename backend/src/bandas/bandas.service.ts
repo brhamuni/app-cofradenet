@@ -9,6 +9,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Banda } from './entities/banda.entity';
 import { Repository } from 'typeorm';
 import { Marcha } from '@backend/marchas/entities/marcha.entity';
+import { Evento } from '@backend/eventos/entities/evento.entity';
+import { CreateEventoDto } from '@backend/eventos/dto/create-evento.dto';
 
 @Injectable()
 export class BandasService {
@@ -17,6 +19,8 @@ export class BandasService {
         private readonly bandaRepo: Repository<Banda>,
         @InjectRepository(Marcha)
         private readonly marchaRepo: Repository<Marcha>,
+        @InjectRepository(Evento)
+        private readonly eventoRepo: Repository<Evento>,
     ) {}
 
     create(createBandaDto: CreateBandaDto) {
@@ -74,5 +78,22 @@ export class BandasService {
 
     remove(id: number) {
         return `This action removes a #${id} banda`;
+    }
+
+    async crearEvento(bandaId: number, createEventoDto: CreateEventoDto) {
+        const banda = await this.bandaRepo.findOneBy({ id: bandaId });
+        if (!banda) throw new NotFoundException('Banda no encontrada');
+        const nuevoEvento = this.eventoRepo.create({
+            ...createEventoDto,
+            banda: { id: bandaId },
+        });
+        return await this.eventoRepo.save(nuevoEvento);
+    }
+
+    async obtenerEventos(bandaId: number) {
+        return await this.eventoRepo.find({
+            where: { banda: { id: bandaId } },
+            order: { fechaHora: 'ASC' },
+        });
     }
 }

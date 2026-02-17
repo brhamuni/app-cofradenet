@@ -1,4 +1,5 @@
 import { Ciudad } from '@backend/ciudades/entities/ciudad.entity';
+import { Evento } from '@backend/eventos/entities/evento.entity';
 import { Marcha } from '@backend/marchas/entities/marcha.entity';
 import { Participacion } from '@backend/participaciones/entities/participacion.entity';
 import { Usuario } from '@backend/usuarios/entities/usuario.entity';
@@ -72,4 +73,7 @@ export class Banda {
 
     @OneToMany(() => Participacion, (participacion) => participacion.banda)
     participaciones: Participacion[];
+
+    @OneToMany(() => Evento, (evento) => evento.banda)
+    eventos: Evento[];
 }
