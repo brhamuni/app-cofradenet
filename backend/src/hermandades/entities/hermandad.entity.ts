@@ -62,4 +62,7 @@ export class Hermandad {
     procesiones: Procesion[];
 
     proximaProcesion?: Procesion | null;
+
+    @Column({ default: false })
+    verificada: boolean;
 }

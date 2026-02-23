@@ -230,4 +230,50 @@ export class ProcesionesService {
 
         return ficha;
     }
+
+    async buscarProcesiones(
+        ciudadNombre?: string, // Cambiado a string
+        diaSemana?: string,
+        nombre?: string,
+        hermandad?: string,
+        banda?: string,
+    ) {
+        const query = this.procesionRepo
+            .createQueryBuilder('procesion')
+            .leftJoinAndSelect('procesion.hermandad', 'hermandad')
+            .leftJoinAndSelect('hermandad.ciudad', 'ciudad')
+            .leftJoinAndSelect('procesion.participaciones', 'participacion')
+            .leftJoinAndSelect('participacion.banda', 'banda');
+
+        // Filtro por NOMBRE de Ciudad
+        if (ciudadNombre) {
+            query.andWhere('ciudad.nombre ILIKE :ciudadNombre', {
+                ciudadNombre: `%${ciudadNombre}%`,
+            });
+        }
+
+        if (diaSemana) {
+            query.andWhere('procesion.diaSemana = :diaSemana', { diaSemana });
+        }
+
+        if (nombre) {
+            query.andWhere('procesion.nombre ILIKE :nombre', {
+                nombre: `%${nombre}%`,
+            });
+        }
+
+        if (hermandad) {
+            query.andWhere('hermandad.nombre ILIKE :hermandad', {
+                hermandad: `%${hermandad}%`,
+            });
+        }
+
+        if (banda) {
+            query.andWhere('banda.nombre ILIKE :banda', {
+                banda: `%${banda}%`,
+            });
+        }
+
+        return await query.getMany();
+    }
 }

@@ -16,10 +16,12 @@ import { UpdateBandaDto } from './dto/update-banda.dto';
 import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
-import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
+import { RolUsuario, Usuario } from '@backend/usuarios/entities/usuario.entity';
 import { CreateEventoDto } from '@backend/eventos/dto/create-evento.dto';
+import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
 
 @Controller('bandas')
+@UseGuards(NotBlockedGuard)
 export class BandasController {
     constructor(private readonly bandasService: BandasService) {}
 
@@ -49,7 +51,7 @@ export class BandasController {
     update(
         @Param('id') id: string,
         @Body() updateBandaDto: UpdateBandaDto,
-        @Req() req,
+        @Req() req: { user: Usuario },
     ) {
         return this.bandasService.update(+id, updateBandaDto, req.user);
     }
@@ -76,5 +78,12 @@ export class BandasController {
     @Get(':id/agenda/:anio')
     getAgenda(@Param('id') id: string, @Param('anio') anio: string) {
         return this.bandasService.findAgenda(+id, +anio);
+    }
+
+    @Patch(':id/verificar')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN)
+    verificar(@Param('id') id: string, @Body() body: { estado: boolean }) {
+        return this.bandasService.verificar(+id, body.estado);
     }
 }

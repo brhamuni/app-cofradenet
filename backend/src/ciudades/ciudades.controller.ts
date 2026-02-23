@@ -7,12 +7,20 @@ import {
     Param,
     Delete,
     Query,
+    ParseIntPipe,
+    UseGuards,
 } from '@nestjs/common';
 import { CiudadesService } from './ciudades.service';
 import { CreateCiudadeDto } from './dto/create-ciudade.dto';
 import { UpdateCiudadeDto } from './dto/update-ciudade.dto';
+import { Roles } from '@backend/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
+import { RolesGuard } from '@backend/auth/guards/roles.guard';
+import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
 
 @Controller('ciudades')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(RolUsuario.ADMIN)
 export class CiudadesController {
     constructor(private readonly ciudadesService: CiudadesService) {}
 
@@ -38,14 +46,14 @@ export class CiudadesController {
 
     @Patch(':id')
     update(
-        @Param('id') id: string,
+        @Param('id', ParseIntPipe) id: number,
         @Body() updateCiudadeDto: UpdateCiudadeDto,
     ) {
-        return this.ciudadesService.update(+id, updateCiudadeDto);
+        return this.ciudadesService.update(id, updateCiudadeDto);
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.ciudadesService.remove(+id);
+    remove(@Param('id', ParseIntPipe) id: number) {
+        return this.ciudadesService.remove(id);
     }
 }

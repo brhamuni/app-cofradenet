@@ -76,4 +76,7 @@ export class Banda {
 
     @OneToMany(() => Evento, (evento) => evento.banda)
     eventos: Evento[];
+
+    @Column({ default: false })
+    verificada: boolean;
 }

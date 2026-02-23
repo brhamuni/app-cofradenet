@@ -155,7 +155,7 @@ export class UsuariosService {
 
     async findAll() {
         return await this.usuariosRepo.find({
-            relations: ['hermandad', 'banda'],
+            select: ['id', 'nombre', 'email', 'rol'],
         });
     }
 
@@ -179,7 +179,22 @@ export class UsuariosService {
         return `This action updates a #${id} usuario`;
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} usuario`;
+    async remove(id: number) {
+        await this.usuariosRepo.delete(id);
+    }
+
+    async updateRol(id: number, nuevoRol: RolUsuario) {
+        const usuario = await this.usuariosRepo.findOneBy({ id });
+        if (!usuario) throw new NotFoundException('Usuario no encontrado');
+        usuario.rol = nuevoRol;
+        return await this.usuariosRepo.save(usuario);
+    }
+
+    async setBloqueo(id: number, bloqueado: boolean, motivo?: string) {
+        const usuario = await this.usuariosRepo.findOneBy({ id });
+        if (!usuario) throw new NotFoundException('Usuario no encontrado');
+        usuario.estaBloqueado = bloqueado;
+        usuario.motivoBloqueo = motivo || '';
+        return await this.usuariosRepo.save(usuario);
     }
 }

@@ -40,24 +40,29 @@ export class CiudadesService {
         return ciudad.hermandades;
     }
 
-    create(createCiudadeDto: CreateCiudadeDto) {
+    async create(createCiudadeDto: CreateCiudadeDto) {
         const nuevaCiudad = this.ciudadRepo.create(createCiudadeDto);
-        return this.ciudadRepo.save(nuevaCiudad);
+        return await this.ciudadRepo.save(nuevaCiudad);
     }
 
-    findAll() {
+    async findAll() {
         return this.ciudadRepo.find();
     }
 
-    findOne(id: number) {
-        return `This action returns a #${id} ciudade`;
+    async findOne(id: number) {
+        const ciudad = await this.ciudadRepo.findOneBy({ id });
+        if (!ciudad) throw new NotFoundException('Ciudad no encontrada');
+        return ciudad;
     }
 
-    update(id: number, updateCiudadeDto: UpdateCiudadeDto) {
-        return `This action updates a #${id} ciudade`;
+    async update(id: number, updateCiudadeDto: UpdateCiudadeDto) {
+        const ciudad = await this.ciudadRepo.findOneBy({ id });
+        if (!ciudad) throw new NotFoundException('Ciudad no encontrada');
+        Object.assign(ciudad, updateCiudadeDto);
+        return await this.ciudadRepo.save(ciudad);
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} ciudade`;
+    async remove(id: number) {
+        await this.ciudadRepo.delete(id);
     }
 }

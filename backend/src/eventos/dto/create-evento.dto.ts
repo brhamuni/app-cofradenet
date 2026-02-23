@@ -22,7 +22,7 @@ export class CreateEventoDto {
     lugar: string;
 
     @IsString()
-    @IsOptional() // <--- IMPORTANTE: Esto evita el error de "must be a string" si no lo envías
+    @IsOptional()
     descripcion?: string;
 
     @IsString()
@@ -31,5 +31,5 @@ export class CreateEventoDto {
 
     @IsInt({ message: 'El ID de la banda debe ser un número entero' })
     @IsNotEmpty({ message: 'La banda es obligatoria' })
-    bandaId: number; // <--- Asegúrate de que esta línea esté presente
+    bandaId: number;
 }

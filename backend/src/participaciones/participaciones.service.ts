@@ -4,12 +4,15 @@ import { Repository } from 'typeorm';
 import { CreateParticipacionDto } from './dto/create-participacion.dto';
 import { UpdateParticipacionDto } from './dto/update-participacion.dto'; // <-- Revisa que este nombre coincida con tu archivo
 import { Participacion } from './entities/participacion.entity';
+import { Procesion } from '@backend/procesiones/entities/procesion.entity';
 
 @Injectable()
 export class ParticipacionesService {
     constructor(
         @InjectRepository(Participacion)
         private readonly participacionRepository: Repository<Participacion>,
+        @InjectRepository(Procesion)
+        private readonly procesionesRepo: Repository<Procesion>,
     ) {}
 
     async create(createParticipacionDto: CreateParticipacionDto) {

@@ -143,4 +143,11 @@ export class BandasService {
             (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
         );
     }
+
+    async verificar(id: number, estado: boolean) {
+        const banda = await this.bandaRepo.findOneBy({ id });
+        if (!banda) throw new NotFoundException('Banda no encontrada');
+        banda.verificada = estado;
+        return await this.bandaRepo.save(banda);
+    }
 }

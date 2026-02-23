@@ -23,9 +23,10 @@ import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
 
 @Controller('hermandades')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard)
 export class HermandadesController {
     constructor(private readonly hermandadesService: HermandadesService) {}
 
@@ -100,5 +101,15 @@ export class HermandadesController {
             id,
             `uploads/${file.filename}`,
         );
+    }
+
+    @Patch(':id/verificar')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN)
+    verificar(
+        @Param('id', ParseIntPipe) id: number,
+        @Body('verificada') verificada: boolean,
+    ) {
+        return this.hermandadesService.verificar(id, verificada);
     }
 }

@@ -36,8 +36,20 @@ export class ProcesionesController {
     }
 
     @Get('buscar')
-    async buscarPorCiudad(@Query('ciudadId', ParseIntPipe) ciudadId: number) {
-        return this.procesionesService.buscarPorCiudad(ciudadId);
+    buscar(
+        @Query('ciudad') ciudad?: string,
+        @Query('dia') diaSemana?: string,
+        @Query('nombre') nombre?: string,
+        @Query('hermandad') hermandad?: string,
+        @Query('banda') banda?: string,
+    ) {
+        return this.procesionesService.buscarProcesiones(
+            ciudad,
+            diaSemana,
+            nombre,
+            hermandad,
+            banda,
+        );
     }
 
     @Get('/hermandad/:id')

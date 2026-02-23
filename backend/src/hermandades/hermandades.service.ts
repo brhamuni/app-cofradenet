@@ -53,7 +53,11 @@ export class HermandadesService {
         return hermandad;
     }
 
-    async updatePerfil(id: number, updateDto: UpdateHermandadDto, user: any) {
+    async updatePerfil(
+        id: number,
+        updateDto: UpdateHermandadDto,
+        user: Usuario,
+    ) {
         const hermandad = await this.hermandadRepo.findOne({
             where: { id },
             relations: ['usuario'],
@@ -65,17 +69,17 @@ export class HermandadesService {
             );
         }
 
-        // SEGURIDAD: Comprobamos si es el dueño o un administrador global
-        if (
-            user.rol !== RolUsuario.HERMANDAD ||
-            (user.rol !== RolUsuario.ADMIN && hermandad.usuario?.id !== user.id)
-        ) {
+        const esAdmin = user.rol === RolUsuario.ADMIN;
+        const esPropietario =
+            user.rol === RolUsuario.HERMANDAD &&
+            hermandad.usuario?.id === user.id;
+
+        if (!esAdmin && !esPropietario) {
             throw new ForbiddenException(
                 'No tienes permiso para gestionar el perfil de esta cofradía',
             );
         }
 
-        // Actualizamos los campos recibidos
         Object.assign(hermandad, updateDto);
 
         return await this.hermandadRepo.save(hermandad);
@@ -93,6 +97,14 @@ export class HermandadesService {
         }
 
         hermandad.imagenEscudo = rutaImagen; // Guardamos la ruta
+        return await this.hermandadRepo.save(hermandad);
+    }
+
+    async verificar(id: number, estado: boolean) {
+        const hermandad = await this.hermandadRepo.findOneBy({ id });
+        if (!hermandad)
+            throw new NotFoundException(`Hermandad con ID ${id} no encontrada`);
+        hermandad.verificada = estado;
         return await this.hermandadRepo.save(hermandad);
     }
 }

@@ -6,6 +6,7 @@ import {
     Patch,
     Param,
     Delete,
+    Query,
 } from '@nestjs/common';
 import { ParticipacionesService } from './participaciones.service';
 import { CreateParticipacionDto } from './dto/create-participacion.dto';

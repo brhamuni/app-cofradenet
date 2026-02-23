@@ -6,6 +6,7 @@ import {
     Patch,
     Param,
     Delete,
+    ParseIntPipe,
 } from '@nestjs/common';
 import { EventosService } from './eventos.service';
 import { CreateEventoDto } from './dto/create-evento.dto';
@@ -26,17 +27,20 @@ export class EventosController {
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.eventosService.findOne(+id);
+    findOne(@Param('id', ParseIntPipe) id: number) {
+        return this.eventosService.findOne(id);
     }
 
-    @Patch(':id')
-    update(@Param('id') id: string, @Body() updateEventoDto: UpdateEventoDto) {
-        return this.eventosService.update(+id, updateEventoDto);
+    @Patch('/:id')
+    update(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() updateEventoDto: UpdateEventoDto,
+    ) {
+        return this.eventosService.update(id, updateEventoDto);
     }
 
-    @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.eventosService.remove(+id);
+    @Delete('admin/:id')
+    remove(@Param('id', ParseIntPipe) id: number) {
+        return this.eventosService.remove(id);
     }
 }

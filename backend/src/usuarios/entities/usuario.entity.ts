@@ -69,4 +69,10 @@ export class Usuario {
     @ManyToMany(() => Banda)
     @JoinTable({ name: 'usuarios_favoritos_bandas' })
     bandasFavoritas: Banda[];
+
+    @Column({ default: false })
+    estaBloqueado: boolean;
+
+    @Column({ default: false })
+    motivoBloqueo: string;
 }

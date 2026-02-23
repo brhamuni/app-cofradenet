@@ -17,7 +17,10 @@ import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
 import { RolUsuario } from './entities/usuario.entity';
+import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
+
 @Controller('usuarios')
+@UseGuards(NotBlockedGuard)
 export class UsuariosController {
     constructor(private readonly usuariosService: UsuariosService) {}
 
@@ -27,6 +30,7 @@ export class UsuariosController {
     }
 
     @Get('lista-completa')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RolUsuario.ADMIN)
     findAll() {
         return this.usuariosService.findAll();
@@ -38,7 +42,7 @@ export class UsuariosController {
     }
 
     @Patch(':id')
-    @UseGuards(JwtAuthGuard, RolesGuard)
+    @UseGuards(JwtAuthGuard)
     update(
         @Param('id') id: number,
         @Body() updateUsuarioDto: UpdateUsuarioDto,
@@ -65,5 +69,14 @@ export class UsuariosController {
     @Delete(':id')
     remove(@Param('id') id: number) {
         return this.usuariosService.remove(id);
+    }
+
+    @Patch(':id/rol')
+    @Roles(RolUsuario.ADMIN) // Solo el jefe puede ascender/degradar usuarios
+    cambiarRol(
+        @Param('id', ParseIntPipe) id: number,
+        @Body('nuevoRol') nuevoRol: RolUsuario,
+    ) {
+        return this.usuariosService.updateRol(id, nuevoRol);
     }
 }
