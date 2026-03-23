@@ -2,7 +2,6 @@ import {
     IsEmail,
     IsEnum,
     IsNotEmpty,
-    IsNumber,
     IsOptional,
     IsString,
     MinLength,
@@ -28,9 +27,9 @@ export class CreateUsuarioDto {
     @IsEnum(RolUsuario, { message: 'El rol no es válido' })
     rol: RolUsuario;
 
-    @IsNumber()
+    @IsString()
     @IsOptional()
-    ciudadId?: number;
+    ciudad?: string;
 
     @IsString()
     @IsOptional()

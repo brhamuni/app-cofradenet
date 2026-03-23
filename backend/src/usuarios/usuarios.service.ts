@@ -11,6 +11,7 @@ import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
 import { RolUsuario, Usuario } from './entities/usuario.entity';
 import { Repository } from 'typeorm';
 import { Banda } from '@backend/bandas/entities/banda.entity';
+import { Ciudad } from '@backend/ciudades/entities/ciudad.entity';
 @Injectable()
 export class UsuariosService {
     constructor(
@@ -20,11 +21,13 @@ export class UsuariosService {
         private readonly hermandadesRepo: Repository<Hermandad>,
         @InjectRepository(Banda)
         private readonly bandasRepo: Repository<Banda>,
+        @InjectRepository(Ciudad)
+        private readonly ciudadesRepo: Repository<Ciudad>,
     ) {}
 
     async create(createUsuarioDto: CreateUsuarioDto) {
         console.log('Creando usuario:', createUsuarioDto);
-        const { password, ...datosUsuario } = createUsuarioDto;
+        const { password, ciudad, ...datosUsuario } = createUsuarioDto;
 
         const existeEmail = await this.usuariosRepo.findOneBy({
             email: createUsuarioDto.email,
@@ -41,12 +44,25 @@ export class UsuariosService {
         if (existeUsername) {
             throw new BadRequestException('El username ya está en uso');
         }
+
+        // Buscamos la ciudad por nombre (insensible a mayúsculas)
+        let ciudadEntidad: Ciudad | null = null;
+        if (ciudad) {
+            ciudadEntidad = await this.ciudadesRepo
+                .createQueryBuilder('c')
+                .where('LOWER(c.nombre) = LOWER(:nombre)', {
+                    nombre: ciudad.trim(),
+                })
+                .getOne();
+        }
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const nuevoUsuario = this.usuariosRepo.create({
             ...datosUsuario,
             password: hashedPassword,
+            ...(ciudadEntidad && { ciudadResidencia: ciudadEntidad }),
         });
 
         const usuarioGuardado = await this.usuariosRepo.save(nuevoUsuario);
@@ -57,7 +73,9 @@ export class UsuariosService {
                 templo: createUsuarioDto.templo || 'Templo por definir',
                 diaSalida: createUsuarioDto.diaSalida || 'Día por definir',
                 usuarioId: usuarioGuardado.id,
-                ciudadId: createUsuarioDto.ciudadId,
+                ...(ciudadEntidad && {
+                    ciudadId: ciudadEntidad.id,
+                }),
             });
             await this.hermandadesRepo.save(nuevaHermandad);
         }
@@ -65,8 +83,7 @@ export class UsuariosService {
         if (usuarioGuardado.rol === RolUsuario.BANDA) {
             const nuevaBanda = this.bandasRepo.create({
                 nombre: createUsuarioDto.nombre,
-                estiloMusical:
-                    createUsuarioDto.estiloMusical || 'No especificado',
+                estiloMusical: createUsuarioDto.estiloMusical || 'No especificado',
                 localidad: createUsuarioDto.localidad || 'No especificada',
                 direccion: createUsuarioDto.direccion || 'No especificada',
                 usuarioId: usuarioGuardado.id,

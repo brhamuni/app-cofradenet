@@ -32,6 +32,8 @@ export class AuthService {
 
         const payload = { id: usuario.id, username: usuario.username };
 
+        console.log('login', loginDTO);
+
         return {
             mensaje: 'Login exitoso',
             access_token: this.jwtService.sign(payload),

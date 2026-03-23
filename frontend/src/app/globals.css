@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cofrade-main: #4A148C; /* Morado oscuro */
+  --color-cofrade-gold: #D4AF37; /* Dorado / Albero */
+  --color-cofrade-bg: #F8F9FA;   /* Gris muy clarito para el fondo */
+}
