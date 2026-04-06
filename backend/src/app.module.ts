@@ -16,6 +16,8 @@ import { join } from 'path';
 import { ParticipacionesModule } from './participaciones/participaciones.module';
 import { EventosModule } from './eventos/eventos.module';
 import { ItinerariosModule } from './itinerarios/itinerarios.module';
+import { SeedModule } from './seed/seed.module';
+import { SearchModule } from './search/search.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -46,6 +48,8 @@ import { ItinerariosModule } from './itinerarios/itinerarios.module';
         ParticipacionesModule,
         EventosModule,
         ItinerariosModule,
+        SeedModule,
+        SearchModule,
     ],
     controllers: [AppController],
     providers: [AppService],

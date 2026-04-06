@@ -6,7 +6,7 @@ export class Ciudad {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ unique: true })
+    @Column()
     nombre: string;
 
     @Column()

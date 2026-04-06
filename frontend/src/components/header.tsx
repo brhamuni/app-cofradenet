@@ -2,186 +2,177 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, LogOut, Heart, Settings, Menu, X, ChevronDown } from 'lucide-react';
+import { User, LogOut, Heart, Settings, Menu, X, ChevronDown, Bell } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
   
-  // Estados
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // Para el móvil
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Para el menú de usuario
-
-  // --- NUEVOS ESTADOS PARA EL SCROLL ---
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Comprobamos si el usuario está logueado y escuchamos cambios
   useEffect(() => {
-    // Función que comprueba el token
     const checkAuth = () => {
       const token = localStorage.getItem('token');
-      setIsLoggedIn(!!token); // !! convierte el token a boolean (true si existe, false si no)
+      setIsLoggedIn(!!token);
     };
 
-    // 1. Ejecutamos la comprobación al cargar el Header por primera vez
     checkAuth();
-
-    // 2. Escuchamos el evento personalizado 'auth-change' que lanzaremos desde el Login
     window.addEventListener('auth-change', checkAuth);
-
-    // Limpiamos el event listener cuando el componente se desmonte
-    return () => {
-      window.removeEventListener('auth-change', checkAuth);
-    };
+    return () => window.removeEventListener('auth-change', checkAuth);
   }, []);
 
-  // --- EFECTO PARA OCULTAR/MOSTRAR EL HEADER AL HACER SCROLL ---
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      
+      // Activar fondo cristalino al bajar un poco
+      setIsScrolled(currentScrollY > 20);
 
-      // Si bajamos y pasamos los 50px, ocultamos. Si subimos, mostramos.
-      if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
+      // Ocultar/Mostrar (suavemente, sin cambiar alturas)
+      if (!isMenuOpen) {
+        if (currentScrollY > lastScrollY && currentScrollY > 80) {
+          setIsVisible(false);
+        } else {
+          setIsVisible(true);
+        }
       }
-
       setLastScrollY(currentScrollY);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [lastScrollY]);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY, isMenuOpen]);
 
   const handleLogout = () => {
-    // Borramos el token
     localStorage.removeItem('token');
-    
-    // Lanzamos el evento para que el Header (y cualquier otra parte) se entere
     window.dispatchEvent(new Event('auth-change'));
-    
     setIsDropdownOpen(false);
     setIsMenuOpen(false);
     router.push('/');
   };
 
   return (
-    // EL CONTENEDOR STICKY: Mantiene el espacio (h-16) reservado para que el contenido no salte
-    <div className="sticky top-0 z-50 h-16 w-full">
-      {/* EL HEADER REAL: Este es el que se anima (sube y baja) */}
+    <>
+      {/* HEADER FIJO 
+        - Altura fija (h-20) para evitar el salto por "capas" al hacer scroll.
+        - transition-transform para esconderse limpiamente.
+      */}
       <header 
-        className={`absolute top-0 w-full bg-white shadow-sm border-b border-gray-100 transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 right-0 z-[100] h-20 transition-all duration-300 ${
           isVisible ? 'translate-y-0' : '-translate-y-full'
+        } ${
+          isScrolled 
+            ? 'bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100' 
+            : 'bg-transparent'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            
-            {/* LOGO A DOS COLORES */}
-            <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-2xl font-extrabold tracking-tight">
-                <span className="text-cofrade-main">Cofrade</span>
-                <span className="text-cofrade-gold">net</span>
-              </Link>
-            </div>
+        {/* Contenedor h-full y flex items-center aseguran el CENTRADO VERTICAL ABSOLUTO */}
+        <div className="w-full h-full px-6 lg:px-12 flex justify-between items-center">
+          
+          {/* 1. LOGO */}
+          <div className="shrink-0">
+            <Link href="/" className="text-3xl font-black tracking-tighter flex items-center gap-1 group">
+              <span className="text-cofrade-main">COFRADE</span>
+              <span className="text-cofrade-gold group-hover:rotate-12 transition-transform">NET</span>
+            </Link>
+          </div>
 
-            {/* MENÚ DE ESCRITORIO */}
-            
-
-            {/* ZONA DE USUARIO (DERECHA) */}
-            <div className="hidden md:flex items-center space-x-4">
-              {!isLoggedIn ? (
-                // VISTA PARA INVITADOS (NO LOGUEADOS)
-                <>
-                  <Link href="/login" className="text-gray-600 hover:text-cofrade-main font-medium px-3 py-2">
-                    Iniciar Sesión
-                  </Link>
-                  <Link href="/register" className="bg-cofrade-main text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition-all">
-                    Registrarse
-                  </Link>
-                </>
-              ) : (
-                // VISTA PARA USUARIOS LOGUEADOS
+          {/* 2. ZONA DE USUARIO / ACCIONES */}
+          <div className="flex items-center gap-4">
+            {!isLoggedIn ? (
+              <div className="hidden md:flex items-center gap-6">
+                <Link href="/login" className="text-xs font-black uppercase tracking-widest text-gray-900 hover:text-cofrade-main transition-colors">
+                  Login
+                </Link>
+                <Link href="/register" className="bg-cofrade-main text-white px-8 py-3 rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-lg shadow-cofrade-main/20 hover:scale-105 active:scale-95 transition-all">
+                  Únete
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 md:gap-4">
+                <button className="p-2 text-gray-400 hover:text-cofrade-main transition-colors hidden sm:block">
+                  <Bell size={20} />
+                </button>
+                
                 <div className="relative">
                   <button 
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100"
+                    className="flex items-center gap-2 p-1 pr-3 rounded-[2rem] bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-all active:scale-95"
                   >
-                    <div className="h-8 w-8 rounded-full bg-cofrade-main/10 flex items-center justify-center text-cofrade-main">
+                    <div className="h-9 w-9 rounded-full bg-cofrade-main text-white flex items-center justify-center font-black shadow-inner">
                       <User size={18} />
                     </div>
-                    <ChevronDown size={16} className="text-gray-500" />
+                    <ChevronDown size={14} className={`text-gray-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {/* DESPLEGABLE DEL USUARIO */}
+                  {/* DESPLEGABLE */}
                   {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                      <div className="px-4 py-2 border-b border-gray-50 mb-1">
-                        <p className="text-sm font-medium text-gray-900">Mi Cuenta</p>
+                    <div className="absolute right-0 mt-4 w-56 bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-gray-50 py-3 z-[110] animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                      <div className="px-6 py-3 border-b border-gray-50 mb-2">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Mi Cuenta</p>
                       </div>
-                      
-                      <Link href="/favoritos" onClick={() => setIsDropdownOpen(false)} className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-cofrade-main transition-colors">
-                        <Heart size={16} className="mr-2" />
-                        Mis Favoritos
-                      </Link>
-                      
-                      <Link href="/perfil" onClick={() => setIsDropdownOpen(false)} className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-cofrade-main transition-colors">
-                        <Settings size={16} className="mr-2" />
-                        Configuración
-                      </Link>
-                      
-                      <div className="border-t border-gray-50 mt-1 pt-1">
-                        <button 
-                          onClick={handleLogout}
-                          className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <LogOut size={16} className="mr-2" />
-                          Cerrar Sesión
+                      <MenuLink href="/perfil" icon={<User size={16}/>} label="Perfil" />
+                      <MenuLink href="/favoritos" icon={<Heart size={16}/>} label="Favoritos" />
+                      <MenuLink href="/settings" icon={<Settings size={16}/>} label="Ajustes" />
+                      <div className="mt-2 pt-2 border-t border-gray-50">
+                        <button onClick={handleLogout} className="flex w-full items-center px-6 py-3 text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-50 transition-colors">
+                          <LogOut size={16} className="mr-3" /> Salir
                         </button>
                       </div>
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-
-            {/* BOTÓN MENÚ MÓVIL */}
-            <div className="md:hidden flex items-center">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-600">
-                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* MENÚ MÓVIL DESPLEGABLE*/}
-        {isMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-100 px-2 pt-2 pb-4 space-y-1">
-            <Link href="/hermandades" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md">Hermandades</Link>
-            <Link href="/bandas" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md">Bandas</Link>
-            
-            {!isLoggedIn ? (
-              <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col space-y-2 px-3">
-                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="text-center text-gray-600 font-medium py-2">Iniciar Sesión</Link>
-                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="text-center bg-cofrade-main text-white py-2 rounded-xl font-medium">Registrarse</Link>
-              </div>
-            ) : (
-              <div className="mt-4 pt-4 border-t border-gray-100 space-y-1">
-                <Link href="/favoritos" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md">Mis Favoritos</Link>
-                <Link href="/perfil" onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md">Mi Perfil</Link>
-                <button onClick={handleLogout} className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:bg-red-50 rounded-md">
-                  Cerrar Sesión
-                </button>
               </div>
             )}
+
+            {/* BOTÓN MENÚ MÓVIL */}
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)} 
+              className={`md:hidden p-3 rounded-2xl transition-all ${isScrolled ? 'bg-gray-100 text-gray-900' : 'bg-white/20 backdrop-blur-md text-gray-900'}`}
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+
+        </div>
+
+        {/* MENÚ MÓVIL SOLO CON AUTH/PERFIL */}
+        {isMenuOpen && (
+          <div className="fixed inset-0 top-0 bg-white z-[90] p-6 pt-24 animate-in slide-in-from-top duration-300">
+            <nav className="flex flex-col gap-2">
+              {!isLoggedIn ? (
+                <div className="flex flex-col gap-4 mt-4">
+                  <Link href="/login" onClick={() => setIsMenuOpen(false)} className="py-5 text-center text-sm font-black uppercase tracking-widest border border-gray-100 rounded-2xl">Login</Link>
+                  <Link href="/register" onClick={() => setIsMenuOpen(false)} className="py-5 text-center text-sm font-black uppercase tracking-widest bg-cofrade-main text-white rounded-2xl shadow-lg shadow-cofrade-main/20">Únete a CofradeNet</Link>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 mt-4">
+                  <Link href="/perfil" onClick={() => setIsMenuOpen(false)} className="py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">Mi Perfil</Link>
+                  <Link href="/favoritos" onClick={() => setIsMenuOpen(false)} className="py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">Favoritos</Link>
+                  <button onClick={handleLogout} className="mt-8 w-full py-5 text-center text-xs font-black uppercase tracking-widest text-red-500 bg-red-50 rounded-2xl">Cerrar Sesión</button>
+                </div>
+              )}
+            </nav>
           </div>
         )}
       </header>
-    </div>
+      
+      {/* Spacer exacto de la altura del header (h-20) para que el contenido de debajo no se tape */}
+      <div className="h-20 w-full bg-white md:bg-transparent"></div>
+    </>
+  );
+}
+
+// --- SUBCOMPONENTES ---
+function MenuLink({ href, icon, label }: any) {
+  return (
+    <Link href={href} className="flex items-center px-6 py-3 text-[11px] font-black uppercase tracking-widest text-gray-700 hover:text-cofrade-main hover:bg-gray-50 transition-all">
+      <span className="mr-3 opacity-50">{icon}</span>
+      {label}
+    </Link>
   );
 }

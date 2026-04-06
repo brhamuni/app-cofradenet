@@ -83,7 +83,8 @@ export class UsuariosService {
         if (usuarioGuardado.rol === RolUsuario.BANDA) {
             const nuevaBanda = this.bandasRepo.create({
                 nombre: createUsuarioDto.nombre,
-                estiloMusical: createUsuarioDto.estiloMusical || 'No especificado',
+                estiloMusical:
+                    createUsuarioDto.estiloMusical || 'No especificado',
                 localidad: createUsuarioDto.localidad || 'No especificada',
                 direccion: createUsuarioDto.direccion || 'No especificada',
                 usuarioId: usuarioGuardado.id,
