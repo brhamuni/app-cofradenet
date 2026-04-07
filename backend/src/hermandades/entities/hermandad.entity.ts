@@ -18,6 +18,12 @@ export class Hermandad {
     @Column()
     nombre: string;
 
+    @Column()
+    nombrePopular: string;
+
+    @Column({ type: 'simple-array' })
+    titulares: string[];
+
     @Column({ nullable: true })
     añoFundacion: number;
 

@@ -9,6 +9,14 @@ export class UpdateHermandadDto extends PartialType(CreateHermandadDto) {
 
     @IsString()
     @IsOptional()
+    nombrePopular?: string;
+
+    @IsString()
+    @IsOptional()
+    titulares?: string[];
+
+    @IsString()
+    @IsOptional()
     descripcion?: string;
 
     @IsString()

@@ -4,7 +4,7 @@ import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
 import { Procesion } from '@backend/procesiones/entities/procesion.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class SearchService {
@@ -49,7 +49,11 @@ export class SearchService {
             resultados.hermandades = await this.hermandadesRepository
                 .createQueryBuilder('hermandad')
                 .leftJoinAndSelect('hermandad.ciudad', 'ciudad')
-                .where('unaccent(hermandad.nombre) ILIKE unaccent(:patron)', { patron })
+                // Añadido: Búsqueda por nombre OR nombrePopular
+                .where(
+                    '(unaccent(hermandad.nombre) ILIKE unaccent(:patron) OR unaccent(hermandad.nombrePopular) ILIKE unaccent(:patron))',
+                    { patron }
+                )
                 .take(10)
                 .getMany();
         }
@@ -57,6 +61,8 @@ export class SearchService {
         if (filtro === 'todo' || filtro === 'bandas') {
             resultados.bandas = await this.bandasRepository
                 .createQueryBuilder('banda')
+                // Añadido: join con ciudad para que el frontend pueda mostrar de dónde es
+                .leftJoinAndSelect('banda.ciudad', 'ciudad') 
                 .where('unaccent(banda.nombre) ILIKE unaccent(:patron)', { patron })
                 .take(10)
                 .getMany();
@@ -65,6 +71,9 @@ export class SearchService {
         if (filtro === 'todo' || filtro === 'procesiones') {
             resultados.procesiones = await this.procesionesRepository
                 .createQueryBuilder('procesion')
+                // Añadido: join con hermandad y ciudad para el frontend
+                .leftJoinAndSelect('procesion.hermandad', 'hermandad')
+                .leftJoinAndSelect('procesion.ciudad', 'ciudad')
                 .where('unaccent(procesion.nombre) ILIKE unaccent(:patron)', { patron })
                 .orderBy('procesion.fecha', 'ASC')
                 .take(10)

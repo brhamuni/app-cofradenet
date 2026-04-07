@@ -26,15 +26,13 @@ import { extname } from 'path';
 import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
 
 @Controller('hermandades')
-@UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard)
+// ❌ HEMOS QUITADO EL GUARD GLOBAL DE AQUÍ
 export class HermandadesController {
     constructor(private readonly hermandadesService: HermandadesService) {}
 
-    @Post()
-    create(@Body() createHermandadeDto: CreateHermandadDto) {
-        console.log('Creating hermandad with data:', createHermandadeDto);
-        return this.hermandadesService.create(createHermandadeDto);
-    }
+    // ==========================================
+    // RUTAS PÚBLICAS (Cualquiera puede verlas)
+    // ==========================================
 
     @Get()
     findAll() {
@@ -42,12 +40,23 @@ export class HermandadesController {
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.hermandadesService.findOne(+id);
+    findOne(@Param('id', ParseIntPipe) id: number) {
+        return this.hermandadesService.findOne(id);
+    }
+
+    // ==========================================
+    // RUTAS PRIVADAS (Requieren login/token)
+    // ==========================================
+
+    @Post()
+    @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard) // ✅ Añadido aquí
+    create(@Body() createHermandadeDto: CreateHermandadDto) {
+        console.log('Creating hermandad with data:', createHermandadeDto);
+        return this.hermandadesService.create(createHermandadeDto);
     }
 
     @Patch(':id')
-    @UseGuards(JwtAuthGuard, RolesGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard) // ✅ Actualizado
     @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
     update(
         @Param('id', ParseIntPipe) id: number,
@@ -58,26 +67,26 @@ export class HermandadesController {
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard) // ✅ Añadido aquí
+    @Roles(RolUsuario.ADMIN) // Opcional: Solo un admin debería poder borrar una hermandad
     remove(@Param('id') id: string) {
         return this.hermandadesService.remove(+id);
     }
 
     @Post(':id/logo')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard) // ✅ Actualizado
+    @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
     @UseInterceptors(
         FileInterceptor('file', {
             storage: diskStorage({
-                destination: './uploads', // Carpeta donde se guardan
+                destination: './uploads',
                 filename: (req, file, cb) => {
-                    // Generamos un nombre único: timestamp + extensión original
-                    const uniqueSuffix =
-                        Date.now() + '-' + Math.round(Math.random() * 1e9);
+                    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
                     const ext = extname(file.originalname);
                     cb(null, `hermandad-${uniqueSuffix}${ext}`);
                 },
             }),
             fileFilter: (req, file, cb) => {
-                // Validamos que sea una imagen
                 if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
                     return cb(
                         new BadRequestException('Solo se permiten imágenes'),
@@ -95,8 +104,6 @@ export class HermandadesController {
         if (!file)
             throw new BadRequestException('No se ha subido ningún archivo');
 
-        // Llamamos al servicio para que guarde la RUTA en la base de datos
-        // La ruta que guardamos es relativa: 'uploads/nombre-archivo.jpg'
         return this.hermandadesService.updateLogo(
             id,
             `uploads/${file.filename}`,
@@ -104,7 +111,7 @@ export class HermandadesController {
     }
 
     @Patch(':id/verificar')
-    @UseGuards(JwtAuthGuard, RolesGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard) // ✅ Actualizado
     @Roles(RolUsuario.ADMIN)
     verificar(
         @Param('id', ParseIntPipe) id: number,
