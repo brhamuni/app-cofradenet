@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { User, Heart, Settings, LogOut } from 'lucide-react';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -29,10 +30,17 @@ export default function MobileMenu({ isOpen, isLoggedIn, onClose, onLogout }: Mo
           </div>
         ) : (
           <div className="flex flex-col gap-2 mt-4">
-            <Link href="/profile" onClick={onClose} className="py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">Mi Perfil</Link>
-            <Link href="/favoritos" onClick={onClose} className="py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">Favoritos</Link>
-            <button onClick={handleLogoutClick} className="mt-8 w-full py-5 text-center text-xs font-black uppercase tracking-widest text-red-500 bg-red-50 rounded-2xl">
-              Cerrar Sesión
+            <Link href="/profile" onClick={onClose} className="flex items-center gap-4 py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">
+              <User size={20} className="text-gray-400" /> Mi Perfil
+            </Link>
+            <Link href="/favoritos" onClick={onClose} className="flex items-center gap-4 py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">
+              <Heart size={20} className="text-gray-400" /> Favoritos
+            </Link>
+            <Link href="/settings" onClick={onClose} className="flex items-center gap-4 py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">
+              <Settings size={20} className="text-gray-400" /> Ajustes
+            </Link>
+            <button onClick={handleLogoutClick} className="mt-8 w-full flex items-center justify-center gap-3 py-5 text-xs font-black uppercase tracking-widest text-red-500 bg-red-50 rounded-2xl">
+              <LogOut size={16} /> Cerrar Sesión
             </button>
           </div>
         )}

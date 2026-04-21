@@ -18,6 +18,8 @@ import { EventosModule } from './eventos/eventos.module';
 import { ItinerariosModule } from './itinerarios/itinerarios.module';
 import { SeedModule } from './seed/seed.module';
 import { SearchModule } from './search/search.module';
+import { PublicacionesModule } from './publicaciones/publicaciones.module';
+import { SeguimientosModule } from './seguimientos/seguimientos.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -50,6 +52,8 @@ import { SearchModule } from './search/search.module';
         ItinerariosModule,
         SeedModule,
         SearchModule,
+        PublicacionesModule,
+        SeguimientosModule,
     ],
     controllers: [AppController],
     providers: [AppService],

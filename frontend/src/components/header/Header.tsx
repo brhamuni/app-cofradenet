@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
@@ -11,12 +11,15 @@ import MobileMenu from './MobileMenu';
 
 export default function Header() {
   const router = useRouter();
-  
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollY = useRef(0);
+  const isMenuOpenRef = useRef(false);
+
+  useEffect(() => { isMenuOpenRef.current = isMenuOpen; }, [isMenuOpen]);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -32,22 +35,22 @@ export default function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
+
       setIsScrolled(currentScrollY > 20);
 
-      if (!isMenuOpen) {
-        if (currentScrollY > lastScrollY && currentScrollY > 80) {
+      if (!isMenuOpenRef.current) {
+        if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
           setIsVisible(false);
         } else {
           setIsVisible(true);
         }
       }
-      setLastScrollY(currentScrollY);
+      lastScrollY.current = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY, isMenuOpen]);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -59,16 +62,16 @@ export default function Header() {
   return (
     <>
       {/* ARREGLADO: Subimos el z-index a 999 para que siempre esté por encima de TODO */}
-      <header 
-        className={`fixed top-0 left-0 right-0 z-999 h-20 transition-transform duration-500 ${
-          isVisible ? 'translate-y-0' : '-translate-y-full'
+      <header
+        className={`fixed top-0 left-0 right-0 z-[999] h-20 transition-[transform,opacity] duration-300 ease-in-out ${
+          isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
         } ${
-          isScrolled 
-            ? 'bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100' 
+          isScrolled
+            ? 'bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-100'
             : 'bg-transparent'
         }`}
       >
-        <div className="w-full h-full px-6 lg:px-12 flex justify-between items-center relative z-1000">
+        <div className="w-full h-full px-6 lg:px-12 flex justify-between items-center relative z-[1000]">
           
           <div className="shrink-0">
             <Link href="/" className="text-3xl font-black tracking-tighter flex items-center gap-1 group">

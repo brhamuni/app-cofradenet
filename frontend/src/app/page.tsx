@@ -29,7 +29,7 @@ export default function HomePage() {
   const ejecutarBusqueda = async (texto: string, categoria: string) => {
     setCargando(true);
     try {
-      const res = await fetch(`http://localhost:3000/search?q=${texto}&filtro=${categoria}`);
+      const res = await fetch(`http://localhost:3000/search?q=${encodeURIComponent(texto)}&filtro=${categoria}`);
       setResultados(await res.json());
     } catch (error) {
       setResultados(null);

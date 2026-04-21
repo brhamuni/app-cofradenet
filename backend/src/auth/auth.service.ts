@@ -30,9 +30,7 @@ export class AuthService {
             throw new UnauthorizedException('Contraseña incorrecta');
         }
 
-        const payload = { id: usuario.id, username: usuario.username };
-
-        console.log('login', loginDTO);
+        const payload = { id: usuario.id, username: usuario.username, rol: usuario.rol };
 
         return {
             mensaje: 'Login exitoso',

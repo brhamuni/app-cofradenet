@@ -1,37 +1,14 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateHermandadDto } from './create-hermandad.dto';
-import { IsString, IsOptional, IsUrl } from 'class-validator';
+import { IsString, IsOptional, IsArray } from 'class-validator';
 
 export class UpdateHermandadDto extends PartialType(CreateHermandadDto) {
     @IsString()
     @IsOptional()
-    nombre?: string;
-
-    @IsString()
-    @IsOptional()
     nombrePopular?: string;
 
-    @IsString()
+    @IsArray()
+    @IsString({ each: true })
     @IsOptional()
     titulares?: string[];
-
-    @IsString()
-    @IsOptional()
-    descripcion?: string;
-
-    @IsString()
-    @IsOptional()
-    templo?: string;
-
-    @IsUrl()
-    @IsOptional()
-    escudoUrl?: string;
-
-    @IsString()
-    @IsOptional()
-    historia?: string;
-
-    @IsString()
-    @IsOptional()
-    patrimonio?: string;
 }

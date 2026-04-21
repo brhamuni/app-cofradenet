@@ -71,9 +71,7 @@ export class SearchService {
         if (filtro === 'todo' || filtro === 'procesiones') {
             resultados.procesiones = await this.procesionesRepository
                 .createQueryBuilder('procesion')
-                // Añadido: join con hermandad y ciudad para el frontend
                 .leftJoinAndSelect('procesion.hermandad', 'hermandad')
-                .leftJoinAndSelect('procesion.ciudad', 'ciudad')
                 .where('unaccent(procesion.nombre) ILIKE unaccent(:patron)', { patron })
                 .orderBy('procesion.fecha', 'ASC')
                 .take(10)

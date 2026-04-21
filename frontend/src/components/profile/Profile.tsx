@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Grid, Bookmark, MessageCircle, Edit3, MapPin, Link as LinkIcon, CheckCircle2, Music, Church, Heart } from 'lucide-react';
+import EditHermandadModal from './EditHermandadModal';
 
 interface ProfileData {
   name: string;
@@ -13,7 +14,6 @@ interface ProfileData {
   following: number | string;
   posts: number;
   coverImage: string;
-  // Añade aquí más campos específicos si los necesitas (ej: escudo, sedeCanonica, etc.)
 }
 
 interface ProfileProps {
@@ -21,17 +21,20 @@ interface ProfileProps {
   isOwnProfile: boolean;
   userType?: 'COFRADE' | 'BANDA' | 'HERMANDAD';
   isVerified?: boolean;
-  profileData?: ProfileData; // Nuevo: Recibimos los datos por prop
+  profileData?: ProfileData;
+  rawData?: any;
 }
 
-export function Profile({ 
-  userId, 
-  isOwnProfile, 
-  userType = 'COFRADE', 
+export function Profile({
+  userId,
+  isOwnProfile,
+  userType = 'COFRADE',
   isVerified = false,
-  profileData: externalProfileData // Renombramos la prop internamente
+  profileData: externalProfileData,
+  rawData,
 }: ProfileProps) {
   const [activeTab, setActiveTab] = useState<'posts' | 'saved' | 'info'>('posts');
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   // Si no nos pasan datos por props, usamos estos por defecto (los tuyos)
   const defaultProfileData: ProfileData = {
@@ -82,7 +85,7 @@ export function Profile({
           {/* Botones de Acción */}
           <div className="flex gap-3 pb-2">
             {isOwnProfile ? (
-              <button className="px-6 py-2.5 bg-white border-2 border-gray-200 text-gray-900 rounded-full font-bold hover:bg-gray-50 transition-all shadow-sm">
+              <button onClick={() => setEditModalOpen(true)} className="px-6 py-2.5 bg-white border-2 border-gray-200 text-gray-900 rounded-full font-bold hover:bg-gray-50 transition-all shadow-sm">
                 Editar Perfil
               </button>
             ) : (
@@ -206,6 +209,14 @@ export function Profile({
             )}
         </div>
       </div>
+
+      {userType === 'HERMANDAD' && (
+        <EditHermandadModal
+          hermandad={rawData}
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

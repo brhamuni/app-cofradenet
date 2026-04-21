@@ -45,7 +45,7 @@ export class BandasService {
     async findOne(id: number) {
         const banda = await this.bandaRepo.findOne({
             where: { id },
-            relations: ['ciudad', 'repertorio'], // Traemos el repertorio (marchas)
+            relations: ['ciudad', 'repertorio', 'eventos'],
         });
         if (!banda) throw new NotFoundException('La banda no existe');
         return banda;
