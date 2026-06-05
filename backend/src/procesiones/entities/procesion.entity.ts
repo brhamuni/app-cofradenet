@@ -9,6 +9,7 @@ import {
 import { PuntoItinerario } from './punto-itinerario.entity';
 import { Participacion } from '@backend/participaciones/entities/participacion.entity';
 import { Itinerario } from '@backend/itinerarios/entities/itinerario.entity';
+import { Paso } from './paso.entity';
 
 @Entity('procesiones')
 export class Procesion {
@@ -43,4 +44,7 @@ export class Procesion {
 
     @OneToMany(() => Itinerario, (itinerario) => itinerario.procesion)
     itinerarios: Itinerario[];
+
+    @OneToMany(() => Paso, (paso) => paso.procesion, { cascade: true })
+    pasos: Paso[];
 }

@@ -4,10 +4,9 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { CreateBandaDto } from './dto/create-banda.dto';
-import { UpdateBandaDto } from './dto/update-banda.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Banda } from './entities/banda.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Marcha } from '@backend/marchas/entities/marcha.entity';
 import { Evento } from '@backend/eventos/entities/evento.entity';
 import { CreateEventoDto } from '@backend/eventos/dto/create-evento.dto';
@@ -73,7 +72,7 @@ export class BandasService {
 
         // Si nos pasan IDs de marchas, buscamos las entidades y las vinculamos
         if (repertorioIds) {
-            const marchas = await this.marchaRepo.findByIds(repertorioIds);
+            const marchas = await this.marchaRepo.findBy({ id: In(repertorioIds) });
             banda.repertorio = marchas;
         }
 
@@ -142,6 +141,31 @@ export class BandasService {
         return agendaCompleta.sort(
             (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
         );
+    }
+
+    async actualizarEvento(bandaId: number, eventoId: number, dto: any, user: any) {
+        const evento = await this.eventoRepo.findOne({ where: { id: eventoId, bandaId } });
+        if (!evento) throw new NotFoundException('Evento no encontrado');
+        if (user.rol !== 'admin') {
+            const banda = await this.bandaRepo.findOneBy({ id: bandaId });
+            if (!banda || banda.usuarioId !== user.id) {
+                throw new ForbiddenException('No tienes permiso para editar este evento');
+            }
+        }
+        Object.assign(evento, dto);
+        return this.eventoRepo.save(evento);
+    }
+
+    async eliminarEvento(bandaId: number, eventoId: number, user: any) {
+        const evento = await this.eventoRepo.findOne({ where: { id: eventoId, bandaId } });
+        if (!evento) throw new NotFoundException('Evento no encontrado');
+        if (user.rol !== 'admin') {
+            const banda = await this.bandaRepo.findOneBy({ id: bandaId });
+            if (!banda || banda.usuarioId !== user.id) {
+                throw new ForbiddenException('No tienes permiso para eliminar este evento');
+            }
+        }
+        return this.eventoRepo.remove(evento);
     }
 
     async verificar(id: number, estado: boolean) {

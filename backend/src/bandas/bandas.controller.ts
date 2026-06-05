@@ -9,6 +9,7 @@ import {
     UseGuards,
     ParseIntPipe,
     Req,
+    Put,
 } from '@nestjs/common';
 import { BandasService } from './bandas.service';
 import { CreateBandaDto } from './dto/create-banda.dto';
@@ -18,6 +19,7 @@ import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
 import { RolUsuario, Usuario } from '@backend/usuarios/entities/usuario.entity';
 import { CreateEventoDto } from '@backend/eventos/dto/create-evento.dto';
+import { UpdateEventoDto } from '@backend/eventos/dto/update-evento.dto';
 import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
 
 @Controller('bandas')
@@ -78,6 +80,29 @@ export class BandasController {
     @Get(':id/agenda/:anio')
     getAgenda(@Param('id') id: string, @Param('anio') anio: string) {
         return this.bandasService.findAgenda(+id, +anio);
+    }
+
+    @Put(':id/eventos/:eventoId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
+    actualizarEvento(
+        @Param('id', ParseIntPipe) id: number,
+        @Param('eventoId', ParseIntPipe) eventoId: number,
+        @Body() dto: UpdateEventoDto,
+        @Req() req: { user: Usuario },
+    ) {
+        return this.bandasService.actualizarEvento(id, eventoId, dto, req.user);
+    }
+
+    @Delete(':id/eventos/:eventoId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
+    eliminarEvento(
+        @Param('id', ParseIntPipe) id: number,
+        @Param('eventoId', ParseIntPipe) eventoId: number,
+        @Req() req: { user: Usuario },
+    ) {
+        return this.bandasService.eliminarEvento(id, eventoId, req.user);
     }
 
     @Patch(':id/verificar')
