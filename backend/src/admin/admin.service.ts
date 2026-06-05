@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { RolUsuario, Usuario } from '@backend/usuarios/entities/usuario.entity';
 import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
 import { Banda } from '@backend/bandas/entities/banda.entity';
@@ -224,13 +224,19 @@ export class AdminService {
      */
     async getCiudadesConContadores(page: number = 1, limit: number = 25, buscar?: string) {
         const skip = (page - 1) * limit;
-        const where = buscar ? { nombre: ILike(`%${buscar}%`) } : {};
-        const [ciudades, total] = await this.ciudadesRepo.findAndCount({
-            where,
-            order: { nombre: 'ASC' },
-            skip,
-            take: limit,
-        });
+
+        const qb = this.ciudadesRepo
+            .createQueryBuilder('c')
+            .orderBy('c.nombre', 'ASC')
+            .skip(skip)
+            .take(limit);
+
+        if (buscar) {
+            qb.where('unaccent(c.nombre) ILIKE unaccent(:buscar)', { buscar: `%${buscar}%` });
+        }
+
+        const [ciudades, total] = await qb.getManyAndCount();
+
         const data = await Promise.all(
             ciudades.map(async (c) => ({
                 ...c,
