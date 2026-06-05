@@ -202,13 +202,13 @@ export default function BandaProfile({ banda }: { banda: any }) {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* CABECERA */}
-        <div className="relative -mt-16 md:-mt-24 mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div className="relative -mt-16 md:-mt-24 mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="w-28 h-28 md:w-36 md:h-36 rounded-3xl border-4 border-white bg-white shadow-xl overflow-hidden flex items-center justify-center">
             {banda.imagenLogo
               ? <img src={banda.imagenLogo} alt="Logo" className="w-full h-full object-contain p-2" />
               : <Music size={48} className="text-cofrade-main/30" />}
           </div>
-          <div className="flex gap-3 pb-1">
+          <div className="flex gap-3 md:pt-28 pb-1">
             {canEdit ? (
               <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-900 rounded-full font-bold text-sm hover:bg-gray-50 transition-all shadow-sm">
                 <Edit3 size={15} /> Editar

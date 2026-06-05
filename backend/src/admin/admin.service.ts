@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { RolUsuario, Usuario } from '@backend/usuarios/entities/usuario.entity';
 import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
 import { Banda } from '@backend/bandas/entities/banda.entity';
@@ -222,14 +222,22 @@ export class AdminService {
      * @see AdminController.getCiudades
      * @see findAllUsers
      */
-    async getCiudadesConContadores() {
-        const ciudades = await this.ciudadesRepo.find({ order: { nombre: 'ASC' } });
-        return Promise.all(
+    async getCiudadesConContadores(page: number = 1, limit: number = 25, buscar?: string) {
+        const skip = (page - 1) * limit;
+        const where = buscar ? { nombre: ILike(`%${buscar}%`) } : {};
+        const [ciudades, total] = await this.ciudadesRepo.findAndCount({
+            where,
+            order: { nombre: 'ASC' },
+            skip,
+            take: limit,
+        });
+        const data = await Promise.all(
             ciudades.map(async (c) => ({
                 ...c,
                 numHermandades: await this.hermandadesRepo.count({ where: { ciudadId: c.id } }),
                 numBandas: await this.bandasRepo.count({ where: { ciudadId: c.id } }),
             })),
         );
+        return { data, total, page, totalPages: Math.ceil(total / limit), limit };
     }
 }

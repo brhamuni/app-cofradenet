@@ -125,6 +125,10 @@ export default function AdminPage() {
 
   // Ciudades
   const [ciudades, setCiudades] = useState<any[]>([]);
+  const [paginaCiudades, setPaginaCiudades] = useState(1);
+  const [totalPaginasCiudades, setTotalPaginasCiudades] = useState(1);
+  const [totalCiudades, setTotalCiudades] = useState(0);
+  const [buscarCiudad, setBuscarCiudad] = useState('');
   const [modalCiudad, setModalCiudad] = useState<any>(null);
   const [confirmDeleteCiudad, setConfirmDeleteCiudad] = useState<number | null>(null);
 
@@ -158,9 +162,16 @@ export default function AdminPage() {
   }, []);
 
   const cargarCiudades = useCallback(async () => {
-    const res = await fetch(`${API}/admin/ciudades`, { headers: authHeaders() });
-    if (res.ok) setCiudades(await res.json());
-  }, []);
+    const params = new URLSearchParams({ page: String(paginaCiudades), limit: '25' });
+    if (buscarCiudad) params.set('buscar', buscarCiudad);
+    const res = await fetch(`${API}/admin/ciudades?${params}`, { headers: authHeaders() });
+    if (res.ok) {
+      const json = await res.json();
+      setCiudades(json.data);
+      setTotalPaginasCiudades(json.totalPages);
+      setTotalCiudades(json.total);
+    }
+  }, [paginaCiudades, buscarCiudad]);
 
   useEffect(() => { cargarStats(); }, [cargarStats]);
   useEffect(() => { if (tab === 'usuarios') cargarUsuarios(); }, [tab, cargarUsuarios]);
@@ -398,13 +409,24 @@ export default function AdminPage() {
         {/* ===== CIUDADES ===== */}
         {tab === 'ciudades' && (
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Ciudades registradas</h3>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">
+                Ciudades registradas
+                {totalCiudades > 0 && <span className="ml-2 text-gray-400 font-semibold normal-case">({totalCiudades})</span>}
+              </h3>
               <button onClick={() => setModalCiudad({})}
                 className="flex items-center gap-2 px-4 py-2 bg-cofrade-main text-white rounded-full text-xs font-black hover:opacity-90">
-                <MapPin size={14} /> Nueva Ciudad
+                <Plus size={14} /> Nueva Ciudad
               </button>
             </div>
+
+            <input
+              type="search"
+              placeholder="Buscar ciudad o provincia..."
+              value={buscarCiudad}
+              onChange={e => { setBuscarCiudad(e.target.value); setPaginaCiudades(1); }}
+              className="w-full sm:w-80 mb-4 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-cofrade-main/20"
+            />
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <table className="w-full text-sm">
@@ -452,6 +474,30 @@ export default function AdminPage() {
               </table>
               {ciudades.length === 0 && (
                 <p className="text-center py-10 text-gray-400 text-sm font-bold">Sin ciudades</p>
+              )}
+
+              {totalPaginasCiudades > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+                  <p className="text-xs text-gray-400 font-semibold">
+                    Pág. {paginaCiudades} de {totalPaginasCiudades}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setPaginaCiudades(p => Math.max(1, p - 1))}
+                      disabled={paginaCiudades === 1}
+                      className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-black text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      ← Anterior
+                    </button>
+                    <button
+                      onClick={() => setPaginaCiudades(p => Math.min(totalPaginasCiudades, p + 1))}
+                      disabled={paginaCiudades === totalPaginasCiudades}
+                      className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-black text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Siguiente →
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </div>

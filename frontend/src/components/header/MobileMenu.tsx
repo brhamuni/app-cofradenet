@@ -1,14 +1,15 @@
 import Link from 'next/link';
-import { User, Heart, Settings, LogOut } from 'lucide-react';
+import { User, Heart, Settings, LogOut, ShieldCheck, LayoutDashboard } from 'lucide-react';
 
 interface MobileMenuProps {
   isOpen: boolean;
   isLoggedIn: boolean;
+  isAdmin: boolean;
   onClose: () => void;
   onLogout: () => void;
 }
 
-export default function MobileMenu({ isOpen, isLoggedIn, onClose, onLogout }: MobileMenuProps) {
+export default function MobileMenu({ isOpen, isLoggedIn, isAdmin, onClose, onLogout }: MobileMenuProps) {
   if (!isOpen) return null;
 
   const handleLogoutClick = () => {
@@ -30,6 +31,17 @@ export default function MobileMenu({ isOpen, isLoggedIn, onClose, onLogout }: Mo
           </div>
         ) : (
           <div className="flex flex-col gap-2 mt-4">
+
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={onClose}
+                className="flex items-center gap-4 py-5 px-6 text-xl font-black tracking-tighter text-white bg-cofrade-main rounded-2xl mb-2 shadow-lg shadow-cofrade-main/20"
+              >
+                <ShieldCheck size={22} /> Panel de Administración
+              </Link>
+            )}
+
             <Link href="/profile" onClick={onClose} className="flex items-center gap-4 py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">
               <User size={20} className="text-gray-400" /> Mi Perfil
             </Link>

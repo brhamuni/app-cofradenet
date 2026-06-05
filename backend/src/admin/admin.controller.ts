@@ -116,7 +116,15 @@ export class AdminController {
     // --- Ciudades con contadores (HUAP-02) ---
 
     @Get('ciudades')
-    getCiudades() {
-        return this.adminService.getCiudadesConContadores();
+    getCiudades(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+        @Query('buscar') buscar?: string,
+    ) {
+        return this.adminService.getCiudadesConContadores(
+            page ? parseInt(page, 10) : 1,
+            limit ? parseInt(limit, 10) : 25,
+            buscar,
+        );
     }
 }

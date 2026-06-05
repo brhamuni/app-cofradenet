@@ -13,6 +13,7 @@ export default function Header() {
   const router = useRouter();
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -25,6 +26,16 @@ export default function Header() {
     const checkAuth = () => {
       const token = localStorage.getItem('token');
       setIsLoggedIn(!!token);
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          setIsAdmin(payload.rol === 'admin');
+        } catch {
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
     };
 
     checkAuth();
@@ -84,7 +95,7 @@ export default function Header() {
             {!isLoggedIn ? (
               <AuthButtons />
             ) : (
-              <UserDropdown onLogout={handleLogout} />
+              <UserDropdown onLogout={handleLogout} isAdmin={isAdmin} />
             )}
 
             <button 
@@ -97,11 +108,12 @@ export default function Header() {
         </div>
       </header>
 
-      <MobileMenu 
-        isOpen={isMenuOpen} 
-        isLoggedIn={isLoggedIn} 
-        onClose={() => setIsMenuOpen(false)} 
-        onLogout={handleLogout} 
+      <MobileMenu
+        isOpen={isMenuOpen}
+        isLoggedIn={isLoggedIn}
+        isAdmin={isAdmin}
+        onClose={() => setIsMenuOpen(false)}
+        onLogout={handleLogout}
       />
       
       <div className="h-20 w-full bg-white md:bg-transparent"></div>
