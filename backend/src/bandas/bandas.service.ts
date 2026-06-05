@@ -100,6 +100,47 @@ export class BandasService {
         });
     }
 
+    /**
+     * @brief Construye la agenda anual unificada de una banda combinando sus procesiones
+     *        y eventos propios ordenados cronológicamente.
+     *
+     * @details
+     * Ejecuta dos consultas independientes en paralelo conceptual (secuencial en la
+     * implementación actual) y fusiona sus resultados en un array homogéneo:
+     *
+     * 1. **Participaciones** — Procesiones en las que la banda actúa ese año.
+     *    Se carga el grafo `participacion → procesion → hermandad` para obtener el templo
+     *    como campo `lugar` y el campo `ubicacion` (posición en la procesión) como `detalle`.
+     *
+     * 2. **Eventos propios** — Conciertos, presentaciones y demás actos de la banda.
+     *    Se cargan todos los eventos y se filtra en memoria por año para evitar complicar
+     *    el QueryBuilder con operadores de fecha (TypeORM no tiene `YEAR()` nativo portátil).
+     *
+     * El resultado unificado usa el tipo `AgendaItem` con las propiedades:
+     * `{ fecha, tipo, nombre, lugar, detalle }`.
+     *
+     * @pre   `bandaId` debe corresponder a una banda existente.
+     * @post  El array devuelto está ordenado cronológicamente ascendente por `fecha`.
+     *        Si no hay actividad ese año, se devuelve un array vacío (sin error).
+     *
+     * @param {number} bandaId - Identificador único de la banda.
+     * @param {number} anio    - Año del que se quiere obtener la agenda (p.ej. 2025).
+     * @returns {Promise<any[]>} Agenda cronológica unificada con items normalizados.
+     *
+     * @complexity O(e) siendo e el número total de eventos de la banda; el filtrado en
+     *             memoria sobre todos los eventos puede ser lento si la banda tiene historial
+     *             extenso. Migrar a filtro SQL (`EXTRACT(YEAR FROM fechaHora) = :anio`) si
+     *             se detecta degradación.
+     *
+     * @warning El filtrado de eventos se hace en memoria (JS), no en SQL. Para bandas con
+     *          cientos de eventos en años anteriores, esto carga datos innecesarios de la BD.
+     *
+     * @note Los campos `tipo` de evento tienen valor por defecto `'Concierto'` cuando la
+     *       entidad `Evento` no especifica tipo, para mantener la homogeneidad del array.
+     *
+     * @see BandasController.agenda
+     * @see findAgenda (openapi: GET /bandas/{id}/agenda/{anio})
+     */
     async findAgenda(bandaId: number, anio: number): Promise<any[]> {
         // 1. Buscamos las procesiones (Participaciones)
         const procesiones = await this.participacionRepo.find({

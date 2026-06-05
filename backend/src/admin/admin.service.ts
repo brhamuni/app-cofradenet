@@ -24,6 +24,36 @@ export class AdminService {
 
     // --- Usuarios ---
 
+    /**
+     * @brief Lista todos los usuarios aplicando filtros opcionales de rol, verificación
+     *        y estado de bloqueo, devolviendo solo los campos necesarios para el panel admin.
+     *
+     * @details
+     * Construye un QueryBuilder con proyección explícita (`select`) para evitar
+     * devolver campos sensibles (p.ej. `passwordHash`). Los filtros son opcionales e
+     * independientes: si todos son `undefined` se devuelven todos los usuarios.
+     *
+     * Conversión de tipos: los parámetros llegan como `string` desde los query params
+     * HTTP (`'true'` / `'false'`); la comparación `=== 'true'` los convierte a `boolean`
+     * antes de pasarlos al parámetro SQL para que TypeORM genere `WHERE u.verificado = $1`
+     * con el tipo correcto en PostgreSQL.
+     *
+     * @pre   El llamador debe ser ADMIN (verificado en el controlador con `@Roles(ADMIN)`).
+     * @post  Ningún campo sensible (contraseña, tokens) se incluye en el resultado.
+     *
+     * @param {{ rol?: string; verificado?: string; bloqueado?: string }} filters
+     *   - `rol`        Filtra por rol exacto: `'admin'|'cofrade'|'hermandad'|'banda'`.
+     *   - `verificado` Filtra por estado de verificación: `'true'` o `'false'`.
+     *   - `bloqueado`  Filtra por estado de bloqueo: `'true'` o `'false'`.
+     * @returns {Promise<Usuario[]>} Usuarios filtrados con proyección parcial y ciudad de residencia.
+     *
+     * @note Si se añaden nuevos campos a `Usuario` que deban aparecer en el panel admin,
+     *       hay que incluirlos explícitamente en el array de `select`. Sin ese `select`
+     *       TypeORM devuelve todos los campos por defecto, incluyendo la contraseña hasheada.
+     *
+     * @see AdminController.findAllUsers
+     * @see getCiudadesConContadores
+     */
     async findAllUsers(filters: { rol?: string; verificado?: string; bloqueado?: string }) {
         const query = this.usuariosRepo
             .createQueryBuilder('u')
@@ -161,6 +191,37 @@ export class AdminService {
 
     // --- Ciudades con contadores ---
 
+    /**
+     * @brief Devuelve todas las ciudades enriquecidas con el número de hermandades
+     *        y bandas que tienen asociadas, para mostrar contadores en el panel admin.
+     *
+     * @details
+     * El método aplica un patrón N+1 controlado:
+     * 1. Carga todas las ciudades ordenadas alfabéticamente (1 consulta).
+     * 2. Por cada ciudad lanza dos `COUNT` en paralelo (`Promise.all` interno de cada `map`).
+     *
+     * El `Promise.all` externo agrupa el array de promesas para esperar a todos antes
+     * de resolver, evitando una cascada secuencial. Para plataformas con cientos de
+     * ciudades esto puede generar muchas conexiones simultáneas; en ese escenario
+     * se recomienda migrar a una subquery o GROUP BY en SQL.
+     *
+     * @pre   Las entidades `Hermandad` y `Banda` deben tener la columna `ciudadId`
+     *        (FK a `ciudades.id`) correctamente indexada para que los COUNT sean eficientes.
+     * @post  El array resultado preserva el orden alfabético de las ciudades.
+     *
+     * @returns {Promise<Array<Ciudad & { numHermandades: number; numBandas: number }>>}
+     *   Ciudades con dos campos adicionales: `numHermandades` y `numBandas`.
+     *
+     * @complexity O(c) consultas de COUNT, donde c es el número de ciudades.
+     *             Con índices sobre `ciudadId`, cada COUNT es O(1) por coste de índice.
+     *
+     * @warning Patrón N+1: genera `2 * numCiudades` consultas adicionales. Aceptable
+     *          mientras el catálogo de ciudades sea pequeño (<100). Para escalar,
+     *          reemplazar con `LEFT JOIN ... COUNT(*) GROUP BY ciudad.id`.
+     *
+     * @see AdminController.getCiudades
+     * @see findAllUsers
+     */
     async getCiudadesConContadores() {
         const ciudades = await this.ciudadesRepo.find({ order: { nombre: 'ASC' } });
         return Promise.all(

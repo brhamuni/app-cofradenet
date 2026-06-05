@@ -221,6 +221,41 @@ export class ProcesionesService {
             });
     }
 
+    /**
+     * @brief Obtiene la ficha completa de una procesión filtrada por año, incluyendo
+     *        su itinerario oficial y las bandas participantes de ese año.
+     *
+     * @details
+     * Ejecuta un único QueryBuilder con cuatro LEFT JOINs condicionales. Los JOINs de
+     * `itinerarios` y `participaciones` llevan una condición extra (`anio = :anio`) para
+     * evitar cargar datos de otros años en la misma consulta (filtro en JOIN, no en WHERE,
+     * por lo que la procesión siempre se devuelve aunque no tenga datos ese año).
+     *
+     * Flujo de validación posterior a la consulta:
+     * 1. Si la procesión no existe → `NotFoundException`.
+     * 2. Si la procesión existe pero no tiene itinerario ni participaciones para ese año
+     *    → `NotFoundException` con mensaje específico del año.
+     *
+     * @pre   `procesionId` debe corresponder a una procesión existente en base de datos.
+     * @post  El objeto devuelto tiene `itinerarios` y `participaciones` acotados al año
+     *        solicitado; el resto de años no aparece en la respuesta.
+     *
+     * @param {number} procesionId - Identificador único de la procesión.
+     * @param {number} anio        - Año civil del que se quiere obtener la ficha (p.ej. 2025).
+     * @returns {Promise<Procesion>} Procesión enriquecida con itinerario y participaciones del año.
+     *
+     * @throws {NotFoundException} Si la procesión no existe o no tiene datos para el año indicado.
+     *
+     * @complexity O(1) al trabajar con clave primaria; el coste real lo determinan los
+     *             índices sobre `itinerarios.anio` y `participaciones.anio`.
+     *
+     * @note El filtrado año en el JOIN (en vez de un WHERE posterior) evita que TypeORM
+     *       descarte la entidad raíz cuando no hay datos del año, manteniendo los metadatos
+     *       básicos de la procesión accesibles al llamador.
+     *
+     * @see buscarProcesiones
+     * @see ProcesionesController.fichaAnual
+     */
     async obtenerFichaPorAnio(procesionId: number, anio: number) {
         const ficha = await this.procesionRepo
             .createQueryBuilder('procesion')
@@ -240,6 +275,42 @@ export class ProcesionesService {
         return ficha;
     }
 
+    /**
+     * @brief Busca procesiones aplicando hasta cinco filtros opcionales de forma acumulativa.
+     *
+     * @details
+     * Construye un QueryBuilder dinámico sobre la entidad `Procesion`. Cada parámetro
+     * presente añade una cláusula `AND WHERE` independiente (condiciones acumulativas, no
+     * excluyentes). Las comparaciones de texto usan `ILIKE` con comodines `%...%` para
+     * búsqueda insensible a mayúsculas en PostgreSQL.
+     *
+     * El grafo de relaciones cargado es:
+     * - `procesion → hermandad → ciudad` (para filtrar y mostrar la localidad)
+     * - `procesion → participaciones → banda` (para filtrar y mostrar bandas participantes)
+     *
+     * Si ningún parámetro es proporcionado, devuelve todas las procesiones con sus
+     * relaciones cargadas (equivale a `findAll` pero con el grafo completo).
+     *
+     * @pre   La base de datos debe ser PostgreSQL; `ILIKE` no está disponible en otros motores.
+     * @post  El conjunto resultado contiene solo procesiones que cumplen TODOS los filtros indicados.
+     *
+     * @param {string} [ciudadNombre] - Nombre parcial de la ciudad (búsqueda insensible a mayúsculas).
+     * @param {string} [diaSemana]    - Día de la Semana Santa exacto (p.ej. "Madrugada", "Viernes Santo").
+     * @param {string} [nombre]       - Nombre parcial de la procesión.
+     * @param {string} [hermandad]    - Nombre parcial de la hermandad titular.
+     * @param {string} [banda]        - Nombre parcial de alguna banda participante.
+     * @returns {Promise<Procesion[]>} Lista de procesiones que satisfacen todos los filtros, con relaciones.
+     *
+     * @complexity O(n) respecto al número de procesiones; la carga de relaciones (JOIN) puede
+     *             incrementar el coste según el volumen de participaciones.
+     *
+     * @warning La búsqueda por `banda` hace un LEFT JOIN en `participaciones`, lo que puede
+     *          devolver duplicados si se combinan varios filtros de banda. Valorar `DISTINCT`
+     *          si el front-end lo requiere.
+     *
+     * @see ProcesionesController.buscar
+     * @see https://typeorm.io/#/select-query-builder
+     */
     async buscarProcesiones(ciudadNombre?: string, diaSemana?: string, nombre?: string, hermandad?: string, banda?: string) {
         const query = this.procesionRepo
             .createQueryBuilder('procesion')
