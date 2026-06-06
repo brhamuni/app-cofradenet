@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { MapPin, BadgeCheck } from "lucide-react";
 import EditHermandadModal from "../../components/profile/EditHermandadModal";
-import { API } from '@/lib/api';
+import { API, resolveImg } from '@/lib/api';
 
 export default function ProfilePage() {
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -32,7 +32,7 @@ export default function ProfilePage() {
               username: "@" + (data.nombrePopular || data.nombre || "perfil").toLowerCase().replace(/\s+/g, '_'),
               bio: data.descripcion || "",
               location: data.ciudad?.nombre ? `${data.ciudad.nombre}, Andalucía` : 'Andalucía, España',
-              avatarImage: data.imagenEscudo || "https://via.placeholder.com/150",
+              avatarImage: resolveImg(data.imagenEscudo) || "https://via.placeholder.com/150",
               coverImage: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=2000&q=80",
             });
           }

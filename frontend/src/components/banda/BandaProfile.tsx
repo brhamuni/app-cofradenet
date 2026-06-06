@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { MapPin, Music, Users, Home, CheckCircle2, Edit3, ChevronRight, Calendar, BookOpen, Plus, Trash2, X } from 'lucide-react';
 import PostFeed from '../publicaciones/PostFeed';
 import FollowButton from '../seguimientos/FollowButton';
-import { API } from '@/lib/api';
+import { API, resolveImg } from '@/lib/api';
+import EditBandaModal from './EditBandaModal';
 
 function parseToken(): { id: number; rol: string } | null {
   try {
@@ -14,9 +15,11 @@ function parseToken(): { id: number; rol: string } | null {
   } catch { return null; }
 }
 
-function authHeaders() {
+function authHeaders(): Record<string, string> {
   const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
 }
 
 function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
@@ -172,6 +175,7 @@ export default function BandaProfile({ banda }: { banda: any }) {
   const [seguidores, setSeguidores] = useState<number | null>(null);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [modalEvento, setModalEvento] = useState<Partial<Evento> | null | false>(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     const user = parseToken();
@@ -203,13 +207,13 @@ export default function BandaProfile({ banda }: { banda: any }) {
         {/* CABECERA */}
         <div className="relative -mt-16 md:-mt-24 mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="w-28 h-28 md:w-36 md:h-36 rounded-3xl border-4 border-white bg-white shadow-xl overflow-hidden flex items-center justify-center">
-            {banda.imagenLogo
-              ? <img src={banda.imagenLogo} alt="Logo" className="w-full h-full object-contain p-2" />
+            {resolveImg(banda.imagenLogo)
+              ? <img src={resolveImg(banda.imagenLogo)} alt="Logo" className="w-full h-full object-contain p-2" />
               : <Music size={48} className="text-cofrade-main/30" />}
           </div>
           <div className="flex gap-3 md:pt-28 pb-1">
             {canEdit ? (
-              <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-900 rounded-full font-bold text-sm hover:bg-gray-50 transition-all shadow-sm">
+              <button onClick={() => setEditOpen(true)} className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-900 rounded-full font-bold text-sm hover:bg-gray-50 transition-all shadow-sm">
                 <Edit3 size={15} /> Editar
               </button>
             ) : (
@@ -384,6 +388,8 @@ export default function BandaProfile({ banda }: { banda: any }) {
           onSaved={() => { setModalEvento(false); cargarEventos(); }}
         />
       )}
+
+      <EditBandaModal banda={banda} isOpen={editOpen} onClose={() => setEditOpen(false)} />
     </div>
   );
 }

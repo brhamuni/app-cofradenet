@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RolUsuario, Usuario } from '@backend/usuarios/entities/usuario.entity';
+import * as bcrypt from 'bcrypt';
 import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
 import { Banda } from '@backend/bandas/entities/banda.entity';
 import { Ciudad } from '@backend/ciudades/entities/ciudad.entity';
@@ -57,11 +58,15 @@ export class AdminService {
     async findAllUsers(filters: { rol?: string; verificado?: string; bloqueado?: string }) {
         const query = this.usuariosRepo
             .createQueryBuilder('u')
-            .leftJoinAndSelect('u.ciudadResidencia', 'ciudad')
+            .leftJoin('u.ciudadResidencia', 'ciudad')
+            .leftJoin('u.hermandad', 'hermandad')
+            .leftJoin('u.banda', 'banda')
             .select([
                 'u.id', 'u.nombre', 'u.username', 'u.email',
                 'u.rol', 'u.verificado', 'u.estaBloqueado',
                 'ciudad.id', 'ciudad.nombre',
+                'hermandad.id',
+                'banda.id',
             ]);
 
         if (filters.rol) {
@@ -116,6 +121,21 @@ export class AdminService {
         usuario.rol = rol;
         await this.usuariosRepo.save(usuario);
         return { message: 'Rol actualizado', id: usuario.id, rol: usuario.rol };
+    }
+
+    async editarUsuario(id: number, dto: { nombre?: string; username?: string; email?: string; rol?: RolUsuario; password?: string }) {
+        const usuario = await this.usuariosRepo.findOneBy({ id });
+        if (!usuario) throw new NotFoundException('Usuario no encontrado');
+
+        const updates: Partial<Usuario> = {};
+        if (dto.nombre !== undefined) updates.nombre = dto.nombre;
+        if (dto.username !== undefined) updates.username = dto.username;
+        if (dto.email !== undefined) updates.email = dto.email;
+        if (dto.rol !== undefined) updates.rol = dto.rol;
+        if (dto.password) updates.password = await bcrypt.hash(dto.password, 10);
+
+        await this.usuariosRepo.update(id, updates);
+        return this.usuariosRepo.findOne({ where: { id }, relations: ['ciudadResidencia'] });
     }
 
     async eliminarUsuario(id: number) {

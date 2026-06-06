@@ -39,27 +39,94 @@ function EstadoBadge({ verificado, bloqueado }: { verificado: boolean; bloqueado
   return <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-yellow-100 text-yellow-700"><Shield size={11} />Pendiente</span>;
 }
 
-// --- Modal Rol ---
-function ModalRol({ userId, rolActual, onClose, onSaved }: { userId: number; rolActual: string; onClose: () => void; onSaved: () => void }) {
-  const [rol, setRol] = useState(rolActual);
+// --- Modal Editar Usuario ---
+function ModalEditUsuario({ usuario, onClose, onSaved }: { usuario: any; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    nombre: usuario.nombre ?? '',
+    username: usuario.username ?? '',
+    email: usuario.email ?? '',
+    rol: usuario.rol ?? 'cofrade',
+    password: '',
+  });
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState('');
+
+  const cambiar = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
   async function guardar() {
-    await fetch(`${API}/admin/usuarios/${userId}/rol`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ rol }) });
-    onSaved();
+    setGuardando(true);
+    setError('');
+    const body: Record<string, unknown> = {
+      nombre: form.nombre,
+      username: form.username,
+      email: form.email,
+      rol: form.rol,
+    };
+    if (form.password) body.password = form.password;
+
+    const res = await fetch(`${API}/admin/usuarios/${usuario.id}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    });
+    setGuardando(false);
+    if (res.ok) {
+      onSaved();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.message || 'Error al guardar');
+    }
   }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xs p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-black text-gray-900">Cambiar rol</h3>
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-black text-gray-900">Editar usuario</h3>
           <button onClick={onClose}><X size={18} /></button>
         </div>
-        <select value={rol} onChange={e => setRol(e.target.value)}
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold bg-white mb-4">
-          {['cofrade', 'hermandad', 'banda', 'admin'].map(r => <option key={r} value={r}>{r}</option>)}
-        </select>
-        <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 py-2 rounded-xl border text-sm font-black text-gray-500">Cancelar</button>
-          <button onClick={guardar} className="flex-1 py-2 rounded-xl bg-cofrade-main text-white text-sm font-black">Guardar</button>
+
+        {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm">{error}</div>}
+
+        <div className="space-y-3">
+          {([
+            { label: 'Nombre', name: 'nombre', type: 'text' },
+            { label: 'Username', name: 'username', type: 'text' },
+            { label: 'Email', name: 'email', type: 'email' },
+          ] as const).map(({ label, name, type }) => (
+            <div key={name}>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{label}</label>
+              <input name={name} type={type} value={form[name]} onChange={cambiar}
+                className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-cofrade-main/20" />
+            </div>
+          ))}
+
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Rol</label>
+            <select name="rol" value={form.rol} onChange={cambiar}
+              className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold bg-white outline-none focus:ring-2 focus:ring-cofrade-main/20">
+              {['cofrade', 'hermandad', 'banda', 'admin'].map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              Nueva contraseña{' '}
+              <span className="normal-case text-gray-300 font-normal">(vacío = sin cambios)</span>
+            </label>
+            <input name="password" type="password" value={form.password} onChange={cambiar}
+              placeholder="••••••••"
+              className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-cofrade-main/20" />
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-5">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border text-sm font-black text-gray-500">Cancelar</button>
+          <button onClick={guardar} disabled={guardando || !form.nombre || !form.username || !form.email}
+            className="flex-1 py-2.5 rounded-xl bg-cofrade-main text-white text-sm font-black disabled:opacity-50">
+            {guardando ? 'Guardando...' : 'Guardar'}
+          </button>
         </div>
       </div>
     </div>
@@ -115,7 +182,7 @@ export default function AdminPage() {
   const [filtroRol, setFiltroRol] = useState('');
   const [filtroVerificado, setFiltroVerificado] = useState('');
   const [filtroBloqueado, setFiltroBloqueado] = useState('');
-  const [modalRol, setModalRol] = useState<any>(null);
+  const [modalEditUser, setModalEditUser] = useState<any>(null);
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<number | null>(null);
 
   // Entidades
@@ -299,7 +366,11 @@ export default function AdminPage() {
                       <td className="px-4 py-3"><EstadoBadge verificado={u.verificado} bloqueado={u.estaBloqueado} /></td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
-                          <button title="Ver" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+                          <button title="Ver perfil" onClick={() => {
+                            if (u.hermandad?.id) router.push(`/hermandad/${u.hermandad.id}`);
+                            else if (u.banda?.id) router.push(`/banda/${u.banda.id}`);
+                            else setModalEditUser(u);
+                          }} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
                             <Eye size={15} />
                           </button>
                           <button title="Verificar" onClick={() => accionUsuario(u.id, 'verificar')}
@@ -312,7 +383,7 @@ export default function AdminPage() {
                             className="p-1.5 rounded-lg hover:bg-orange-50 text-orange-500">
                             <Ban size={15} />
                           </button>
-                          <button title="Cambiar rol" onClick={() => setModalRol(u)}
+                          <button title="Editar usuario" onClick={() => setModalEditUser(u)}
                             className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500">
                             <Edit size={15} />
                           </button>
@@ -503,10 +574,10 @@ export default function AdminPage() {
         )}
       </div>
 
-      {modalRol && (
-        <ModalRol userId={modalRol.id} rolActual={modalRol.rol}
-          onClose={() => setModalRol(null)}
-          onSaved={() => { setModalRol(null); cargarUsuarios(); }} />
+      {modalEditUser && (
+        <ModalEditUsuario usuario={modalEditUser}
+          onClose={() => setModalEditUser(null)}
+          onSaved={() => { setModalEditUser(null); cargarUsuarios(); }} />
       )}
 
       {modalCiudad !== null && (

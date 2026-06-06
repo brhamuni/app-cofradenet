@@ -4,11 +4,14 @@ import {
     Entity,
     JoinColumn,
     ManyToOne,
+    OneToMany,
     PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Usuario } from '@backend/usuarios/entities/usuario.entity';
 import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
 import { Banda } from '@backend/bandas/entities/banda.entity';
+import { MeGusta } from './me-gusta.entity';
+import { Comentario } from './comentario.entity';
 
 export enum TipoPublicacion {
     GENERAL = 'general',
@@ -52,4 +55,10 @@ export class Publicacion {
     @ManyToOne(() => Banda, { nullable: true, onDelete: 'CASCADE', eager: true })
     @JoinColumn({ name: 'bandaId' })
     banda: Banda;
+
+    @OneToMany(() => MeGusta, (mg) => mg.publicacion)
+    meGustas: MeGusta[];
+
+    @OneToMany(() => Comentario, (c) => c.publicacion)
+    comentarios: Comentario[];
 }

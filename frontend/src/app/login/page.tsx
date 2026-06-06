@@ -20,6 +20,9 @@ export default function LoginPage() {
       const response = await api.post('/auth/login', { username, password });
       if (response.data?.access_token) {
         localStorage.setItem('token', response.data.access_token);
+        if (response.data.refresh_token) {
+          localStorage.setItem('refresh_token', response.data.refresh_token);
+        }
         window.dispatchEvent(new Event('auth-change'));
       }
       router.push('/'); 

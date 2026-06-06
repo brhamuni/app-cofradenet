@@ -13,6 +13,7 @@ import {
     BadRequestException,
     UploadedFile,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { HermandadesService } from './hermandades.service';
 import { CreateHermandadDto } from './dto/create-hermandad.dto';
 import { UpdateHermandadDto } from './dto/update-hermandad.dto';
@@ -25,6 +26,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
 
+@ApiTags('hermandades')
 @Controller('hermandades')
 // ❌ HEMOS QUITADO EL GUARD GLOBAL DE AQUÍ
 export class HermandadesController {
@@ -34,11 +36,16 @@ export class HermandadesController {
     // RUTAS PÚBLICAS (Cualquiera puede verlas)
     // ==========================================
 
+    @ApiOperation({ summary: 'Listar todas las hermandades' })
+    @ApiResponse({ status: 200, description: 'Lista de hermandades' })
     @Get()
     findAll() {
         return this.hermandadesService.findAll();
     }
 
+    @ApiOperation({ summary: 'Obtener una hermandad por ID' })
+    @ApiResponse({ status: 200, description: 'Datos de la hermandad' })
+    @ApiResponse({ status: 404, description: 'Hermandad no encontrada' })
     @Get(':id')
     findOne(@Param('id', ParseIntPipe) id: number) {
         return this.hermandadesService.findOne(id);
@@ -48,6 +55,11 @@ export class HermandadesController {
     // RUTAS PRIVADAS (Requieren login/token)
     // ==========================================
 
+    @ApiOperation({ summary: 'Crear una nueva hermandad' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 201, description: 'Hermandad creada correctamente' })
+    @ApiResponse({ status: 401, description: 'No autenticado' })
+    @ApiResponse({ status: 403, description: 'Sin permisos suficientes' })
     @Post()
     @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard) // ✅ Añadido aquí
     create(@Body() createHermandadeDto: CreateHermandadDto) {
@@ -55,6 +67,12 @@ export class HermandadesController {
         return this.hermandadesService.create(createHermandadeDto);
     }
 
+    @ApiOperation({ summary: 'Actualizar el perfil de una hermandad' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 200, description: 'Hermandad actualizada correctamente' })
+    @ApiResponse({ status: 401, description: 'No autenticado' })
+    @ApiResponse({ status: 403, description: 'Sin permisos suficientes' })
+    @ApiResponse({ status: 404, description: 'Hermandad no encontrada' })
     @Patch(':id')
     @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard) // ✅ Actualizado
     @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
@@ -66,6 +84,11 @@ export class HermandadesController {
         return this.hermandadesService.updatePerfil(id, updateDto, req.user);
     }
 
+    @ApiOperation({ summary: 'Eliminar una hermandad (solo administrador)' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 200, description: 'Hermandad eliminada correctamente' })
+    @ApiResponse({ status: 401, description: 'No autenticado' })
+    @ApiResponse({ status: 403, description: 'Sin permisos de administrador' })
     @Delete(':id')
     @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard) // ✅ Añadido aquí
     @Roles(RolUsuario.ADMIN) // Opcional: Solo un admin debería poder borrar una hermandad
@@ -73,6 +96,12 @@ export class HermandadesController {
         return this.hermandadesService.remove(+id);
     }
 
+    @ApiOperation({ summary: 'Subir el logo de una hermandad' })
+    @ApiBearerAuth('access-token')
+    @ApiConsumes('multipart/form-data')
+    @ApiResponse({ status: 201, description: 'Logo actualizado correctamente' })
+    @ApiResponse({ status: 400, description: 'No se proporcionó ningún archivo válido' })
+    @ApiResponse({ status: 401, description: 'No autenticado' })
     @Post(':id/logo')
     @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard) // ✅ Actualizado
     @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
@@ -110,6 +139,11 @@ export class HermandadesController {
         );
     }
 
+    @ApiOperation({ summary: 'Verificar o desverificar una hermandad (solo administrador)' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 200, description: 'Estado de verificación actualizado' })
+    @ApiResponse({ status: 401, description: 'No autenticado' })
+    @ApiResponse({ status: 403, description: 'Sin permisos de administrador' })
     @Patch(':id/verificar')
     @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard) // ✅ Actualizado
     @Roles(RolUsuario.ADMIN)

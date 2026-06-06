@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { User, ChevronDown, Heart, Settings, LogOut, ShieldCheck, LayoutDashboard } from 'lucide-react';
+import { User, ChevronDown, Heart, Settings, LogOut, ShieldCheck, LayoutDashboard, Newspaper } from 'lucide-react';
 
 function MenuLink({ href, icon, label, onClose, highlight }: { href: string; icon: React.ReactNode; label: string; onClose: () => void; highlight?: boolean }) {
   return (
@@ -75,6 +75,7 @@ export default function UserDropdown({ onLogout, isAdmin }: { onLogout: () => vo
               </>
             )}
 
+            <MenuLink href="/feed" icon={<Newspaper size={16} />} label="Mi Feed" onClose={close} highlight />
             <MenuLink href="/profile" icon={<User size={16} />} label="Perfil" onClose={close} />
             <MenuLink href="/favoritos" icon={<Heart size={16} />} label="Favoritos" onClose={close} />
             <MenuLink href="/settings" icon={<Settings size={16} />} label="Ajustes" onClose={close} />

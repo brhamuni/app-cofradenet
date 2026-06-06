@@ -8,6 +8,7 @@ import { Menu, X } from 'lucide-react';
 import AuthButtons from './AuthButtons';
 import UserDropdown from './UserDropdown';
 import MobileMenu from './MobileMenu';
+import api from '@/app/api/axios';
 
 export default function Header() {
   const router = useRouter();
@@ -63,8 +64,11 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const refreshToken = localStorage.getItem('refresh_token');
+    try { await api.post('/auth/logout', { refresh_token: refreshToken }); } catch {}
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
     window.dispatchEvent(new Event('auth-change'));
     setIsMenuOpen(false);
     router.push('/');

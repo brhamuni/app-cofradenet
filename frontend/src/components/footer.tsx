@@ -42,7 +42,7 @@ export default function Footer() {
         {/* Separador y Copyright */}
         <div className="border-t border-zinc-600 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-zinc-400">
-            © {currentYear} CofradeNet. Proyecto de Trabajo de Fin de Grado.
+            © {currentYear} CofradeNet.
           </p>
           <div className="text-sm text-zinc-400">
             Hecho con dedicación en España.

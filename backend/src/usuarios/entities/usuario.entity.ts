@@ -75,4 +75,7 @@ export class Usuario {
 
     @Column({ default: false })
     motivoBloqueo: string;
+
+    @Column({ nullable: true, type: 'text' })
+    refreshToken: string | null;
 }

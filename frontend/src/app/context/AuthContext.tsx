@@ -6,7 +6,7 @@ import api from '../api/axios';
 interface AuthContextType {
   user: any;
   login: (email: string, pass: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -24,18 +24,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Llamamos a tu endpoint de NestJS (ajusta '/auth/login' a tu ruta real si es diferente)
     const { data } = await api.post('/auth/login', { email, password });
-    
-    // Guardamos token y datos del usuario en el navegador
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    setUser(data.user);
+    localStorage.setItem('token', data.access_token);
+    if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+    localStorage.setItem('user', JSON.stringify(data.usuario));
+    window.dispatchEvent(new Event('auth-change'));
+    setUser(data.usuario);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const refreshToken = localStorage.getItem('refresh_token');
+    try { await api.post('/auth/logout', { refresh_token: refreshToken }); } catch {}
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+    window.dispatchEvent(new Event('auth-change'));
     setUser(null);
   };
 

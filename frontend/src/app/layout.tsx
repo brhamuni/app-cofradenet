@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider } from "@/app/context/AuthContext";
 import Header from "../components/header/Header";
 import Footer from "../components/footer";
 
