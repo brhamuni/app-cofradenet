@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Trash2, MapPin, Clock } from 'lucide-react';
+import { API } from '@/lib/api';
 
 interface PostCardProps {
   post: any;
@@ -28,7 +29,7 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
     setEliminando(true);
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:3000/publicaciones/${post.id}`, {
+      await fetch(`${API}/publicaciones/${post.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

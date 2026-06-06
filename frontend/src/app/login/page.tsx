@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { LogIn, Lock, User, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '@/api/axios';
+import api from '@/app/api/axios';
 
 export default function LoginPage() {
   const router = useRouter();

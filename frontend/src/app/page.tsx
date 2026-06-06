@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import HeroSection from '../components/main/HeroSection';
 import QuickAccess from '../components/main/QuickAccess';
 import FeaturedCities from '../components/main/FeaturedCities';
+import { API } from '@/lib/api';
 
 export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,7 +30,7 @@ export default function HomePage() {
   const ejecutarBusqueda = async (texto: string, categoria: string) => {
     setCargando(true);
     try {
-      const res = await fetch(`http://localhost:3000/search?q=${encodeURIComponent(texto)}&filtro=${categoria}`);
+      const res = await fetch(`${API}/search?q=${encodeURIComponent(texto)}&filtro=${categoria}`);
       setResultados(await res.json());
     } catch (error) {
       setResultados(null);

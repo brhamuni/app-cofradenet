@@ -6,8 +6,7 @@ import {
   Users, Building2, Music, MapPin, CheckCircle, Shield, XCircle,
   Eye, Ban, Edit, Trash2, Plus, X,
 } from 'lucide-react';
-
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { API } from '@/lib/api';
 
 function authHeaders() {
   const token = localStorage.getItem('token');

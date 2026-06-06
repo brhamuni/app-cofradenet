@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { PenLine } from 'lucide-react';
 import PostCard from './PostCard';
 import CreatePostModal from './CreatePostModal';
+import { API } from '@/lib/api';
 
 interface PostFeedProps {
   endpoint: string;         // ej: '/publicaciones/hermandad/3'
@@ -21,7 +22,7 @@ export default function PostFeed({ endpoint, canPost, hermandadId, bandaId, curr
   const cargar = useCallback(async () => {
     setCargando(true);
     try {
-      const res = await fetch(`http://localhost:3000${endpoint}`);
+      const res = await fetch(`${API}${endpoint}`);
       if (res.ok) setPosts(await res.json());
     } finally {
       setCargando(false);

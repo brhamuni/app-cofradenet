@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { User, Mail, User as UserIcon, Building2, Music, MapPin, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '@/api/axios';
+import api from '@/app/api/axios';
 
 export default function RegisterPage() {
   const router = useRouter();

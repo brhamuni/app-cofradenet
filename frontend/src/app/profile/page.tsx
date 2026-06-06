@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { MapPin, BadgeCheck } from "lucide-react";
 import EditHermandadModal from "../../components/profile/EditHermandadModal";
+import { API } from '@/lib/api';
 
 export default function ProfilePage() {
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -19,7 +20,7 @@ export default function ProfilePage() {
       const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
       const id = payload.sub || payload.id;
 
-      fetch(`http://localhost:3000/hermandades/${id}`, {
+      fetch(`${API}/hermandades/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(r => r.ok ? r.json() : null)

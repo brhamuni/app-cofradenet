@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, X } from "lucide-react";
+import { API } from '@/lib/api';
 
 export default function EditHermandadModal({ hermandad, isOpen, onClose }: any) {
   const [cargando, setCargando] = useState(false);
@@ -37,7 +38,7 @@ export default function EditHermandadModal({ hermandad, isOpen, onClose }: any) 
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:3000/hermandades/${hermandad.id}`, {
+      const res = await fetch(`${API}/hermandades/${hermandad.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

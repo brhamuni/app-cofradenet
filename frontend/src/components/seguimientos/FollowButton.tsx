@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { UserPlus, UserCheck, UserMinus, Loader2 } from 'lucide-react';
+import { API } from '@/lib/api';
 
 type Tipo = 'hermandad' | 'banda' | 'usuario';
 
@@ -20,7 +21,7 @@ export default function FollowButton({ tipo, id, onCountChange }: FollowButtonPr
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    fetch(`http://localhost:3000/seguimientos/${tipo}/${id}`, {
+    fetch(`${API}/seguimientos/${tipo}/${id}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then(r => r.ok ? r.json() : null)
@@ -47,7 +48,7 @@ export default function FollowButton({ tipo, id, onCountChange }: FollowButtonPr
 
     setToggling(true);
     try {
-      const res = await fetch(`http://localhost:3000/seguimientos/${tipo}/${id}`, {
+      const res = await fetch(`${API}/seguimientos/${tipo}/${id}`, {
         method: sigues ? 'DELETE' : 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });

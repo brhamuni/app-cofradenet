@@ -4,8 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { MapPin, Music, Users, Home, CheckCircle2, Edit3, ChevronRight, Calendar, BookOpen, Plus, Trash2, X } from 'lucide-react';
 import PostFeed from '../publicaciones/PostFeed';
 import FollowButton from '../seguimientos/FollowButton';
-
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { API } from '@/lib/api';
 
 function parseToken(): { id: number; rol: string } | null {
   try {

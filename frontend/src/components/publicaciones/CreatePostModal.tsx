@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, Loader2, ImageIcon, Route } from 'lucide-react';
+import { API } from '@/lib/api';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -50,7 +51,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:3000/publicaciones', {
+      const res = await fetch(`${API}/publicaciones`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

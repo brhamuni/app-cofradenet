@@ -27,13 +27,13 @@ import { SeguimientosModule } from './seguimientos/seguimientos.module';
         }),
         TypeOrmModule.forRoot({
             type: 'postgres',
-            host: 'localhost',
-            port: 5432,
-            username: 'postgres', // Este es el usuario por defecto
-            password: '***REMOVED***', // La que pusiste en la instalación
-            database: 'cofradenet_db', // El nombre que creamos en pgAdmin
-            autoLoadEntities: true, // Esto busca tus clases @Entity automáticamente
-            synchronize: true, // ¡Magia! Crea las tablas solo mirando tus clases
+            host: process.env.DB_HOST ?? 'localhost',
+            port: parseInt(process.env.DB_PORT ?? '5432', 10),
+            username: process.env.DB_USERNAME ?? 'postgres',
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME ?? 'cofradenet_db',
+            autoLoadEntities: true,
+            synchronize: true,
         }),
         ServeStaticModule.forRoot({
             rootPath: join(__dirname, '..', 'uploads'),
