@@ -105,7 +105,7 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
 
   const esItinerario = post.tipo === 'itinerario';
   const currentUserId = typeof window !== 'undefined'
-    ? (() => { try { const t = localStorage.getItem('token'); if (!t) return null; return JSON.parse(atob(t.split('.')[1]))?.sub ?? null; } catch { return null; } })()
+    ? (() => { try { const t = localStorage.getItem('token'); if (!t) return null; return JSON.parse(atob(t.split('.')[1]))?.id ?? null; } catch { return null; } })()
     : null;
 
   const avatarImg = resolveImg(post.hermandad?.imagenEscudo ?? post.banda?.imagenLogo ?? null);
@@ -193,21 +193,17 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
               <p className="text-xs text-gray-400 text-center py-2 font-semibold">Sé el primero en comentar</p>
             )}
             {comentarios.map((c) => {
-              const cAvatar = resolveImg((c.autor as any)?.imagenPerfil ?? null);
-              const cName = c.autor?.nombre || c.autor?.username || '?';
+              const isOwn = currentUserId !== null && c.usuarioId === currentUserId;
+              const cName = isOwn ? 'Tú' : (c.autor?.nombre || c.autor?.username || '?');
               return (
                 <div key={c.id} className="flex gap-2 group">
                   <div className="w-7 h-7 rounded-full bg-cofrade-main/10 border border-gray-100 overflow-hidden flex items-center justify-center shrink-0 mt-0.5">
-                    {cAvatar ? (
-                      <img src={cAvatar} alt={cName} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-cofrade-main font-black text-xs">{cName.charAt(0).toUpperCase()}</span>
-                    )}
+                    <span className="text-cofrade-main font-black text-xs">{cName.charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="bg-gray-50 rounded-xl px-3 py-2">
-                      <p className="text-xs font-black text-gray-700 mb-0.5">
-                        {c.autor?.nombre || c.autor?.username}
+                      <p className={`text-xs font-black mb-0.5 ${isOwn ? 'text-cofrade-main' : 'text-gray-700'}`}>
+                        {cName}
                       </p>
                       <p className="text-sm text-gray-800 leading-snug">{c.contenido}</p>
                     </div>
