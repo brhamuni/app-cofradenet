@@ -20,6 +20,8 @@ import { SeedModule } from './seed/seed.module';
 import { SearchModule } from './search/search.module';
 import { PublicacionesModule } from './publicaciones/publicaciones.module';
 import { SeguimientosModule } from './seguimientos/seguimientos.module';
+import { UbicacionModule } from './ubicacion/ubicacion.module';
+import { MediaModule } from './media/media.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -54,6 +56,8 @@ import { SeguimientosModule } from './seguimientos/seguimientos.module';
         SearchModule,
         PublicacionesModule,
         SeguimientosModule,
+        UbicacionModule,
+        MediaModule,
     ],
     controllers: [AppController],
     providers: [AppService],

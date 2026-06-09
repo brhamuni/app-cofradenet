@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { User, Heart, Settings, LogOut, ShieldCheck, LayoutDashboard } from 'lucide-react';
+import { User, Heart, Settings, LogOut, ShieldCheck, MapPin } from 'lucide-react';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -22,6 +22,9 @@ export default function MobileMenu({ isOpen, isLoggedIn, isAdmin, onClose, onLog
       <nav className="flex flex-col gap-2">
         {!isLoggedIn ? (
           <div className="flex flex-col gap-4 mt-4">
+            <Link href="/mapa" onClick={onClose} className="flex items-center gap-4 py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">
+              <MapPin size={20} className="text-cofrade-main" /> Mapa en Directo
+            </Link>
             <Link href="/login" onClick={onClose} className="py-5 text-center text-sm font-black uppercase tracking-widest border border-gray-100 rounded-2xl">
               Login
             </Link>
@@ -31,6 +34,10 @@ export default function MobileMenu({ isOpen, isLoggedIn, isAdmin, onClose, onLog
           </div>
         ) : (
           <div className="flex flex-col gap-2 mt-4">
+
+            <Link href="/mapa" onClick={onClose} className="flex items-center gap-4 py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">
+              <MapPin size={20} className="text-cofrade-main" /> Mapa en Directo
+            </Link>
 
             {isAdmin && (
               <Link

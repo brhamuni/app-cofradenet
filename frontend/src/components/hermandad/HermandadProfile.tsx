@@ -5,6 +5,8 @@ import { MapPin, Church, Calendar, Hash, Home, CheckCircle2, Edit3, ChevronRight
 import EditHermandadModal from '../profile/EditHermandadModal';
 import PostFeed from '../publicaciones/PostFeed';
 import FollowButton from '../seguimientos/FollowButton';
+import CompartirUbicacion from '../ubicacion/CompartirUbicacion';
+import GaleriaMedia from '../media/GaleriaMedia';
 import { resolveImg, API } from '@/lib/api';
 
 function parseToken(): { id: number; rol: string } | null {
@@ -330,6 +332,12 @@ function ProcesonExpandible({ procesion }: { procesion: any }) {
                 )}
               </div>
 
+              {/* ── Ubicación en tiempo real ─────────────────────────────── */}
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Ubicación en tiempo real</p>
+                <CompartirUbicacion procesionId={procesion.id} />
+              </div>
+
               {/* ── Bandas participantes ──────────────────────────────────── */}
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -438,6 +446,7 @@ const TABS = [
   { key: 'publicaciones', label: 'Publicaciones' },
   { key: 'info', label: 'Información' },
   { key: 'procesiones', label: 'Procesiones' },
+  { key: 'galeria', label: 'Galería' },
 ] as const;
 type Tab = typeof TABS[number]['key'];
 
@@ -448,10 +457,12 @@ export default function HermandadProfile({ hermandad }: { hermandad: any }) {
   const [activeTab, setActiveTab] = useState<Tab>('publicaciones');
   const [editOpen, setEditOpen] = useState(false);
   const [seguidores, setSeguidores] = useState<number | null>(null);
+  const [userId, setUserId] = useState<number | undefined>();
 
   useEffect(() => {
     const user = parseToken();
     if (!user) return;
+    setUserId(user.id);
     setCanEdit(user.rol === 'admin' || hermandad.usuarioId === user.id);
   }, [hermandad.usuarioId]);
 
@@ -585,6 +596,10 @@ export default function HermandadProfile({ hermandad }: { hermandad: any }) {
                 )}
               </div>
             )
+          )}
+
+          {activeTab === 'galeria' && (
+            <GaleriaMedia hermandadId={hermandad.id} canEdit={canEdit} userId={userId} />
           )}
         </div>
       </div>
