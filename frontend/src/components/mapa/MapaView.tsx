@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import Map, { Marker, Popup } from 'react-map-gl/maplibre';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import Map, { Marker, Popup, MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { API } from '@/lib/api';
 import EstadoPasoModal from '@/components/ubicacion/EstadoPasoModal';
@@ -61,6 +61,10 @@ function PulsingMarker() {
 }
 
 export default function MapaView() {
+  const mapRef = useRef<MapRef>(null);
+  const mapReadyRef = useRef(false);
+  const [userPos, setUserPos] = useState<[number, number] | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
   const [activas, setActivas] = useState<Ubicacion[]>([]);
   const [estados, setEstados] = useState<Record<number, EstadoPaso[]>>({});
   const [openPopup, setOpenPopup] = useState<number | null>(null);
@@ -82,6 +86,51 @@ export default function MapaView() {
         setEstados(prev => ({ ...prev, [procesionId]: data.slice(0, 5) }));
       }
     } catch {}
+  }, []);
+
+  const watchIdRef = useRef<number | null>(null);
+
+  const flyToUser = useCallback((coords: [number, number]) => {
+    mapRef.current?.flyTo({ center: coords, zoom: 15, duration: 1200 });
+  }, []);
+
+  const handleLocate = useCallback(() => {
+    console.log('[geo] isSecureContext:', window.isSecureContext, '| geolocation:', !!navigator.geolocation);
+    if (!navigator.geolocation) {
+      console.warn('[geo] navigator.geolocation no disponible');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const coords: [number, number] = [pos.coords.longitude, pos.coords.latitude];
+        setUserPos(coords);
+        flyToUser(coords);
+        if (watchIdRef.current === null) {
+          watchIdRef.current = navigator.geolocation.watchPosition(p => {
+            setUserPos([p.coords.longitude, p.coords.latitude]);
+          });
+        }
+      },
+      err => {
+        console.error('[geo] error:', err.code, err.message);
+        const msg = err.code === 1
+          ? 'Permiso de ubicación denegado'
+          : 'No se pudo obtener la ubicación. Activa los Servicios de ubicación en Windows (Configuración → Privacidad → Ubicación)';
+        setGeoError(msg);
+        setTimeout(() => setGeoError(null), 5000);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    );
+  }, [flyToUser]);
+
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+    };
+  }, []);
+
+  const handleMapLoad = useCallback(() => {
+    mapReadyRef.current = true;
   }, []);
 
   useEffect(() => {
@@ -107,8 +156,26 @@ export default function MapaView() {
         </span>
       </div>
 
+      {geoError && (
+        <div className="absolute bottom-20 right-4 z-10 bg-red-600 text-white text-xs font-semibold rounded-xl shadow-lg px-3 py-2 max-w-[220px] text-center">
+          {geoError}
+        </div>
+      )}
+
+      <button
+        onClick={userPos ? () => flyToUser(userPos) : handleLocate}
+        className="absolute bottom-8 right-4 z-10 bg-white rounded-full shadow-lg p-3 hover:bg-gray-50 active:scale-95 transition-transform"
+        title="Ir a mi ubicación"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-cofrade-main" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2a7 7 0 0 1 7 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
+        </svg>
+      </button>
+
       <Map
+        ref={mapRef}
         initialViewState={{ longitude: -5.9845, latitude: 37.3891, zoom: 13 }}
+        onLoad={handleMapLoad}
         style={{ width: '100%', height: '100%' }}
         mapStyle="https://tiles.openfreemap.org/styles/liberty"
       >
@@ -187,6 +254,12 @@ export default function MapaView() {
             </div>
           );
         })}
+
+        {userPos && (
+          <Marker longitude={userPos[0]} latitude={userPos[1]} anchor="center">
+            <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-md" />
+          </Marker>
+        )}
       </Map>
 
       {estadoModal !== null && (
