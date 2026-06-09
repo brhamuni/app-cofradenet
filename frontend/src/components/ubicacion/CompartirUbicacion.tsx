@@ -15,6 +15,7 @@ export default function CompartirUbicacion({ procesionId }: Props) {
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const watchRef = useRef<number | null>(null);
+  const coordsRef = useRef<{ lat: number; lng: number } | null>(null);
 
   async function sendLocation(lat: number, lng: number, estaActiva: boolean) {
     const token = localStorage.getItem('token');
@@ -23,6 +24,28 @@ export default function CompartirUbicacion({ procesionId }: Props) {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ latitud: lat, longitud: lng, estaActiva }),
     });
+  }
+
+  function startWatching(initialLat: number, initialLng: number) {
+    watchRef.current = navigator.geolocation.watchPosition(
+      p => {
+        const c = { lat: p.coords.latitude, lng: p.coords.longitude };
+        coordsRef.current = c;
+        setCoords(c);
+      },
+      undefined,
+      { enableHighAccuracy: true, maximumAge: 10000 },
+    );
+
+    intervalRef.current = setInterval(() => {
+      const c = coordsRef.current;
+      if (c) sendLocation(c.lat, c.lng, true);
+    }, 30000);
+
+    coordsRef.current = { lat: initialLat, lng: initialLng };
+    setCoords({ lat: initialLat, lng: initialLng });
+    setActivo(true);
+    setLoading(false);
   }
 
   async function iniciarCompartir() {
@@ -36,34 +59,25 @@ export default function CompartirUbicacion({ procesionId }: Props) {
     navigator.geolocation.getCurrentPosition(
       async pos => {
         const { latitude: lat, longitude: lng } = pos.coords;
-        setCoords({ lat, lng });
         await sendLocation(lat, lng, true);
-        setActivo(true);
-        setLoading(false);
-
-        // Watch GPS position and send updates every 30 seconds
-        watchRef.current = navigator.geolocation.watchPosition(
-          p => setCoords({ lat: p.coords.latitude, lng: p.coords.longitude }),
-          undefined,
-          { enableHighAccuracy: true, maximumAge: 10000 },
+        startWatching(lat, lng);
+      },
+      async () => {
+        // Alta precisión falló — reintentar con baja precisión (redes/WiFi)
+        navigator.geolocation.getCurrentPosition(
+          async pos => {
+            const { latitude: lat, longitude: lng } = pos.coords;
+            await sendLocation(lat, lng, true);
+            startWatching(lat, lng);
+          },
+          () => {
+            setLoading(false);
+            setError('No se pudo obtener la ubicación. Activa los servicios de ubicación.');
+          },
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 },
         );
-
-        intervalRef.current = setInterval(async () => {
-          if (watchRef.current !== null) {
-            navigator.geolocation.getCurrentPosition(async p => {
-              const lat = p.coords.latitude;
-              const lng = p.coords.longitude;
-              setCoords({ lat, lng });
-              await sendLocation(lat, lng, true);
-            });
-          }
-        }, 30000);
       },
-      () => {
-        setLoading(false);
-        setError('No se pudo obtener la ubicación');
-      },
-      { enableHighAccuracy: true },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 },
     );
   }
 
@@ -73,7 +87,9 @@ export default function CompartirUbicacion({ procesionId }: Props) {
     intervalRef.current = null;
     watchRef.current = null;
 
-    if (coords) await sendLocation(coords.lat, coords.lng, false);
+    const c = coordsRef.current;
+    if (c) await sendLocation(c.lat, c.lng, false);
+    coordsRef.current = null;
     setActivo(false);
     setCoords(null);
   }

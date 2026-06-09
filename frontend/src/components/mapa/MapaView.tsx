@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import Map, { Marker, Popup, MapRef } from 'react-map-gl/maplibre';
+import { RefreshCw, Maximize2, Minimize2, SlidersHorizontal, MapPin, Navigation } from 'lucide-react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { API } from '@/lib/api';
 import EstadoPasoModal from '@/components/ubicacion/EstadoPasoModal';
@@ -29,11 +30,24 @@ interface EstadoPaso {
   autor?: { username: string };
 }
 
+function haversineMetros(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatDistancia(m: number) {
+  return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
+}
+
 function formatAgo(dateStr: string) {
   const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
   if (diff < 60) return `hace ${Math.floor(diff)}s`;
-  if (diff < 3600) return `hace ${Math.floor(diff / 60)}min`;
-  return `hace ${Math.floor(diff / 3600)}h`;
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`;
+  return `hace ${Math.floor(diff / 3600)} h`;
 }
 
 function parseToken(): { id: number; rol: string } | null {
@@ -45,24 +59,32 @@ function parseToken(): { id: number; rol: string } | null {
   } catch { return null; }
 }
 
-function PulsingMarker() {
+function PulsingMarker({ selected }: { selected?: boolean }) {
   return (
     <div className="relative flex items-center justify-center">
       <div
-        className="absolute rounded-full opacity-40 animate-ping"
-        style={{ width: 28, height: 28, background: '#7B2D8B' }}
+        className="absolute rounded-full animate-ping"
+        style={{
+          width: selected ? 44 : 32, height: selected ? 44 : 32,
+          background: selected ? 'rgba(74,20,140,0.35)' : 'rgba(74,20,140,0.25)',
+        }}
       />
       <div
-        className="relative rounded-full border-2 border-white shadow-lg"
-        style={{ width: 18, height: 18, background: '#7B2D8B' }}
+        className="relative rounded-full border-[3px] border-white shadow-lg"
+        style={{ width: selected ? 26 : 20, height: selected ? 26 : 20, background: '#4A148C' }}
       />
     </div>
   );
 }
 
+const SELECT_CLS = 'w-full text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-cofrade-main focus:bg-white transition-colors cursor-pointer';
+
 export default function MapaView() {
   const mapRef = useRef<MapRef>(null);
-  const mapReadyRef = useRef(false);
+  const watchIdRef = useRef<number | null>(null);
+
+  const [expandido, setExpandido] = useState(false);
+  const [filtrosVisibles, setFiltrosVisibles] = useState(true);
   const [userPos, setUserPos] = useState<[number, number] | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [activas, setActivas] = useState<Ubicacion[]>([]);
@@ -70,7 +92,48 @@ export default function MapaView() {
   const [openPopup, setOpenPopup] = useState<number | null>(null);
   const [estadoModal, setEstadoModal] = useState<number | null>(null);
   const [user, setUser] = useState<{ id: number; rol: string } | null>(null);
+  const [filterDia, setFilterDia] = useState('');
+  const [filterHermandad, setFilterHermandad] = useState('');
+  const [radioCercanas, setRadioCercanas] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
+  /* ── Derivados ───────────────────────────────────────────────── */
+  const diasDisponibles = useMemo(() =>
+    [...new Set(activas.map(u => u.procesion?.diaSemana).filter(Boolean) as string[])].sort(),
+    [activas]);
+
+  const hermandadesDisponibles = useMemo(() =>
+    [...new Set(activas.map(u =>
+      u.procesion?.hermandad?.nombrePopular || u.procesion?.hermandad?.nombre
+    ).filter(Boolean) as string[])].sort(),
+    [activas]);
+
+  const activasConDistancia = useMemo(() =>
+    activas.map(u => ({
+      ...u,
+      distancia: userPos
+        ? haversineMetros(userPos[1], userPos[0], parseFloat(u.latitud), parseFloat(u.longitud))
+        : null,
+    })),
+    [activas, userPos]);
+
+  const activasFiltradas = useMemo(() => {
+    let lista = activasConDistancia.filter(u => {
+      if (filterDia && u.procesion?.diaSemana !== filterDia) return false;
+      if (filterHermandad) {
+        const n = u.procesion?.hermandad?.nombrePopular || u.procesion?.hermandad?.nombre;
+        if (n !== filterHermandad) return false;
+      }
+      if (radioCercanas !== null && u.distancia !== null && u.distancia > radioCercanas) return false;
+      return true;
+    });
+    if (userPos) lista = [...lista].sort((a, b) => (a.distancia ?? Infinity) - (b.distancia ?? Infinity));
+    return lista;
+  }, [activasConDistancia, filterDia, filterHermandad, radioCercanas, userPos]);
+
+  const filtrosActivos = filterDia !== '' || filterHermandad !== '' || radioCercanas !== null;
+
+  /* ── Fetch ───────────────────────────────────────────────────── */
   const fetchActivas = useCallback(async () => {
     try {
       const res = await fetch(`${API}/ubicacion/activas`);
@@ -88,188 +151,312 @@ export default function MapaView() {
     } catch {}
   }, []);
 
-  const watchIdRef = useRef<number | null>(null);
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchActivas();
+    setTimeout(() => setRefreshing(false), 700);
+  }, [fetchActivas]);
 
-  const flyToUser = useCallback((coords: [number, number]) => {
-    mapRef.current?.flyTo({ center: coords, zoom: 15, duration: 1200 });
+  /* ── Geo ─────────────────────────────────────────────────────── */
+  const flyTo = useCallback((lng: number, lat: number, zoom = 15) => {
+    mapRef.current?.flyTo({ center: [lng, lat], zoom, duration: 1000 });
   }, []);
 
   const handleLocate = useCallback(() => {
-    console.log('[geo] isSecureContext:', window.isSecureContext, '| geolocation:', !!navigator.geolocation);
-    if (!navigator.geolocation) {
-      console.warn('[geo] navigator.geolocation no disponible');
-      return;
-    }
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       pos => {
-        const coords: [number, number] = [pos.coords.longitude, pos.coords.latitude];
-        setUserPos(coords);
-        flyToUser(coords);
-        if (watchIdRef.current === null) {
-          watchIdRef.current = navigator.geolocation.watchPosition(p => {
-            setUserPos([p.coords.longitude, p.coords.latitude]);
-          });
-        }
+        const { longitude: lng, latitude: lat } = pos.coords;
+        setUserPos([lng, lat]);
+        flyTo(lng, lat);
+        if (watchIdRef.current === null)
+          watchIdRef.current = navigator.geolocation.watchPosition(p =>
+            setUserPos([p.coords.longitude, p.coords.latitude]));
       },
       err => {
-        console.error('[geo] error:', err.code, err.message);
-        const msg = err.code === 1
-          ? 'Permiso de ubicación denegado'
-          : 'No se pudo obtener la ubicación. Activa los Servicios de ubicación en Windows (Configuración → Privacidad → Ubicación)';
-        setGeoError(msg);
-        setTimeout(() => setGeoError(null), 5000);
+        setGeoError(err.code === 1 ? 'Permiso denegado' : 'No se pudo obtener la ubicación');
+        setTimeout(() => setGeoError(null), 4000);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
     );
-  }, [flyToUser]);
+  }, [flyTo]);
 
-  useEffect(() => {
-    return () => {
-      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
-    };
-  }, []);
-
-  const handleMapLoad = useCallback(() => {
-    mapReadyRef.current = true;
+  useEffect(() => () => {
+    if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
   }, []);
 
   useEffect(() => {
     setUser(parseToken());
     fetchActivas();
-    const interval = setInterval(fetchActivas, 15000);
-    return () => clearInterval(interval);
+    const iv = setInterval(fetchActivas, 15000);
+    return () => clearInterval(iv);
   }, [fetchActivas]);
 
   useEffect(() => {
     activas.forEach(u => fetchEstados(u.procesionId));
   }, [activas, fetchEstados]);
 
+  /* ── Render ──────────────────────────────────────────────────── */
   return (
-    <div className="relative w-full h-full">
-      {/* Stats bar */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white/95 backdrop-blur rounded-2xl shadow-lg px-5 py-2.5 flex items-center gap-3 pointer-events-none">
-        <div className="w-3 h-3 rounded-full bg-cofrade-main animate-pulse" />
-        <span className="text-sm font-black text-gray-900">
-          {activas.length === 0
-            ? 'Sin procesiones activas ahora'
-            : `${activas.length} procesión${activas.length > 1 ? 'es' : ''} en directo`}
-        </span>
+    <div className="p-4 lg:p-6 space-y-5 bg-cofrade-bg min-h-screen">
+
+      {/* ── Cabecera ─────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Mapa en Vivo</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Sigue las procesiones activas en tiempo real</p>
+          <div className="flex items-center gap-2 mt-2.5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+            </span>
+            <span className="text-sm font-semibold text-gray-600">
+              {activas.length === 0
+                ? 'Sin procesiones activas ahora'
+                : `${activas.length} procesión${activas.length > 1 ? 'es' : ''} activa${activas.length > 1 ? 's' : ''} ahora`}
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={handleRefresh}
+          className="flex items-center gap-2 px-5 py-2.5 bg-cofrade-main text-white text-sm font-black rounded-xl hover:brightness-110 active:scale-95 transition-all self-start sm:self-auto shrink-0"
+        >
+          <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+          Actualizar
+        </button>
       </div>
 
-      {geoError && (
-        <div className="absolute bottom-20 right-4 z-10 bg-red-600 text-white text-xs font-semibold rounded-xl shadow-lg px-3 py-2 max-w-[220px] text-center">
-          {geoError}
-        </div>
-      )}
+      {/* ── Mapa + Sidebar ───────────────────────────────────────── */}
+      <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col lg:flex-row transition-all duration-300 ${expandido ? 'h-[calc(100vh-220px)]' : 'h-130 lg:h-140'}`}>
 
-      <button
-        onClick={userPos ? () => flyToUser(userPos) : handleLocate}
-        className="absolute bottom-8 right-4 z-10 bg-white rounded-full shadow-lg p-3 hover:bg-gray-50 active:scale-95 transition-transform"
-        title="Ir a mi ubicación"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-cofrade-main" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2a7 7 0 0 1 7 7c0 5.25-7 13-7 13S5 14.25 5 9a7 7 0 0 1 7-7zm0 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
-        </svg>
-      </button>
+        {/* ─ Mapa ──────────────────────────────────────────────── */}
+        <div className="relative flex-1 min-w-0 min-h-0 h-[55%] lg:h-full">
 
-      <Map
-        ref={mapRef}
-        initialViewState={{ longitude: -5.9845, latitude: 37.3891, zoom: 13 }}
-        onLoad={handleMapLoad}
-        style={{ width: '100%', height: '100%' }}
-        mapStyle="https://tiles.openfreemap.org/styles/liberty"
-      >
-        {activas.map(u => {
-          const lng = parseFloat(u.longitud);
-          const lat = parseFloat(u.latitud);
-          const nombre =
-            u.procesion?.hermandad?.nombrePopular ||
-            u.procesion?.hermandad?.nombre ||
-            `Procesión #${u.procesionId}`;
+          {/* Control expandir */}
+          <button
+            onClick={() => setExpandido(v => !v)}
+            title={expandido ? 'Reducir' : 'Expandir'}
+            className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 p-2 hover:bg-white transition-colors"
+          >
+            {expandido
+              ? <Minimize2 size={15} className="text-gray-500" />
+              : <Maximize2 size={15} className="text-gray-500" />}
+          </button>
 
-          return (
-            <div key={u.id}>
-              <Marker
-                longitude={lng}
-                latitude={lat}
-                anchor="center"
-                onClick={e => {
-                  e.originalEvent.stopPropagation();
-                  setOpenPopup(prev => (prev === u.procesionId ? null : u.procesionId));
-                }}
-              >
-                <PulsingMarker />
-              </Marker>
+          {/* Control mi ubicación */}
+          <button
+            onClick={userPos ? () => flyTo(userPos[0], userPos[1]) : handleLocate}
+            title="Mi ubicación"
+            className={`absolute bottom-4 right-3 z-10 rounded-full shadow-md border p-2.5 transition-all active:scale-95 ${userPos ? 'bg-cofrade-main border-cofrade-main' : 'bg-white border-gray-100 hover:bg-gray-50'}`}
+          >
+            <Navigation size={15} className={userPos ? 'text-white' : 'text-cofrade-main'} />
+          </button>
 
-              {openPopup === u.procesionId && (
-                <Popup
-                  longitude={lng}
-                  latitude={lat}
-                  anchor="bottom"
-                  onClose={() => setOpenPopup(null)}
-                  closeOnClick={false}
-                  maxWidth="300px"
-                >
-                  <div className="min-w-[200px] p-1 font-sans">
-                    <p className="font-black text-gray-900 text-sm leading-tight">{nombre}</p>
-                    <p className="text-xs font-bold mt-0.5" style={{ color: '#7B2D8B' }}>
-                      {u.procesion?.nombre}
-                    </p>
-                    <p className="text-[10px] text-gray-400 font-semibold mt-1">
-                      Actualizado {formatAgo(u.updatedAt)}
-                    </p>
-
-                    {(estados[u.procesionId] || []).length > 0 && (
-                      <div className="mt-3 space-y-1.5 border-t border-gray-100 pt-2">
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                          Últimas noticias
-                        </p>
-                        {(estados[u.procesionId] || []).map(e => (
-                          <div key={e.id} className="bg-gray-50 rounded-lg p-1.5">
-                            <p className="text-xs font-black text-gray-800">{e.nombrePaso}</p>
-                            <p className="text-[11px] text-gray-600">{e.estado}</p>
-                            <p className="text-[9px] text-gray-400 mt-0.5">
-                              {formatAgo(e.createdAt)} · @{e.autor?.username}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {user && (
-                      <button
-                        onClick={() => {
-                          setOpenPopup(null);
-                          setEstadoModal(u.procesionId);
-                        }}
-                        className="mt-3 w-full py-1.5 rounded-xl text-white text-xs font-black transition-colors"
-                        style={{ background: '#7B2D8B' }}
-                      >
-                        + Añadir estado de paso
-                      </button>
-                    )}
-                  </div>
-                </Popup>
-              )}
+          {/* Error geo */}
+          {geoError && (
+            <div className="absolute bottom-16 right-3 z-10 bg-gray-900/90 backdrop-blur-sm text-white text-xs font-semibold rounded-xl shadow-lg px-3 py-2 max-w-52 text-center">
+              {geoError}
             </div>
-          );
-        })}
+          )}
 
-        {userPos && (
-          <Marker longitude={userPos[0]} latitude={userPos[1]} anchor="center">
-            <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-md" />
-          </Marker>
-        )}
-      </Map>
+          <Map
+            ref={mapRef}
+            initialViewState={{ longitude: -5.9845, latitude: 37.3891, zoom: 13 }}
+            style={{ width: '100%', height: '100%' }}
+            mapStyle="https://tiles.openfreemap.org/styles/liberty"
+          >
+            {activasFiltradas.map(u => {
+              const lng = parseFloat(u.longitud);
+              const lat = parseFloat(u.latitud);
+              const nombre = u.procesion?.hermandad?.nombrePopular || u.procesion?.hermandad?.nombre || `Procesión #${u.procesionId}`;
+
+              return (
+                <div key={u.id}>
+                  <Marker longitude={lng} latitude={lat} anchor="center"
+                    onClick={e => { e.originalEvent.stopPropagation(); setOpenPopup(prev => prev === u.procesionId ? null : u.procesionId); }}>
+                    <PulsingMarker selected={openPopup === u.procesionId} />
+                  </Marker>
+
+                  {openPopup === u.procesionId && (
+                    <Popup longitude={lng} latitude={lat} anchor="bottom"
+                      onClose={() => setOpenPopup(null)} closeOnClick={false} maxWidth="280px">
+                      <div className="p-1 font-sans min-w-48">
+                        <p className="font-black text-gray-900 text-sm leading-tight">{nombre}</p>
+                        <p className="text-xs font-bold mt-0.5 text-cofrade-main">{u.procesion?.nombre}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">Actualizado {formatAgo(u.updatedAt)}</p>
+
+                        {(estados[u.procesionId] || []).length > 0 && (
+                          <div className="mt-3 space-y-1.5 border-t border-gray-100 pt-2">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Últimas noticias</p>
+                            {(estados[u.procesionId] || []).map(e => (
+                              <div key={e.id} className="bg-gray-50 rounded-lg p-1.5">
+                                <p className="text-xs font-black text-gray-800">{e.nombrePaso}</p>
+                                <p className="text-[11px] text-gray-600">{e.estado}</p>
+                                <p className="text-[9px] text-gray-400 mt-0.5">{formatAgo(e.createdAt)} · @{e.autor?.username}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {user && (
+                          <button
+                            onClick={() => { setOpenPopup(null); setEstadoModal(u.procesionId); }}
+                            className="mt-3 w-full py-1.5 rounded-xl bg-cofrade-main text-white text-xs font-black hover:brightness-110 transition-all"
+                          >
+                            + Añadir estado de paso
+                          </button>
+                        )}
+                      </div>
+                    </Popup>
+                  )}
+                </div>
+              );
+            })}
+
+            {userPos && (
+              <Marker longitude={userPos[0]} latitude={userPos[1]} anchor="center">
+                <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-md" />
+              </Marker>
+            )}
+          </Map>
+        </div>
+
+        {/* ─ Sidebar ───────────────────────────────────────────── */}
+        <div className="w-full lg:w-80 lg:shrink-0 border-t lg:border-t-0 lg:border-l border-gray-100 flex flex-col overflow-hidden h-[45%] lg:h-full bg-white">
+
+          {/* Cabecera sidebar */}
+          <div className="px-4 pt-4 pb-3 border-b border-gray-100 shrink-0">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Procesiones Activas</p>
+              <button
+                onClick={() => setFiltrosVisibles(v => !v)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-black transition-all ${filtrosVisibles ? 'bg-cofrade-main text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              >
+                <SlidersHorizontal size={11} />
+                Filtros
+                {filtrosActivos && !filtrosVisibles && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-white inline-block" />
+                )}
+              </button>
+            </div>
+
+            {/* Filtros */}
+            {filtrosVisibles && (
+              <div className="mt-3 space-y-2">
+                <select value={filterDia} onChange={e => setFilterDia(e.target.value)} className={SELECT_CLS}>
+                  <option value="">Todos los días</option>
+                  {diasDisponibles.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <select value={filterHermandad} onChange={e => setFilterHermandad(e.target.value)} className={SELECT_CLS}>
+                  <option value="">Todas las hermandades</option>
+                  {hermandadesDisponibles.map(h => <option key={h} value={h}>{h}</option>)}
+                </select>
+                <select value={radioCercanas ?? ''} onChange={e => setRadioCercanas(e.target.value === '' ? null : Number(e.target.value))} className={SELECT_CLS}>
+                  <option value="">Cualquier distancia</option>
+                  <option value="500">Menos de 500 m</option>
+                  <option value="1000">Menos de 1 km</option>
+                  <option value="2000">Menos de 2 km</option>
+                  <option value="5000">Menos de 5 km</option>
+                </select>
+                {filtrosActivos && (
+                  <button
+                    onClick={() => { setFilterDia(''); setFilterHermandad(''); setRadioCercanas(null); }}
+                    className="text-xs font-black text-cofrade-main hover:underline"
+                  >
+                    Limpiar filtros
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Lista */}
+          <div className="flex-1 overflow-y-auto">
+            {activasFiltradas.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 p-8 text-center h-40">
+                <MapPin size={28} className="text-gray-200" />
+                <p className="text-sm font-black text-gray-400">
+                  {filtrosActivos ? 'Ninguna procesión coincide' : 'Sin procesiones activas'}
+                </p>
+                {filtrosActivos && (
+                  <button
+                    onClick={() => { setFilterDia(''); setFilterHermandad(''); setRadioCercanas(null); }}
+                    className="text-xs font-black text-cofrade-main hover:underline"
+                  >
+                    Limpiar filtros
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {activasFiltradas.map(u => {
+                  const lng = parseFloat(u.longitud);
+                  const lat = parseFloat(u.latitud);
+                  const nombre = u.procesion?.hermandad?.nombrePopular || u.procesion?.hermandad?.nombre || `Procesión #${u.procesionId}`;
+                  const ultimoEstado = estados[u.procesionId]?.[0];
+                  const isSelected = openPopup === u.procesionId;
+
+                  return (
+                    <button
+                      key={u.id}
+                      onClick={() => { flyTo(lng, lat); setOpenPopup(prev => prev === u.procesionId ? null : u.procesionId); }}
+                      className={`w-full px-4 py-3.5 text-left transition-all border-l-2 ${isSelected ? 'bg-purple-50/60 border-cofrade-main' : 'border-transparent hover:bg-gray-50/80'}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="relative mt-1.5 shrink-0">
+                          <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-cofrade-main opacity-50 animate-ping" />
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cofrade-main" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-black text-gray-900 text-sm truncate leading-snug">{nombre}</p>
+                          <p className="text-xs font-bold text-cofrade-main truncate">{u.procesion?.nombre}</p>
+                          {ultimoEstado && (
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                              <span className="font-semibold text-gray-700">{ultimoEstado.nombrePaso}</span>
+                              {' · '}{ultimoEstado.estado}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            <span className="text-[10px] text-gray-400">{formatAgo(u.updatedAt)}</span>
+                            {u.distancia !== null && (
+                              <span className="text-[10px] font-black bg-purple-50 text-cofrade-main px-2 py-0.5 rounded-full">
+                                {formatDistancia(u.distancia)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-black text-cofrade-main shrink-0 mt-1">Ver →</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ¿Ves una procesión? */}
+            {user && (
+              <div className="m-4 rounded-2xl p-4 bg-linear-to-br from-purple-50 to-purple-100/50 border border-purple-100">
+                <p className="font-black text-sm text-cofrade-main">¿Ves una procesión?</p>
+                <p className="text-xs text-gray-500 mt-0.5 mb-3">Comparte el estado en tiempo real con la comunidad</p>
+                {activasFiltradas.length > 0 && (
+                  <button
+                    onClick={() => setEstadoModal(activasFiltradas[0].procesionId)}
+                    className="w-full py-2 rounded-xl bg-cofrade-main text-white text-xs font-black hover:brightness-110 active:scale-95 transition-all"
+                  >
+                    Añadir estado
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {estadoModal !== null && (
         <EstadoPasoModal
           procesionId={estadoModal}
           onClose={() => setEstadoModal(null)}
-          onSaved={() => {
-            fetchEstados(estadoModal);
-            setEstadoModal(null);
-          }}
+          onSaved={() => { fetchEstados(estadoModal); setEstadoModal(null); }}
         />
       )}
     </div>
