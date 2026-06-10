@@ -24,12 +24,15 @@ import { UbicacionModule } from './ubicacion/ubicacion.module';
 import { MediaModule } from './media/media.module';
 import { ArchivosModule } from './archivos/archivos.module';
 import { buildTypeOrmConfig } from './config/database.config';
+import { resolveEnvFilePaths } from './config/env';
+
+const envFiles = resolveEnvFilePaths();
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            envFilePath: join(__dirname, '..', '..', 'config', '.env'),
+            ...(envFiles.length > 0 ? { envFilePath: envFiles } : {}),
         }),
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],

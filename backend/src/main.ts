@@ -4,7 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { serviceUrl } from './config/service-url.js';
+import { getCorsOrigin, getListenPort } from './config/env.js';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -20,10 +20,7 @@ async function bootstrap() {
     );
 
     app.enableCors({
-        origin: serviceUrl(
-            config.getOrThrow<string>('APP_HOST'),
-            config.getOrThrow<string>('FRONTEND_PORT'),
-        ),
+        origin: getCorsOrigin(config),
         credentials: true,
     });
 
@@ -49,7 +46,7 @@ async function bootstrap() {
         .addTag('marchas', 'Marchas procesionales')
         .addTag('search', 'Búsqueda global')
         .addTag('admin', 'Panel de administración')
-        .addTag('archivos', 'Archivos multimedia (referencias en PostgreSQL, binarios en MongoDB)')
+        .addTag('archivos', 'Archivos multimedia (PostgreSQL + R2)')
         .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);
@@ -61,6 +58,7 @@ async function bootstrap() {
         },
     });
 
-    await app.listen(parseInt(config.getOrThrow<string>('BACKEND_PORT'), 10));
+    const port = getListenPort(config);
+    await app.listen(port, '0.0.0.0');
 }
 bootstrap();
