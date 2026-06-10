@@ -15,18 +15,21 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { MediaService } from './media.service';
 import { CreateMediaItemDto } from './dto/create-media-item.dto';
 import { TipoMedia } from './entities/media-item.entity';
 import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
+import { ArchivosService } from '@backend/archivos/archivos.service';
 
 @ApiTags('media')
 @Controller('media')
 export class MediaController {
-    constructor(private readonly service: MediaService) {}
+    constructor(
+        private readonly service: MediaService,
+        private readonly archivosService: ArchivosService,
+    ) {}
 
     @ApiOperation({ summary: 'Subir foto o vídeo con etiquetas' })
     @ApiBearerAuth('access-token')
@@ -35,14 +38,7 @@ export class MediaController {
     @UseGuards(JwtAuthGuard, NotBlockedGuard)
     @UseInterceptors(
         FileInterceptor('file', {
-            storage: diskStorage({
-                destination: './uploads',
-                filename: (req, file, cb) => {
-                    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-                    const ext = extname(file.originalname);
-                    cb(null, `media-${uniqueSuffix}${ext}`);
-                },
-            }),
+            storage: memoryStorage(),
             fileFilter: (req, file, cb) => {
                 const allowed = /\/(jpg|jpeg|png|gif|webp|mp4|webm|mov|avi)$/;
                 if (!file.mimetype.match(allowed)) {
@@ -60,7 +56,20 @@ export class MediaController {
     ) {
         if (!file) throw new BadRequestException('No se ha subido ningún archivo');
         const tipo = file.mimetype.startsWith('video') ? TipoMedia.VIDEO : TipoMedia.FOTO;
-        return this.service.create(dto, `uploads/${file.filename}`, tipo, req.user.id);
+
+        const archivo = await this.archivosService.store({
+            buffer: file.buffer,
+            mimeType: file.mimetype,
+            originalName: file.originalname,
+        });
+
+        return this.service.create(
+            dto,
+            this.archivosService.publicPath(archivo.id),
+            tipo,
+            req.user.id,
+            archivo.id,
+        );
     }
 
     @ApiOperation({ summary: 'Añadir enlace externo (YouTube, Spotify, etc.)' })

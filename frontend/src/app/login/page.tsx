@@ -23,6 +23,9 @@ export default function LoginPage() {
         if (response.data.refresh_token) {
           localStorage.setItem('refresh_token', response.data.refresh_token);
         }
+        if (response.data.usuario) {
+          localStorage.setItem('user', JSON.stringify(response.data.usuario));
+        }
         window.dispatchEvent(new Event('auth-change'));
       }
       router.push('/'); 

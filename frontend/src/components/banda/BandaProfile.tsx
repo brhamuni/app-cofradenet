@@ -6,15 +6,8 @@ import PostFeed from '../publicaciones/PostFeed';
 import FollowButton from '../seguimientos/FollowButton';
 import GaleriaMedia from '../media/GaleriaMedia';
 import { API, resolveImg } from '@/lib/api';
+import { parseTokenFromStorage } from '@/lib/jwt';
 import EditBandaModal from './EditBandaModal';
-
-function parseToken(): { id: number; rol: string } | null {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-  } catch { return null; }
-}
 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem('token');
@@ -181,7 +174,7 @@ export default function BandaProfile({ banda }: { banda: any }) {
   const [userId, setUserId] = useState<number | undefined>();
 
   useEffect(() => {
-    const user = parseToken();
+    const user = parseTokenFromStorage();
     if (!user) return;
     setUserId(user.id);
     setCanEdit(user.rol === 'admin' || banda.usuarioId === user.id);

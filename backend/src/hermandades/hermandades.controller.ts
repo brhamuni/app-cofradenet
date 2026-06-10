@@ -22,15 +22,18 @@ import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
 import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
+import { ArchivosService } from '@backend/archivos/archivos.service';
 
 @ApiTags('hermandades')
 @Controller('hermandades')
 // ❌ HEMOS QUITADO EL GUARD GLOBAL DE AQUÍ
 export class HermandadesController {
-    constructor(private readonly hermandadesService: HermandadesService) {}
+    constructor(
+        private readonly hermandadesService: HermandadesService,
+        private readonly archivosService: ArchivosService,
+    ) {}
 
     // ==========================================
     // RUTAS PÚBLICAS (Cualquiera puede verlas)
@@ -107,16 +110,9 @@ export class HermandadesController {
     @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
     @UseInterceptors(
         FileInterceptor('file', {
-            storage: diskStorage({
-                destination: './uploads',
-                filename: (req, file, cb) => {
-                    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-                    const ext = extname(file.originalname);
-                    cb(null, `hermandad-${uniqueSuffix}${ext}`);
-                },
-            }),
+            storage: memoryStorage(),
             fileFilter: (req, file, cb) => {
-                if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+                if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
                     return cb(
                         new BadRequestException('Solo se permiten imágenes'),
                         false,
@@ -126,16 +122,23 @@ export class HermandadesController {
             },
         }),
     )
-    uploadLogo(
+    async uploadLogo(
         @Param('id', ParseIntPipe) id: number,
         @UploadedFile() file: Express.Multer.File,
     ) {
         if (!file)
             throw new BadRequestException('No se ha subido ningún archivo');
 
+        const archivo = await this.archivosService.store({
+            buffer: file.buffer,
+            mimeType: file.mimetype,
+            originalName: file.originalname,
+        });
+
         return this.hermandadesService.updateLogo(
             id,
-            `uploads/${file.filename}`,
+            this.archivosService.publicPath(archivo.id),
+            archivo.id,
         );
     }
 

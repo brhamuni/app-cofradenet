@@ -5,6 +5,7 @@ import Image from "next/image";
 import { MapPin, BadgeCheck } from "lucide-react";
 import EditHermandadModal from "../../components/profile/EditHermandadModal";
 import { API, resolveImg } from '@/lib/api';
+import { parseJwtPayload } from '@/lib/jwt';
 
 export default function ProfilePage() {
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -17,8 +18,9 @@ export default function ProfilePage() {
     if (!token) { setCargando(false); return; }
 
     try {
-      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-      const id = payload.sub || payload.id;
+      const payload = parseJwtPayload<{ sub?: number; id?: number }>(token);
+      const id = payload?.sub || payload?.id;
+      if (!id) { setCargando(false); return; }
 
       fetch(`${API}/hermandades/${id}`, {
         headers: { Authorization: `Bearer ${token}` },

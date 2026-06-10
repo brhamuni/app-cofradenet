@@ -4,16 +4,30 @@ import { Repository } from 'typeorm';
 import { MediaItem, TipoMedia } from './entities/media-item.entity';
 import { CreateMediaItemDto } from './dto/create-media-item.dto';
 import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
+import { ArchivosService } from '@backend/archivos/archivos.service';
 
 @Injectable()
 export class MediaService {
     constructor(
         @InjectRepository(MediaItem)
         private readonly mediaRepo: Repository<MediaItem>,
+        private readonly archivosService: ArchivosService,
     ) {}
 
-    async create(dto: CreateMediaItemDto, url: string, tipo: TipoMedia, autorId: number): Promise<MediaItem> {
-        const item = this.mediaRepo.create({ ...dto, url, tipo, autorId });
+    async create(
+        dto: CreateMediaItemDto,
+        url: string,
+        tipo: TipoMedia,
+        autorId: number,
+        archivoId?: string,
+    ): Promise<MediaItem> {
+        const item = this.mediaRepo.create({
+            ...dto,
+            url,
+            tipo,
+            autorId,
+            archivoId: archivoId ?? null,
+        });
         return this.mediaRepo.save(item);
     }
 
@@ -54,6 +68,9 @@ export class MediaService {
         if (!item) throw new NotFoundException('Media no encontrado');
         if (item.autorId !== user.id && user.rol !== RolUsuario.ADMIN) {
             throw new ForbiddenException('Sin permisos para eliminar este media');
+        }
+        if (item.archivoId) {
+            await this.archivosService.remove(item.archivoId);
         }
         await this.mediaRepo.remove(item);
     }

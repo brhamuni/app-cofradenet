@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node scripts/with-env.mjs dev",
+    "build": "node scripts/with-env.mjs build",
+    "start": "node scripts/with-env.mjs start",
     "lint": "eslint"
   },
   "dependencies": {
@@ -23,6 +23,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.6.1",
+    "dotenv-cli": "^8.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",

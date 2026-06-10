@@ -1,4 +1,14 @@
 {
+  "name": "app-cofradenet",
+  "private": true,
+  "scripts": {
+    "db:up": "podman compose --env-file config/.env up -d",
+    "db:down": "podman compose --env-file config/.env down",
+    "db:logs": "podman compose --env-file config/.env logs -f postgres",
+    "db:seed": "cd backend && npm run seed",
+    "dev:backend": "cd backend && npm run start:dev",
+    "dev:frontend": "npm run dev --prefix frontend"
+  },
   "dependencies": {
     "cheerio": "^1.2.0",
     "lucide-react": "^0.577.0"

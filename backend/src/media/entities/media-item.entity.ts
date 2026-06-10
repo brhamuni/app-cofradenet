@@ -29,6 +29,10 @@ export class MediaItem {
     @Column()
     url: string;
 
+    /** Referencia al binario en PostgreSQL (tabla archivos) → MongoDB/local */
+    @Column({ type: 'uuid', nullable: true })
+    archivoId: string | null;
+
     @Column({ nullable: true })
     titulo: string;
 

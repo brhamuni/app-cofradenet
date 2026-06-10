@@ -45,6 +45,9 @@ export class Hermandad {
     @Column({ nullable: true })
     imagenEscudo: string;
 
+    @Column({ type: 'uuid', nullable: true })
+    escudoArchivoId: string | null;
+
     @Column({ nullable: true })
     ciudadId: number;
 

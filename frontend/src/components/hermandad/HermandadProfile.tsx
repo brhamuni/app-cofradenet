@@ -8,14 +8,7 @@ import FollowButton from '../seguimientos/FollowButton';
 import CompartirUbicacion from '../ubicacion/CompartirUbicacion';
 import GaleriaMedia from '../media/GaleriaMedia';
 import { resolveImg, API } from '@/lib/api';
-
-function parseToken(): { id: number; rol: string } | null {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-  } catch { return null; }
-}
+import { parseTokenFromStorage } from '@/lib/jwt';
 
 function authHeader(): HeadersInit {
   const token = localStorage.getItem('token');
@@ -460,7 +453,7 @@ export default function HermandadProfile({ hermandad }: { hermandad: any }) {
   const [userId, setUserId] = useState<number | undefined>();
 
   useEffect(() => {
-    const user = parseToken();
+    const user = parseTokenFromStorage();
     if (!user) return;
     setUserId(user.id);
     setCanEdit(user.rol === 'admin' || hermandad.usuarioId === user.id);

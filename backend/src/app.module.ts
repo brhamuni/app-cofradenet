@@ -7,7 +7,7 @@ import { HermandadesModule } from './hermandades/hermandades.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { BandasModule } from './bandas/bandas.module';
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AdminModule } from './admin/admin.module';
 import { MarchasModule } from './marchas/marchas.module';
 import { ProcesionesModule } from './procesiones/procesiones.module';
@@ -22,20 +22,19 @@ import { PublicacionesModule } from './publicaciones/publicaciones.module';
 import { SeguimientosModule } from './seguimientos/seguimientos.module';
 import { UbicacionModule } from './ubicacion/ubicacion.module';
 import { MediaModule } from './media/media.module';
+import { ArchivosModule } from './archivos/archivos.module';
+import { buildTypeOrmConfig } from './config/database.config';
+
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
+            envFilePath: join(__dirname, '..', '..', 'config', '.env'),
         }),
-        TypeOrmModule.forRoot({
-            type: 'postgres',
-            host: process.env.DB_HOST ?? 'localhost',
-            port: parseInt(process.env.DB_PORT ?? '5432', 10),
-            username: process.env.DB_USERNAME ?? 'postgres',
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME ?? 'cofradenet_db',
-            autoLoadEntities: true,
-            synchronize: true,
+        TypeOrmModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: buildTypeOrmConfig,
         }),
         ServeStaticModule.forRoot({
             rootPath: join(__dirname, '..', 'uploads'),
@@ -58,6 +57,7 @@ import { MediaModule } from './media/media.module';
         SeguimientosModule,
         UbicacionModule,
         MediaModule,
+        ArchivosModule,
     ],
     controllers: [AppController],
     providers: [AppService],

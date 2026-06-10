@@ -5,6 +5,7 @@ import Map, { Marker, Popup, MapRef } from 'react-map-gl/maplibre';
 import { RefreshCw, Maximize2, Minimize2, SlidersHorizontal, MapPin, Navigation } from 'lucide-react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { API } from '@/lib/api';
+import { parseTokenFromStorage } from '@/lib/jwt';
 import EstadoPasoModal from '@/components/ubicacion/EstadoPasoModal';
 
 interface Ubicacion {
@@ -50,14 +51,6 @@ function formatAgo(dateStr: string) {
   return `hace ${Math.floor(diff / 3600)} h`;
 }
 
-function parseToken(): { id: number; rol: string } | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-  } catch { return null; }
-}
 
 function PulsingMarker({ selected }: { selected?: boolean }) {
   return (
@@ -186,7 +179,7 @@ export default function MapaView() {
   }, []);
 
   useEffect(() => {
-    setUser(parseToken());
+    setUser(parseTokenFromStorage());
     fetchActivas();
     const iv = setInterval(fetchActivas, 15000);
     return () => clearInterval(iv);

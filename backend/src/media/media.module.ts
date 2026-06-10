@@ -3,9 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MediaController } from './media.controller';
 import { MediaService } from './media.service';
 import { MediaItem } from './entities/media-item.entity';
+import { ArchivosModule } from '@backend/archivos/archivos.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([MediaItem])],
+    imports: [TypeOrmModule.forFeature([MediaItem]), ArchivosModule],
     controllers: [MediaController],
     providers: [MediaService],
     exports: [MediaService],
