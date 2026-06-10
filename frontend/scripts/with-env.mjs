@@ -19,13 +19,15 @@ function requireVar(name) {
     return value;
 }
 
-const host = requireVar('APP_HOST');
-const backendPort = requireVar('BACKEND_PORT');
-const frontendPort = requireVar('FRONTEND_PORT');
+if (!process.env.NEXT_PUBLIC_API_URL) {
+    const host = requireVar('APP_HOST');
+    const backendPort = requireVar('BACKEND_PORT');
+    process.env.NEXT_PUBLIC_APP_HOST = host;
+    process.env.NEXT_PUBLIC_BACKEND_PORT = backendPort;
+    process.env.NEXT_PUBLIC_API_URL = `http://${host}:${backendPort}`;
+}
 
-process.env.NEXT_PUBLIC_APP_HOST = host;
-process.env.NEXT_PUBLIC_BACKEND_PORT = backendPort;
-process.env.NEXT_PUBLIC_API_URL = `http://${host}:${backendPort}`;
+const frontendPort = requireVar('FRONTEND_PORT');
 
 const subcommand = process.argv[2] ?? 'dev';
 const extraArgs = process.argv.slice(3);

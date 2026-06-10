@@ -1,29 +1,38 @@
 import { config as loadEnv } from 'dotenv';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { NextConfig } from 'next';
 import { serviceUrl } from './src/config/service-url';
 
-loadEnv({ path: resolve(__dirname, '../config/.env') });
-
-function requireConfigEnv(name: string): string {
-    const value = process.env[name];
-    if (!value) {
-        throw new Error(`config/.env: falta la variable ${name}`);
-    }
-    return value;
+const envPath = resolve(__dirname, '../config/.env');
+if (existsSync(envPath)) {
+    loadEnv({ path: envPath });
 }
 
-const appHost = requireConfigEnv('APP_HOST');
-const backendPort = requireConfigEnv('BACKEND_PORT');
+function resolvePublicApiUrl(): string | undefined {
+    if (process.env.NEXT_PUBLIC_API_URL) {
+        return process.env.NEXT_PUBLIC_API_URL;
+    }
+
+    const host = process.env.APP_HOST;
+    const port = process.env.BACKEND_PORT;
+    if (host && port) {
+        return serviceUrl(host, port);
+    }
+
+    return undefined;
+}
+
+const publicApiUrl = resolvePublicApiUrl();
 
 const nextConfig: NextConfig = {
     reactCompiler: true,
     turbopack: {
         root: resolve(__dirname),
     },
-    env: {
-        NEXT_PUBLIC_API_URL: serviceUrl(appHost, backendPort),
-    },
+    ...(publicApiUrl
+        ? { env: { NEXT_PUBLIC_API_URL: publicApiUrl } }
+        : {}),
 };
 
 export default nextConfig;
