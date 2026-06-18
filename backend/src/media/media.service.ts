@@ -1,10 +1,12 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MediaItem, TipoMedia } from './entities/media-item.entity';
 import { CreateMediaItemDto } from './dto/create-media-item.dto';
 import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
 import { ArchivosService } from '@backend/archivos/archivos.service';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class MediaService {
@@ -12,6 +14,7 @@ export class MediaService {
         @InjectRepository(MediaItem)
         private readonly mediaRepo: Repository<MediaItem>,
         private readonly archivosService: ArchivosService,
+        private readonly httpService: HttpService,
     ) {}
 
     async create(
@@ -73,5 +76,50 @@ export class MediaService {
             await this.archivosService.remove(item.archivoId);
         }
         await this.mediaRepo.remove(item);
+    }
+
+    async explorar(page = 1, limit = 20, tipo?: TipoMedia): Promise<{ data: MediaItem[]; total: number }> {
+        const qb = this.mediaRepo.createQueryBuilder('m')
+            .orderBy('m.createdAt', 'DESC')
+            .skip((page - 1) * limit)
+            .take(limit);
+        if (tipo) qb.where('m.tipo = :tipo', { tipo });
+        const [data, total] = await qb.getManyAndCount();
+        return { data, total };
+    }
+
+    async tendencias(): Promise<MediaItem[]> {
+        const hace7Dias = new Date();
+        hace7Dias.setDate(hace7Dias.getDate() - 7);
+        return this.mediaRepo.createQueryBuilder('m')
+            .where('m.createdAt >= :desde', { desde: hace7Dias })
+            .orderBy('m.createdAt', 'DESC')
+            .take(12)
+            .getMany();
+    }
+
+    async reciente(): Promise<MediaItem[]> {
+        return this.mediaRepo.find({ order: { createdAt: 'DESC' }, take: 8 });
+    }
+
+    async oembed(url: string): Promise<any> {
+        let apiUrl: string;
+
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            apiUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+        } else if (url.includes('instagram.com')) {
+            apiUrl = `https://graph.facebook.com/v14.0/instagram_oembed?url=${encodeURIComponent(url)}&format=json`;
+        } else if (url.includes('twitter.com') || url.includes('x.com')) {
+            apiUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}`;
+        } else {
+            throw new BadRequestException('Plataforma no soportada para oEmbed');
+        }
+
+        try {
+            const { data } = await firstValueFrom(this.httpService.get(apiUrl));
+            return data;
+        } catch {
+            throw new BadRequestException('No se pudo obtener el embed para esta URL');
+        }
     }
 }

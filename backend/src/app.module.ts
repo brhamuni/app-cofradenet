@@ -24,6 +24,8 @@ import { UbicacionModule } from './ubicacion/ubicacion.module';
 import { MediaModule } from './media/media.module';
 import { ArchivosModule } from './archivos/archivos.module';
 import { CalendarioModule } from './calendario/calendario.module';
+import { NotificacionesModule } from './notificaciones/notificaciones.module';
+import { ScheduleModule } from '@nestjs/schedule';
 import { buildTypeOrmConfig } from './config/database.config';
 import { resolveEnvFilePaths } from './config/env';
 
@@ -63,6 +65,8 @@ const envFiles = resolveEnvFilePaths();
         MediaModule,
         ArchivosModule,
         CalendarioModule,
+        ScheduleModule.forRoot(),
+        NotificacionesModule,
     ],
     controllers: [AppController],
     providers: [AppService],

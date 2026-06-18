@@ -1,7 +1,8 @@
-import { Controller, Get, Query, Req, UseGuards, Res } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, ParseIntPipe, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Response } from 'express';
-import { CalendarioService, TipoFiltro } from './calendario.service';
+import type { Response } from 'express';
+import { CalendarioService } from './calendario.service';
+import type { TipoFiltro } from './calendario.service';
 import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 
 @ApiTags('calendario')
@@ -15,26 +16,53 @@ export class CalendarioController {
     @UseGuards(JwtAuthGuard)
     getMisEventos(
         @Req() req: any,
-        @Query('tipo') tipo: TipoFiltro = 'all',
+        @Query('tipo') tipo = 'all',
         @Query('ciudadId') ciudadId?: string,
     ) {
-        return this.service.getMisEventos(req.user.id, tipo, ciudadId ? +ciudadId : undefined);
+        return this.service.getMisEventos(req.user.id, tipo as TipoFiltro, ciudadId ? +ciudadId : undefined);
     }
 
-    @ApiOperation({ summary: 'Exportar mis eventos como archivo ICS' })
+    @ApiOperation({ summary: 'Obtener mis eventos agrupados por día para un mes concreto' })
     @ApiBearerAuth('access-token')
-    @Get('exportar-ics')
+    @Get('mis-eventos/mes/:anio/:mes')
+    @UseGuards(JwtAuthGuard)
+    getMisEventosMes(
+        @Req() req: any,
+        @Param('anio', ParseIntPipe) anio: number,
+        @Param('mes', ParseIntPipe) mes: number,
+    ) {
+        return this.service.getMisEventosMes(req.user.id, anio, mes);
+    }
+
+    @ApiOperation({ summary: 'Exportar todos mis eventos como archivo ICS' })
+    @ApiBearerAuth('access-token')
+    @Get('mis-eventos/ical')
     @UseGuards(JwtAuthGuard)
     async exportarIcs(
         @Req() req: any,
-        @Query('tipo') tipo: TipoFiltro = 'all',
+        @Query('tipo') tipo = 'all',
         @Query('ciudadId') ciudadId?: string,
         @Res() res?: Response,
     ) {
-        const eventos = await this.service.getMisEventos(req.user.id, tipo, ciudadId ? +ciudadId : undefined);
+        const eventos = await this.service.getMisEventos(req.user.id, tipo as TipoFiltro, ciudadId ? +ciudadId : undefined);
         const ics = buildIcsContent(eventos);
         res!.setHeader('Content-Type', 'text/calendar; charset=utf-8');
         res!.setHeader('Content-Disposition', 'attachment; filename="mi-calendario-cofradenet.ics"');
+        res!.send(ics);
+    }
+
+    @ApiOperation({ summary: 'Exportar un evento individual como archivo ICS' })
+    @Get('eventos/:tipo/:id/ical')
+    async exportarEventoIcs(
+        @Param('tipo') tipo: string,
+        @Param('id', ParseIntPipe) id: number,
+        @Res() res?: Response,
+    ) {
+        const ev = await this.service.getEventoById(tipo as 'procesion' | 'concierto', id);
+        if (!ev) throw new NotFoundException('Evento no encontrado');
+        const ics = buildIcsContent([ev]);
+        res!.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+        res!.setHeader('Content-Disposition', `attachment; filename="evento-${tipo}-${id}.ics"`);
         res!.send(ics);
     }
 }

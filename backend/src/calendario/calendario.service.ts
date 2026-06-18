@@ -11,7 +11,7 @@ export interface EventoCalendario {
     id: number;
     tipo: 'procesion' | 'concierto';
     titulo: string;
-    fecha: Date;
+    fecha: Date | string;
     hora?: string;
     ciudad?: string;
     ciudadId?: number;
@@ -111,5 +111,58 @@ export class CalendarioService {
 
         resultados.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
         return resultados;
+    }
+
+    async getMisEventosMes(
+        userId: number,
+        anio: number,
+        mes: number,
+    ): Promise<Record<string, EventoCalendario[]>> {
+        const todos = await this.getMisEventos(userId, 'all');
+        const delMes = todos.filter((ev) => {
+            const d = new Date(ev.fecha);
+            return d.getFullYear() === anio && d.getMonth() + 1 === mes;
+        });
+        const agrupados: Record<string, EventoCalendario[]> = {};
+        for (const ev of delMes) {
+            const key = new Date(ev.fecha).toISOString().slice(0, 10);
+            if (!agrupados[key]) agrupados[key] = [];
+            agrupados[key].push(ev);
+        }
+        return agrupados;
+    }
+
+    async getEventoById(tipo: 'procesion' | 'concierto', id: number): Promise<EventoCalendario | null> {
+        if (tipo === 'procesion') {
+            const p = await this.procesionRepo.findOne({
+                where: { id },
+                relations: ['hermandad', 'hermandad.ciudad'],
+            });
+            if (!p) return null;
+            return {
+                id: p.id,
+                tipo: 'procesion',
+                titulo: p.nombre,
+                fecha: p.fecha,
+                hora: p.horaSalida,
+                ciudad: (p.hermandad as any)?.ciudad?.nombre,
+                ciudadId: p.hermandad?.ciudadId,
+                hermandad: p.hermandad
+                    ? { id: p.hermandad.id, nombre: p.hermandad.nombre, nombrePopular: p.hermandad.nombrePopular, imagenEscudo: p.hermandad.imagenEscudo }
+                    : undefined,
+            };
+        }
+        const e = await this.eventoRepo.findOne({ where: { id }, relations: ['banda', 'banda.ciudad'] });
+        if (!e) return null;
+        return {
+            id: e.id,
+            tipo: 'concierto',
+            titulo: e.titulo,
+            fecha: e.fechaHora,
+            lugar: e.lugar,
+            ciudad: (e.banda as any)?.ciudad?.nombre,
+            ciudadId: (e.banda as any)?.ciudadId,
+            banda: e.banda ? { id: e.banda.id, nombre: e.banda.nombre, imagenLogo: e.banda.imagenLogo } : undefined,
+        };
     }
 }

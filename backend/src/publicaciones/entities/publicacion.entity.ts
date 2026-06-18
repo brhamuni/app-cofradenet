@@ -19,6 +19,13 @@ export enum TipoPublicacion {
     ENLACE_SOCIAL = 'enlace_social',
 }
 
+export enum PlataformaEmbed {
+    YOUTUBE = 'youtube',
+    INSTAGRAM = 'instagram',
+    TWITTER = 'twitter',
+    OTRO = 'otro',
+}
+
 @Entity('publicaciones')
 export class Publicacion {
     @PrimaryGeneratedColumn()
@@ -32,6 +39,15 @@ export class Publicacion {
 
     @Column({ nullable: true })
     urlExterna: string;
+
+    @Column({ nullable: true })
+    embedUrl: string;
+
+    @Column({ type: 'text', nullable: true })
+    embedHtml: string;
+
+    @Column({ type: 'enum', enum: PlataformaEmbed, nullable: true })
+    embedPlataforma: PlataformaEmbed;
 
     @Column({ type: 'enum', enum: TipoPublicacion, default: TipoPublicacion.GENERAL })
     tipo: TipoPublicacion;

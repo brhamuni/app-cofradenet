@@ -11,6 +11,8 @@ import {
     Query,
     ParseIntPipe,
     Put,
+    HttpCode,
+    HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProcesionesService } from './procesiones.service';
@@ -20,11 +22,18 @@ import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
 import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
+import { UbicacionService } from '@backend/ubicacion/ubicacion.service';
+import { UpdateUbicacionDto } from '@backend/ubicacion/dto/update-ubicacion.dto';
+import { CreateEstadoPasoDto } from '@backend/ubicacion/dto/create-estado-paso.dto';
+import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
 
 @ApiTags('procesiones')
 @Controller('procesiones')
 export class ProcesionesController {
-    constructor(private readonly procesionesService: ProcesionesService) {}
+    constructor(
+        private readonly procesionesService: ProcesionesService,
+        private readonly ubicacionService: UbicacionService,
+    ) {}
 
     @ApiOperation({ summary: 'Crear una nueva procesión' })
     @ApiBearerAuth('access-token')
@@ -56,6 +65,13 @@ export class ProcesionesController {
         @Query('banda') banda?: string,
     ) {
         return this.procesionesService.buscarProcesiones(ciudad, diaSemana, nombre, hermandad, banda);
+    }
+
+    @ApiOperation({ summary: 'Obtener todas las procesiones activas con ubicación' })
+    @ApiResponse({ status: 200, description: 'Lista de procesiones activas' })
+    @Get('activas')
+    getProcesionesActivas() {
+        return this.ubicacionService.getActivas();
     }
 
     @ApiOperation({ summary: 'Obtener procesiones de una hermandad por ID' })
@@ -252,5 +268,96 @@ export class ProcesionesController {
         @Param('pasoId', ParseIntPipe) pasoId: number,
     ) {
         return this.procesionesService.removePaso(pasoId);
+    }
+
+    // --- Ubicación en tiempo real ---
+
+    @ApiOperation({ summary: 'Iniciar retransmisión de ubicación de una procesión' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 200, description: 'Retransmisión iniciada' })
+    @Post(':id/ubicacion/iniciar')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
+    iniciarUbicacion(@Param('id', ParseIntPipe) id: number, @Req() req) {
+        return this.ubicacionService.iniciar(id, req.user);
+    }
+
+    @ApiOperation({ summary: 'Actualizar coordenadas GPS de una procesión' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 200, description: 'Ubicación actualizada' })
+    @Post(':id/ubicacion')
+    @UseGuards(JwtAuthGuard, NotBlockedGuard)
+    updateUbicacion(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: UpdateUbicacionDto,
+        @Req() req,
+    ) {
+        return this.ubicacionService.updateUbicacion(id, dto, req.user);
+    }
+
+    @ApiOperation({ summary: 'Finalizar retransmisión de ubicación de una procesión' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 200, description: 'Retransmisión finalizada' })
+    @HttpCode(HttpStatus.OK)
+    @Delete(':id/ubicacion/finalizar')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
+    finalizarUbicacion(@Param('id', ParseIntPipe) id: number, @Req() req) {
+        return this.ubicacionService.finalizar(id, req.user);
+    }
+
+    @ApiOperation({ summary: 'Obtener ubicación actual de una procesión' })
+    @ApiResponse({ status: 200, description: 'Datos de ubicación' })
+    @Get(':id/ubicacion')
+    getUbicacion(@Param('id', ParseIntPipe) id: number) {
+        return this.ubicacionService.getByProcesion(id);
+    }
+
+    // --- Estados de paso ---
+
+    @ApiOperation({ summary: 'Obtener estados de un paso en una procesión' })
+    @ApiResponse({ status: 200, description: 'Lista de estados' })
+    @Get(':id/pasos/:pasoId/estados')
+    getEstadosPaso(
+        @Param('id', ParseIntPipe) id: number,
+        @Param('pasoId', ParseIntPipe) pasoId: number,
+    ) {
+        return this.ubicacionService.getEstadosPaso(id, pasoId);
+    }
+
+    @ApiOperation({ summary: 'Obtener el último estado de un paso' })
+    @ApiResponse({ status: 200, description: 'Último estado del paso' })
+    @Get(':id/pasos/:pasoId/estados/ultimo')
+    getUltimoEstadoPaso(
+        @Param('id', ParseIntPipe) id: number,
+        @Param('pasoId', ParseIntPipe) pasoId: number,
+    ) {
+        return this.ubicacionService.getUltimoEstadoPaso(id, pasoId);
+    }
+
+    @ApiOperation({ summary: 'Registrar un estado de paso en una procesión' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 201, description: 'Estado registrado correctamente' })
+    @Post(':id/pasos/:pasoId/estados')
+    @UseGuards(JwtAuthGuard, NotBlockedGuard)
+    createEstadoPaso(
+        @Param('id', ParseIntPipe) id: number,
+        @Param('pasoId', ParseIntPipe) pasoId: number,
+        @Body() dto: CreateEstadoPasoDto,
+        @Req() req,
+    ) {
+        return this.ubicacionService.createEstadoPaso(id, pasoId, dto, req.user.id);
+    }
+
+    @ApiOperation({ summary: 'Eliminar un estado de paso' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 200, description: 'Estado eliminado correctamente' })
+    @Delete(':id/pasos/:pasoId/estados/:estadoId')
+    @UseGuards(JwtAuthGuard, NotBlockedGuard)
+    deleteEstadoPaso(
+        @Param('estadoId', ParseIntPipe) estadoId: number,
+        @Req() req,
+    ) {
+        return this.ubicacionService.deleteEstadoPaso(estadoId, req.user);
     }
 }

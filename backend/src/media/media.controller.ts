@@ -116,4 +116,37 @@ export class MediaController {
     remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
         return this.service.remove(id, req.user);
     }
+
+    @ApiOperation({ summary: 'Explorar galería pública paginada' })
+    @Get('explorar')
+    explorar(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+        @Query('tipo') tipo?: string,
+    ) {
+        return this.service.explorar(
+            page ? +page : 1,
+            limit ? +limit : 20,
+            tipo as any,
+        );
+    }
+
+    @ApiOperation({ summary: 'Tendencias: media más reciente de los últimos 7 días' })
+    @Get('explorar/tendencias')
+    tendencias() {
+        return this.service.tendencias();
+    }
+
+    @ApiOperation({ summary: 'Media más reciente (últimos 8 items)' })
+    @Get('explorar/reciente')
+    reciente() {
+        return this.service.reciente();
+    }
+
+    @ApiOperation({ summary: 'Proxy oEmbed para YouTube, Instagram o X' })
+    @Get('oembed')
+    oembed(@Query('url') url: string) {
+        if (!url) throw new BadRequestException('Se requiere el parámetro url');
+        return this.service.oembed(url);
+    }
 }

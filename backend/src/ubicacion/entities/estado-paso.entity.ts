@@ -7,6 +7,7 @@ import {
     PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Procesion } from '@backend/procesiones/entities/procesion.entity';
+import { Paso } from '@backend/procesiones/entities/paso.entity';
 import { Usuario } from '@backend/usuarios/entities/usuario.entity';
 
 @Entity('estados_paso')
@@ -21,8 +22,12 @@ export class EstadoPaso {
     @JoinColumn({ name: 'procesionId' })
     procesion: Procesion;
 
-    @Column()
-    nombrePaso: string;
+    @Column({ nullable: true })
+    pasoId: number;
+
+    @ManyToOne(() => Paso, { nullable: true, onDelete: 'SET NULL' })
+    @JoinColumn({ name: 'pasoId' })
+    paso: Paso;
 
     @Column()
     estado: string;

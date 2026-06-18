@@ -11,6 +11,8 @@ import { Marcha } from '@backend/marchas/entities/marcha.entity';
 import { Evento } from '@backend/eventos/entities/evento.entity';
 import { CreateEventoDto } from '@backend/eventos/dto/create-evento.dto';
 import { Participacion } from '@backend/participaciones/entities/participacion.entity';
+import { EnlaceExterno } from './entities/enlace-externo.entity';
+import { CreateEnlaceDto } from './dto/create-enlace.dto';
 
 @Injectable()
 export class BandasService {
@@ -23,6 +25,8 @@ export class BandasService {
         private readonly eventoRepo: Repository<Evento>,
         @InjectRepository(Participacion)
         private readonly participacionRepo: Repository<Participacion>,
+        @InjectRepository(EnlaceExterno)
+        private readonly enlaceRepo: Repository<EnlaceExterno>,
     ) {}
 
     async create(createBandaDto: CreateBandaDto) {
@@ -214,5 +218,28 @@ export class BandasService {
         if (!banda) throw new NotFoundException('Banda no encontrada');
         banda.verificada = estado;
         return await this.bandaRepo.save(banda);
+    }
+
+    async getEnlaces(bandaId: number): Promise<EnlaceExterno[]> {
+        return this.enlaceRepo.find({ where: { bandaId }, order: { createdAt: 'ASC' } });
+    }
+
+    async addEnlace(bandaId: number, dto: CreateEnlaceDto): Promise<EnlaceExterno> {
+        const banda = await this.bandaRepo.findOneBy({ id: bandaId });
+        if (!banda) throw new NotFoundException('Banda no encontrada');
+        const enlace = this.enlaceRepo.create({ bandaId, ...dto });
+        return this.enlaceRepo.save(enlace);
+    }
+
+    async removeEnlace(enlaceId: number, user: any): Promise<void> {
+        const enlace = await this.enlaceRepo.findOne({
+            where: { id: enlaceId },
+            relations: ['banda'],
+        });
+        if (!enlace) throw new NotFoundException('Enlace no encontrado');
+        const isOwner = enlace.banda?.usuarioId === user.id;
+        const isAdmin = user.rol === 'admin';
+        if (!isOwner && !isAdmin) throw new ForbiddenException('Sin permisos para eliminar este enlace');
+        await this.enlaceRepo.remove(enlace);
     }
 }

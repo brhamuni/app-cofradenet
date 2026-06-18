@@ -10,8 +10,11 @@ import {
     ParseIntPipe,
     Req,
     Put,
+    UseInterceptors,
+    UploadedFile,
+    BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { BandasService } from './bandas.service';
 import { CreateBandaDto } from './dto/create-banda.dto';
 import { UpdateBandaDto } from './dto/update-banda.dto';
@@ -22,12 +25,22 @@ import { RolUsuario, Usuario } from '@backend/usuarios/entities/usuario.entity';
 import { CreateEventoDto } from '@backend/eventos/dto/create-evento.dto';
 import { UpdateEventoDto } from '@backend/eventos/dto/update-evento.dto';
 import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { ArchivosService } from '@backend/archivos/archivos.service';
+import { MediaService } from '@backend/media/media.service';
+import { TipoMedia } from '@backend/media/entities/media-item.entity';
+import { CreateEnlaceDto } from './dto/create-enlace.dto';
 
 @ApiTags('bandas')
 @Controller('bandas')
 @UseGuards(NotBlockedGuard)
 export class BandasController {
-    constructor(private readonly bandasService: BandasService) {}
+    constructor(
+        private readonly bandasService: BandasService,
+        private readonly archivosService: ArchivosService,
+        private readonly mediaService: MediaService,
+    ) {}
 
     @ApiOperation({ summary: 'Crear una nueva banda' })
     @ApiResponse({ status: 201, description: 'Banda creada correctamente' })
@@ -156,5 +169,104 @@ export class BandasController {
     @Roles(RolUsuario.ADMIN)
     verificar(@Param('id') id: string, @Body() body: { estado: boolean }) {
         return this.bandasService.verificar(+id, body.estado);
+    }
+
+    // --- Galería multimedia ---
+
+    @ApiOperation({ summary: 'Obtener la galería multimedia de una banda' })
+    @ApiResponse({ status: 200, description: 'Lista de items multimedia' })
+    @Get(':id/galeria')
+    getGaleria(@Param('id', ParseIntPipe) id: number) {
+        return this.mediaService.findByBanda(id);
+    }
+
+    @ApiOperation({ summary: 'Subir una foto/vídeo a la galería de una banda' })
+    @ApiBearerAuth('access-token')
+    @ApiConsumes('multipart/form-data')
+    @ApiResponse({ status: 201, description: 'Media añadido correctamente' })
+    @Post(':id/galeria')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
+    @UseInterceptors(
+        FileInterceptor('file', {
+            storage: memoryStorage(),
+            fileFilter: (req, file, cb) => {
+                if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp|mp4|mov|avi|webm)$/)) {
+                    return cb(new BadRequestException('Formato de archivo no permitido'), false);
+                }
+                cb(null, true);
+            },
+        }),
+    )
+    async addGaleria(
+        @Param('id', ParseIntPipe) id: number,
+        @UploadedFile() file: Express.Multer.File,
+        @Body() body: { titulo?: string; descripcion?: string; anio?: string },
+        @Req() req,
+    ) {
+        if (!file) throw new BadRequestException('No se ha subido ningún archivo');
+        const archivo = await this.archivosService.store({
+            buffer: file.buffer,
+            mimeType: file.mimetype,
+            originalName: file.originalname,
+        });
+        const tipo = file.mimetype.startsWith('video/') ? TipoMedia.VIDEO : TipoMedia.FOTO;
+        return this.mediaService.create(
+            {
+                bandaId: id,
+                titulo: body.titulo,
+                descripcion: body.descripcion,
+                anio: body.anio ? Number.parseInt(body.anio, 10) : undefined,
+            },
+            this.archivosService.publicPath(archivo.id),
+            tipo,
+            req.user.id,
+            archivo.id,
+        );
+    }
+
+    @ApiOperation({ summary: 'Eliminar un item de la galería de una banda' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 200, description: 'Media eliminado correctamente' })
+    @Delete(':id/galeria/:itemId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
+    removeGaleria(
+        @Param('itemId', ParseIntPipe) itemId: number,
+        @Req() req,
+    ) {
+        return this.mediaService.remove(itemId, req.user);
+    }
+
+    // --- Enlaces externos ---
+
+    @ApiOperation({ summary: 'Obtener los enlaces externos de una banda' })
+    @ApiResponse({ status: 200, description: 'Lista de enlaces' })
+    @Get(':id/enlaces')
+    getEnlaces(@Param('id', ParseIntPipe) id: number) {
+        return this.bandasService.getEnlaces(id);
+    }
+
+    @ApiOperation({ summary: 'Añadir un enlace externo a una banda' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 201, description: 'Enlace añadido correctamente' })
+    @Post(':id/enlaces')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
+    addEnlace(@Param('id', ParseIntPipe) id: number, @Body() dto: CreateEnlaceDto) {
+        return this.bandasService.addEnlace(id, dto);
+    }
+
+    @ApiOperation({ summary: 'Eliminar un enlace externo de una banda' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 200, description: 'Enlace eliminado correctamente' })
+    @Delete(':id/enlaces/:enlaceId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
+    removeEnlace(
+        @Param('enlaceId', ParseIntPipe) enlaceId: number,
+        @Req() req,
+    ) {
+        return this.bandasService.removeEnlace(enlaceId, req.user);
     }
 }

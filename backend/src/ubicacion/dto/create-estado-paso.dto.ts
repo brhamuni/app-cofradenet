@@ -1,14 +1,21 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsInt, IsNumber, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class CreateEstadoPasoDto {
-    @IsString()
-    @IsNotEmpty()
-    nombrePaso: string;
+export enum TipoEstadoPaso {
+    LEVANTA = 'LEVANTA',
+    PARA = 'PARA',
+    MARCHA = 'MARCHA',
+    OTRO = 'OTRO',
+}
 
-    @IsString()
-    @IsNotEmpty()
-    estado: string;
+export class CreateEstadoPasoDto {
+    @IsEnum(TipoEstadoPaso)
+    estado: TipoEstadoPaso;
+
+    @IsInt()
+    @IsOptional()
+    @Type(() => Number)
+    pasoId?: number;
 
     @IsNumber()
     @IsOptional()
