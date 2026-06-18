@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Loader2, ImageIcon, Route } from 'lucide-react';
+import { X, Loader2, ImageIcon, Route, Link as LinkIcon } from 'lucide-react';
 import { API } from '@/lib/api';
 
 interface CreatePostModalProps {
@@ -25,9 +25,10 @@ Bandas que acompañan:
 `;
 
 export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadId, bandaId }: CreatePostModalProps) {
-  const [tipo, setTipo] = useState<'general' | 'itinerario'>('general');
+  const [tipo, setTipo] = useState<'general' | 'itinerario' | 'enlace_social'>('general');
   const [contenido, setContenido] = useState('');
   const [imagenUrl, setImagenUrl] = useState('');
+  const [urlExterna, setUrlExterna] = useState('');
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
 
@@ -35,13 +36,14 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
 
   const canPublishItinerario = !!hermandadId;
 
-  const handleTipoChange = (nuevoTipo: 'general' | 'itinerario') => {
+  const handleTipoChange = (nuevoTipo: 'general' | 'itinerario' | 'enlace_social') => {
     setTipo(nuevoTipo);
     if (nuevoTipo === 'itinerario' && !contenido) {
       setContenido(ITINERARIO_TEMPLATE);
     } else if (nuevoTipo === 'general' && contenido === ITINERARIO_TEMPLATE) {
       setContenido('');
     }
+    if (nuevoTipo !== 'enlace_social') setUrlExterna('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,6 +62,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
         body: JSON.stringify({
           contenido: contenido.trim(),
           imagenUrl: imagenUrl.trim() || undefined,
+          urlExterna: urlExterna.trim() || undefined,
           tipo,
           hermandadId: hermandadId || undefined,
           bandaId: bandaId || undefined,
@@ -73,6 +76,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
       onCreated(post);
       setContenido('');
       setImagenUrl('');
+      setUrlExterna('');
       setTipo('general');
       onClose();
     } catch (err: any) {
@@ -96,20 +100,20 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {error && <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm">{error}</div>}
 
-          {/* Selector de tipo (solo hermandades) */}
-          {canPublishItinerario && (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => handleTipoChange('general')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider border-2 transition-all ${
-                  tipo === 'general'
-                    ? 'border-cofrade-main bg-cofrade-main/5 text-cofrade-main'
-                    : 'border-gray-100 text-gray-400 hover:border-gray-200'
-                }`}
-              >
-                General
-              </button>
+          {/* Selector de tipo */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => handleTipoChange('general')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider border-2 transition-all ${
+                tipo === 'general'
+                  ? 'border-cofrade-main bg-cofrade-main/5 text-cofrade-main'
+                  : 'border-gray-100 text-gray-400 hover:border-gray-200'
+              }`}
+            >
+              General
+            </button>
+            {canPublishItinerario && (
               <button
                 type="button"
                 onClick={() => handleTipoChange('itinerario')}
@@ -121,6 +125,32 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
               >
                 <Route size={14} /> Itinerario
               </button>
+            )}
+            <button
+              type="button"
+              onClick={() => handleTipoChange('enlace_social')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider border-2 transition-all ${
+                tipo === 'enlace_social'
+                  ? 'border-blue-500 bg-blue-50 text-blue-600'
+                  : 'border-gray-100 text-gray-400 hover:border-gray-200'
+              }`}
+            >
+              <LinkIcon size={14} /> Enlace
+            </button>
+          </div>
+
+          {/* URL externa (tipo enlace_social) */}
+          {tipo === 'enlace_social' && (
+            <div className="flex items-center gap-2">
+              <LinkIcon size={16} className="text-blue-500 shrink-0" />
+              <input
+                type="url"
+                value={urlExterna}
+                onChange={e => setUrlExterna(e.target.value)}
+                placeholder="Pega aquí el enlace de YouTube, Instagram o X..."
+                className="flex-1 p-2.5 bg-gray-50 border border-blue-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                required={tipo === 'enlace_social'}
+              />
             </div>
           )}
 
@@ -128,10 +158,16 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
           <textarea
             value={contenido}
             onChange={e => setContenido(e.target.value)}
-            placeholder={tipo === 'itinerario' ? 'Edita el itinerario...' : '¿Qué quieres compartir?'}
-            rows={tipo === 'itinerario' ? 10 : 5}
+            placeholder={
+              tipo === 'itinerario'
+                ? 'Edita el itinerario...'
+                : tipo === 'enlace_social'
+                ? 'Añade un comentario sobre el enlace (opcional)...'
+                : '¿Qué quieres compartir?'
+            }
+            rows={tipo === 'itinerario' ? 10 : 3}
             className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cofrade-main/20 resize-none font-mono"
-            required
+            required={tipo !== 'enlace_social'}
           />
 
           {/* URL imagen (opcional) */}
@@ -153,7 +189,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
             </button>
             <button
               type="submit"
-              disabled={cargando || !contenido.trim()}
+              disabled={cargando || (tipo === 'enlace_social' ? !urlExterna.trim() : !contenido.trim())}
               className="px-6 py-2 bg-cofrade-main text-white rounded-full font-bold text-sm flex items-center gap-2 disabled:opacity-50"
             >
               {cargando && <Loader2 size={14} className="animate-spin" />}

@@ -16,6 +16,7 @@ import { Comentario } from './comentario.entity';
 export enum TipoPublicacion {
     GENERAL = 'general',
     ITINERARIO = 'itinerario',
+    ENLACE_SOCIAL = 'enlace_social',
 }
 
 @Entity('publicaciones')
@@ -28,6 +29,9 @@ export class Publicacion {
 
     @Column({ nullable: true })
     imagenUrl: string;
+
+    @Column({ nullable: true })
+    urlExterna: string;
 
     @Column({ type: 'enum', enum: TipoPublicacion, default: TipoPublicacion.GENERAL })
     tipo: TipoPublicacion;

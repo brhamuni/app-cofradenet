@@ -13,6 +13,11 @@ export class CreatePublicacionDto {
     @IsOptional()
     imagenUrl?: string;
 
+    @ApiPropertyOptional({ description: 'URL externa de red social (YouTube, Instagram, X)', example: 'https://www.youtube.com/watch?v=abc123' })
+    @IsString()
+    @IsOptional()
+    urlExterna?: string;
+
     @ApiPropertyOptional({ description: 'Tipo de publicación', enum: TipoPublicacion, example: TipoPublicacion.GENERAL })
     @IsEnum(TipoPublicacion)
     @IsOptional()

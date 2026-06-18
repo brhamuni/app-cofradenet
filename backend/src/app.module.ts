@@ -23,6 +23,7 @@ import { SeguimientosModule } from './seguimientos/seguimientos.module';
 import { UbicacionModule } from './ubicacion/ubicacion.module';
 import { MediaModule } from './media/media.module';
 import { ArchivosModule } from './archivos/archivos.module';
+import { CalendarioModule } from './calendario/calendario.module';
 import { buildTypeOrmConfig } from './config/database.config';
 import { resolveEnvFilePaths } from './config/env';
 
@@ -61,6 +62,7 @@ const envFiles = resolveEnvFilePaths();
         UbicacionModule,
         MediaModule,
         ArchivosModule,
+        CalendarioModule,
     ],
     controllers: [AppController],
     providers: [AppService],

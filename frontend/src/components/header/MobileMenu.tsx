@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { User, Heart, Settings, LogOut, ShieldCheck, MapPin } from 'lucide-react';
+import { User, Heart, Settings, LogOut, ShieldCheck, MapPin, Calendar, Images, Newspaper } from 'lucide-react';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -49,6 +49,15 @@ export default function MobileMenu({ isOpen, isLoggedIn, isAdmin, onClose, onLog
               </Link>
             )}
 
+            <Link href="/feed" onClick={onClose} className="flex items-center gap-4 py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">
+              <Newspaper size={20} className="text-cofrade-main" /> Mi Feed
+            </Link>
+            <Link href="/calendario" onClick={onClose} className="flex items-center gap-4 py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">
+              <Calendar size={20} className="text-cofrade-main" /> Mi Calendario
+            </Link>
+            <Link href="/explorar" onClick={onClose} className="flex items-center gap-4 py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">
+              <Images size={20} className="text-gray-400" /> Explorar
+            </Link>
             <Link href="/profile" onClick={onClose} className="flex items-center gap-4 py-5 px-6 text-xl font-black tracking-tighter text-gray-900 border-b border-gray-50">
               <User size={20} className="text-gray-400" /> Mi Perfil
             </Link>
