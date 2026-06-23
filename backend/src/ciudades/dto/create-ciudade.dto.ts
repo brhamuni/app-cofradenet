@@ -8,12 +8,18 @@ export class CreateCiudadeDto {
     @MinLength(3, { message: 'El nombre debe tener al menos 3 caracteres' })
     nombre: string;
 
-    @ApiPropertyOptional({ description: 'Provincia a la que pertenece la ciudad', example: 'Sevilla' })
+    @ApiPropertyOptional({
+        description: 'Provincia a la que pertenece la ciudad',
+        example: 'Sevilla',
+    })
     @IsString()
     @IsOptional()
     provincia?: string;
 
-    @ApiPropertyOptional({ description: 'País de la ciudad', example: 'España' })
+    @ApiPropertyOptional({
+        description: 'País de la ciudad',
+        example: 'España',
+    })
     @IsString()
     @IsOptional()
     pais?: string;

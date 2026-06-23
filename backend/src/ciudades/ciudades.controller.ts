@@ -10,7 +10,12 @@ import {
     ParseIntPipe,
     UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+    ApiTags,
+    ApiOperation,
+    ApiResponse,
+    ApiBearerAuth,
+} from '@nestjs/swagger';
 import { CiudadesService } from './ciudades.service';
 import { CreateCiudadeDto } from './dto/create-ciudade.dto';
 import { UpdateCiudadeDto } from './dto/update-ciudade.dto';
@@ -20,32 +25,22 @@ import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
 
 @ApiTags('ciudades')
-@ApiBearerAuth('access-token')
 @Controller('ciudades')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(RolUsuario.ADMIN)
 export class CiudadesController {
     constructor(private readonly ciudadesService: CiudadesService) {}
 
-    @ApiOperation({ summary: 'Crear una nueva ciudad (solo administrador)' })
-    @ApiResponse({ status: 201, description: 'Ciudad creada correctamente' })
-    @ApiResponse({ status: 401, description: 'No autenticado' })
-    @ApiResponse({ status: 403, description: 'Sin permisos de administrador' })
-    @Post()
-    create(@Body() createCiudadeDto: CreateCiudadeDto) {
-        return this.ciudadesService.create(createCiudadeDto);
-    }
-
-    @ApiOperation({ summary: 'Listar todas las ciudades (solo administrador)' })
+    @ApiOperation({ summary: 'Listar todas las ciudades' })
     @ApiResponse({ status: 200, description: 'Lista de ciudades' })
-    @ApiResponse({ status: 401, description: 'No autenticado' })
     @Get()
     findAll() {
         return this.ciudadesService.findAll();
     }
 
     @ApiOperation({ summary: 'Buscar ciudades por nombre' })
-    @ApiResponse({ status: 200, description: 'Ciudades que coinciden con el nombre' })
+    @ApiResponse({
+        status: 200,
+        description: 'Ciudades que coinciden con el nombre',
+    })
     @Get('buscar')
     buscar(@Query('nombre') nombre: string) {
         return this.ciudadesService.buscarPorNombre(nombre);
@@ -59,10 +54,35 @@ export class CiudadesController {
         return this.ciudadesService.buscarHermandadesPorCiudad(nombreCiudad);
     }
 
-    @ApiOperation({ summary: 'Actualizar los datos de una ciudad' })
-    @ApiResponse({ status: 200, description: 'Ciudad actualizada correctamente' })
+    @ApiOperation({ summary: 'Obtener una ciudad por ID' })
+    @ApiResponse({ status: 200, description: 'Datos de la ciudad' })
     @ApiResponse({ status: 404, description: 'Ciudad no encontrada' })
+    @Get(':id')
+    findOne(@Param('id', ParseIntPipe) id: number) {
+        return this.ciudadesService.findOne(id);
+    }
+
+    @ApiOperation({ summary: 'Crear una nueva ciudad (solo administrador)' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 201, description: 'Ciudad creada correctamente' })
+    @Post()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN)
+    create(@Body() createCiudadeDto: CreateCiudadeDto) {
+        return this.ciudadesService.create(createCiudadeDto);
+    }
+
+    @ApiOperation({
+        summary: 'Actualizar los datos de una ciudad (solo administrador)',
+    })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({
+        status: 200,
+        description: 'Ciudad actualizada correctamente',
+    })
     @Patch(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN)
     update(
         @Param('id', ParseIntPipe) id: number,
         @Body() updateCiudadeDto: UpdateCiudadeDto,
@@ -71,9 +91,11 @@ export class CiudadesController {
     }
 
     @ApiOperation({ summary: 'Eliminar una ciudad (solo administrador)' })
+    @ApiBearerAuth('access-token')
     @ApiResponse({ status: 200, description: 'Ciudad eliminada correctamente' })
-    @ApiResponse({ status: 404, description: 'Ciudad no encontrada' })
     @Delete(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN)
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.ciudadesService.remove(id);
     }

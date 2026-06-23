@@ -10,7 +10,12 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+    ApiTags,
+    ApiOperation,
+    ApiResponse,
+    ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
@@ -27,7 +32,9 @@ export class AdminController {
 
     // --- Usuarios (HUAP-01) ---
 
-    @ApiOperation({ summary: 'Listar todos los usuarios con filtros opcionales' })
+    @ApiOperation({
+        summary: 'Listar todos los usuarios con filtros opcionales',
+    })
     @ApiResponse({ status: 200, description: 'Lista de usuarios' })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @ApiResponse({ status: 403, description: 'Sin permisos de administrador' })
@@ -49,7 +56,10 @@ export class AdminController {
     }
 
     @ApiOperation({ summary: 'Verificar un usuario' })
-    @ApiResponse({ status: 200, description: 'Usuario verificado correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Usuario verificado correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
     @Put('usuarios/:id/verificar')
     verificarUsuario(@Param('id', ParseIntPipe) id: number) {
@@ -57,7 +67,10 @@ export class AdminController {
     }
 
     @ApiOperation({ summary: 'Bloquear un usuario' })
-    @ApiResponse({ status: 200, description: 'Usuario bloqueado correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Usuario bloqueado correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
     @Put('usuarios/:id/bloquear')
     bloquearUsuario(@Param('id', ParseIntPipe) id: number) {
@@ -65,7 +78,10 @@ export class AdminController {
     }
 
     @ApiOperation({ summary: 'Desbloquear un usuario' })
-    @ApiResponse({ status: 200, description: 'Usuario desbloqueado correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Usuario desbloqueado correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
     @Put('usuarios/:id/desbloquear')
     desbloquearUsuario(@Param('id', ParseIntPipe) id: number) {
@@ -89,13 +105,23 @@ export class AdminController {
     @Patch('usuarios/:id')
     editarUsuario(
         @Param('id', ParseIntPipe) id: number,
-        @Body() dto: { nombre?: string; username?: string; email?: string; rol?: RolUsuario; password?: string },
+        @Body()
+        dto: {
+            nombre?: string;
+            username?: string;
+            email?: string;
+            rol?: RolUsuario;
+            password?: string;
+        },
     ) {
         return this.adminService.editarUsuario(id, dto);
     }
 
     @ApiOperation({ summary: 'Eliminar un usuario permanentemente' })
-    @ApiResponse({ status: 200, description: 'Usuario eliminado correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Usuario eliminado correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
     @Delete('usuarios/:id')
     eliminarUsuario(@Param('id', ParseIntPipe) id: number) {
@@ -112,7 +138,10 @@ export class AdminController {
     }
 
     @ApiOperation({ summary: 'Verificar una hermandad' })
-    @ApiResponse({ status: 200, description: 'Hermandad verificada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Hermandad verificada correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Hermandad no encontrada' })
     @Put('hermandades/:id/verificar')
     verificarHermandad(@Param('id', ParseIntPipe) id: number) {
@@ -120,7 +149,10 @@ export class AdminController {
     }
 
     @ApiOperation({ summary: 'Editar datos de una hermandad' })
-    @ApiResponse({ status: 200, description: 'Hermandad editada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Hermandad editada correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Hermandad no encontrada' })
     @Put('hermandades/:id')
     editarHermandad(@Param('id', ParseIntPipe) id: number, @Body() dto: any) {
@@ -128,7 +160,10 @@ export class AdminController {
     }
 
     @ApiOperation({ summary: 'Eliminar una hermandad permanentemente' })
-    @ApiResponse({ status: 200, description: 'Hermandad eliminada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Hermandad eliminada correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Hermandad no encontrada' })
     @Delete('hermandades/:id')
     eliminarHermandad(@Param('id', ParseIntPipe) id: number) {
@@ -155,7 +190,10 @@ export class AdminController {
     // --- Publicaciones (HUAP-01) ---
 
     @ApiOperation({ summary: 'Eliminar una publicación (moderación)' })
-    @ApiResponse({ status: 200, description: 'Publicación eliminada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Publicación eliminada correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Publicación no encontrada' })
     @Delete('publicaciones/:id')
     eliminarPublicacion(@Param('id', ParseIntPipe) id: number) {
@@ -164,8 +202,14 @@ export class AdminController {
 
     // --- Estadísticas (HUAP-01) ---
 
-    @ApiOperation({ summary: 'Obtener estadísticas generales de la plataforma' })
-    @ApiResponse({ status: 200, description: 'Estadísticas de usuarios, hermandades, bandas y publicaciones' })
+    @ApiOperation({
+        summary: 'Obtener estadísticas generales de la plataforma',
+    })
+    @ApiResponse({
+        status: 200,
+        description:
+            'Estadísticas de usuarios, hermandades, bandas y publicaciones',
+    })
     @Get('estadisticas')
     getEstadisticas() {
         return this.adminService.getEstadisticas();
@@ -173,8 +217,14 @@ export class AdminController {
 
     // --- Ciudades con contadores (HUAP-02) ---
 
-    @ApiOperation({ summary: 'Listar ciudades con sus contadores de hermandades y procesiones' })
-    @ApiResponse({ status: 200, description: 'Lista paginada de ciudades con contadores' })
+    @ApiOperation({
+        summary:
+            'Listar ciudades con sus contadores de hermandades y procesiones',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Lista paginada de ciudades con contadores',
+    })
     @Get('ciudades')
     getCiudades(
         @Query('page') page?: string,

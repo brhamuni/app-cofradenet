@@ -40,7 +40,9 @@ export class SearchService {
         if (filtro === 'todo' || filtro === 'ciudades') {
             resultados.ciudades = await this.ciudadesRepository
                 .createQueryBuilder('ciudad')
-                .where('unaccent(ciudad.nombre) ILIKE unaccent(:patron)', { patron })
+                .where('unaccent(ciudad.nombre) ILIKE unaccent(:patron)', {
+                    patron,
+                })
                 .take(10)
                 .getMany();
         }
@@ -52,7 +54,7 @@ export class SearchService {
                 // Añadido: Búsqueda por nombre OR nombrePopular
                 .where(
                     '(unaccent(hermandad.nombre) ILIKE unaccent(:patron) OR unaccent(hermandad.nombrePopular) ILIKE unaccent(:patron))',
-                    { patron }
+                    { patron },
                 )
                 .take(10)
                 .getMany();
@@ -62,8 +64,10 @@ export class SearchService {
             resultados.bandas = await this.bandasRepository
                 .createQueryBuilder('banda')
                 // Añadido: join con ciudad para que el frontend pueda mostrar de dónde es
-                .leftJoinAndSelect('banda.ciudad', 'ciudad') 
-                .where('unaccent(banda.nombre) ILIKE unaccent(:patron)', { patron })
+                .leftJoinAndSelect('banda.ciudad', 'ciudad')
+                .where('unaccent(banda.nombre) ILIKE unaccent(:patron)', {
+                    patron,
+                })
                 .take(10)
                 .getMany();
         }
@@ -72,7 +76,9 @@ export class SearchService {
             resultados.procesiones = await this.procesionesRepository
                 .createQueryBuilder('procesion')
                 .leftJoinAndSelect('procesion.hermandad', 'hermandad')
-                .where('unaccent(procesion.nombre) ILIKE unaccent(:patron)', { patron })
+                .where('unaccent(procesion.nombre) ILIKE unaccent(:patron)', {
+                    patron,
+                })
                 .orderBy('procesion.fecha', 'ASC')
                 .take(10)
                 .getMany();

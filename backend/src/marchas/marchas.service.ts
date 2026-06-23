@@ -140,7 +140,8 @@ export class MarchasService {
 
         // 2. Filtramos el array para quitar la marcha con ese ID
         // Si tipo es 'repertorio', editamos usuario.repertorio
-        usuario[tipo] = usuario[tipo].filter((m) => m.id !== marchaId);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        usuario[tipo] = (usuario[tipo] as Marcha[]).filter((m) => m.id !== marchaId);
 
         // 3. Guardamos al usuario (TypeORM eliminará la fila en la tabla intermedia)
         await this.usuariosRepo.save(usuario);

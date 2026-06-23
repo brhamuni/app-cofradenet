@@ -16,6 +16,14 @@ import { Comentario } from './comentario.entity';
 export enum TipoPublicacion {
     GENERAL = 'general',
     ITINERARIO = 'itinerario',
+    ENLACE_SOCIAL = 'enlace_social',
+}
+
+export enum PlataformaEmbed {
+    YOUTUBE = 'youtube',
+    INSTAGRAM = 'instagram',
+    TWITTER = 'twitter',
+    OTRO = 'otro',
 }
 
 @Entity('publicaciones')
@@ -29,7 +37,23 @@ export class Publicacion {
     @Column({ nullable: true })
     imagenUrl: string;
 
-    @Column({ type: 'enum', enum: TipoPublicacion, default: TipoPublicacion.GENERAL })
+    @Column({ nullable: true })
+    urlExterna: string;
+
+    @Column({ nullable: true })
+    embedUrl: string;
+
+    @Column({ type: 'text', nullable: true })
+    embedHtml: string;
+
+    @Column({ type: 'enum', enum: PlataformaEmbed, nullable: true })
+    embedPlataforma: PlataformaEmbed;
+
+    @Column({
+        type: 'enum',
+        enum: TipoPublicacion,
+        default: TipoPublicacion.GENERAL,
+    })
     tipo: TipoPublicacion;
 
     @CreateDateColumn()
@@ -45,14 +69,22 @@ export class Publicacion {
     @Column({ nullable: true })
     hermandadId: number;
 
-    @ManyToOne(() => Hermandad, { nullable: true, onDelete: 'CASCADE', eager: true })
+    @ManyToOne(() => Hermandad, {
+        nullable: true,
+        onDelete: 'CASCADE',
+        eager: true,
+    })
     @JoinColumn({ name: 'hermandadId' })
     hermandad: Hermandad;
 
     @Column({ nullable: true })
     bandaId: number;
 
-    @ManyToOne(() => Banda, { nullable: true, onDelete: 'CASCADE', eager: true })
+    @ManyToOne(() => Banda, {
+        nullable: true,
+        onDelete: 'CASCADE',
+        eager: true,
+    })
     @JoinColumn({ name: 'bandaId' })
     banda: Banda;
 

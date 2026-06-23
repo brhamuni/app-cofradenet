@@ -19,4 +19,7 @@ async function bootstrap() {
     console.log('Script de siembra finalizado.');
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+    console.error('Error en el seed:', err);
+    process.exit(1);
+});

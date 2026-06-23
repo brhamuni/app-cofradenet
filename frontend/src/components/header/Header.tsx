@@ -8,6 +8,7 @@ import { Menu, X } from 'lucide-react';
 import AuthButtons from './AuthButtons';
 import UserDropdown from './UserDropdown';
 import MobileMenu from './MobileMenu';
+import NotificationBell from './NotificationBell';
 import api from '@/app/api/axios';
 
 export default function Header() {
@@ -95,7 +96,8 @@ export default function Header() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {isLoggedIn && <NotificationBell />}
             {!isLoggedIn ? (
               <AuthButtons />
             ) : (

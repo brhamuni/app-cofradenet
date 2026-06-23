@@ -3,16 +3,28 @@ import { CreateBandaDto } from './create-banda.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateBandaDto extends PartialType(CreateBandaDto) {
-    @ApiPropertyOptional({ description: 'Nombre de la banda', example: 'Banda de Música Santa Cecilia' })
+    @ApiPropertyOptional({
+        description: 'Nombre de la banda',
+        example: 'Banda de Música Santa Cecilia',
+    })
     nombre?: string;
 
-    @ApiPropertyOptional({ description: 'Estilo musical', example: 'Banda de Música' })
+    @ApiPropertyOptional({
+        description: 'Estilo musical',
+        example: 'Banda de Música',
+    })
     estiloMusical?: string;
 
-    @ApiPropertyOptional({ description: 'Historia de la banda', example: 'Fundada en 1990...' })
+    @ApiPropertyOptional({
+        description: 'Historia de la banda',
+        example: 'Fundada en 1990...',
+    })
     historia?: string;
 
-    @ApiPropertyOptional({ description: 'IDs de marchas del repertorio', example: [1, 4, 7] })
+    @ApiPropertyOptional({
+        description: 'IDs de marchas del repertorio',
+        example: [1, 4, 7],
+    })
     repertorioIds?: number[];
 
     @ApiPropertyOptional({ description: 'ID de la ciudad', example: 2 })

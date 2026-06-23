@@ -89,14 +89,15 @@ export class HermandadesService {
         return `This action removes a #${id} hermandade`;
     }
 
-    async updateLogo(id: number, rutaImagen: string) {
+    async updateLogo(id: number, rutaImagen: string, escudoArchivoId?: string) {
         const hermandad = await this.hermandadRepo.findOneBy({ id });
 
         if (!hermandad) {
             throw new NotFoundException('Hermandad no encontrada');
         }
 
-        hermandad.imagenEscudo = rutaImagen; // Guardamos la ruta
+        hermandad.imagenEscudo = rutaImagen;
+        if (escudoArchivoId) hermandad.escudoArchivoId = escudoArchivoId;
         return await this.hermandadRepo.save(hermandad);
     }
 

@@ -10,7 +10,13 @@ import { Publicacion } from '@backend/publicaciones/entities/publicacion.entity'
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Usuario, Hermandad, Banda, Ciudad, Publicacion]),
+        TypeOrmModule.forFeature([
+            Usuario,
+            Hermandad,
+            Banda,
+            Ciudad,
+            Publicacion,
+        ]),
     ],
     controllers: [AdminController],
     providers: [AdminService],

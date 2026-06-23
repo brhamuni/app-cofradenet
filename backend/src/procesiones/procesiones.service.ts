@@ -114,17 +114,32 @@ export class ProcesionesService {
             return { message: 'Procesión eliminada por el administrador' };
         }
 
-        if (!procesion.hermandad.usuario || procesion.hermandad.usuario.id !== user.id) {
-            throw new ForbiddenException('No tienes permiso para borrar esta procesión');
+        if (
+            !procesion.hermandad.usuario ||
+            procesion.hermandad.usuario.id !== user.id
+        ) {
+            throw new ForbiddenException(
+                'No tienes permiso para borrar esta procesión',
+            );
         }
 
         await this.procesionRepo.remove(procesion);
         return { message: 'Procesión eliminada correctamente' };
     }
 
-    async asignarBanda(procesionId: number, bandaId: number, anio: number, ubicacion: string) {
-        const procesion = await this.procesionRepo.findOne({ where: { id: procesionId } });
-        if (!procesion) throw new NotFoundException('No se ha podido encontrar ninguna procesion');
+    async asignarBanda(
+        procesionId: number,
+        bandaId: number,
+        anio: number,
+        ubicacion: string,
+    ) {
+        const procesion = await this.procesionRepo.findOne({
+            where: { id: procesionId },
+        });
+        if (!procesion)
+            throw new NotFoundException(
+                'No se ha podido encontrar ninguna procesion',
+            );
 
         await this.bandaRepo.findOne({ where: { id: bandaId } });
 
@@ -148,16 +163,27 @@ export class ProcesionesService {
         });
     }
 
-    async addParticipacion(procesionId: number, dto: { bandaId: number; anio: number; ubicacion?: string }) {
-        const procesion = await this.procesionRepo.findOneBy({ id: procesionId });
+    async addParticipacion(
+        procesionId: number,
+        dto: { bandaId: number; anio: number; ubicacion?: string },
+    ) {
+        const procesion = await this.procesionRepo.findOneBy({
+            id: procesionId,
+        });
         if (!procesion) throw new NotFoundException('Procesión no encontrada');
         const nueva = this.participacionRepo.create({ ...dto, procesionId });
         return this.participacionRepo.save(nueva);
     }
 
-    async updateParticipacion(pid: number, dto: Partial<{ bandaId: number; anio: number; ubicacion: string }>) {
+    async updateParticipacion(
+        pid: number,
+        dto: Partial<{ bandaId: number; anio: number; ubicacion: string }>,
+    ) {
         await this.participacionRepo.update(pid, dto);
-        return this.participacionRepo.findOne({ where: { id: pid }, relations: ['banda'] });
+        return this.participacionRepo.findOne({
+            where: { id: pid },
+            relations: ['banda'],
+        });
     }
 
     async removeParticipacion(pid: number) {
@@ -175,28 +201,63 @@ export class ProcesionesService {
         });
     }
 
-    async createItinerario(procesionId: number, dto: { anio: number; horarioSalida?: string; horarioEntrada?: string; recorrido?: string }) {
-        const procesion = await this.procesionRepo.findOneBy({ id: procesionId });
+    async createItinerario(
+        procesionId: number,
+        dto: {
+            anio: number;
+            horarioSalida?: string;
+            horarioEntrada?: string;
+            recorrido?: string;
+        },
+    ) {
+        const procesion = await this.procesionRepo.findOneBy({
+            id: procesionId,
+        });
         if (!procesion) throw new NotFoundException('Procesión no encontrada');
         const nuevo = this.itinerarioRepo.create({ ...dto, procesionId });
         return this.itinerarioRepo.save(nuevo);
     }
 
-    async updateItinerario(itinerarioId: number, dto: { horarioSalida?: string; horarioEntrada?: string; recorrido?: string }) {
+    async updateItinerario(
+        itinerarioId: number,
+        dto: {
+            horarioSalida?: string;
+            horarioEntrada?: string;
+            recorrido?: string;
+        },
+    ) {
         await this.itinerarioRepo.update(itinerarioId, dto);
         return this.itinerarioRepo.findOneBy({ id: itinerarioId });
     }
 
     // --- Pasos (HUAH-02) ---
 
-    async createPaso(procesionId: number, dto: { nombre: string; tipo?: string; orden?: number; descripcion?: string }) {
-        const procesion = await this.procesionRepo.findOneBy({ id: procesionId });
+    async createPaso(
+        procesionId: number,
+        dto: {
+            nombre: string;
+            tipo?: string;
+            orden?: number;
+            descripcion?: string;
+        },
+    ) {
+        const procesion = await this.procesionRepo.findOneBy({
+            id: procesionId,
+        });
         if (!procesion) throw new NotFoundException('Procesión no encontrada');
         const nuevo = this.pasoRepo.create({ ...dto, procesionId });
         return this.pasoRepo.save(nuevo);
     }
 
-    async updatePaso(pasoId: number, dto: Partial<{ nombre: string; tipo: string; orden: number; descripcion: string }>) {
+    async updatePaso(
+        pasoId: number,
+        dto: Partial<{
+            nombre: string;
+            tipo: string;
+            orden: number;
+            descripcion: string;
+        }>,
+    ) {
         await this.pasoRepo.update(pasoId, dto);
         return this.pasoRepo.findOneBy({ id: pasoId });
     }
@@ -215,7 +276,10 @@ export class ProcesionesService {
             })
             .then((procesion) => {
                 if (procesion) {
-                    procesion.participaciones = procesion.participaciones.filter((p) => p.anio === anio);
+                    procesion.participaciones =
+                        procesion.participaciones.filter(
+                            (p) => p.anio === anio,
+                        );
                 }
                 return procesion;
             });
@@ -260,16 +324,34 @@ export class ProcesionesService {
         const ficha = await this.procesionRepo
             .createQueryBuilder('procesion')
             .leftJoinAndSelect('procesion.hermandad', 'hermandad')
-            .leftJoinAndSelect('procesion.itinerarios', 'itinerario', 'itinerario.anio = :anio', { anio })
-            .leftJoinAndSelect('procesion.participaciones', 'participacion', 'participacion.anio = :anio', { anio })
+            .leftJoinAndSelect(
+                'procesion.itinerarios',
+                'itinerario',
+                'itinerario.anio = :anio',
+                { anio },
+            )
+            .leftJoinAndSelect(
+                'procesion.participaciones',
+                'participacion',
+                'participacion.anio = :anio',
+                { anio },
+            )
             .leftJoinAndSelect('participacion.banda', 'banda')
             .where('procesion.id = :procesionId', { procesionId })
             .getOne();
 
-        if (!ficha) throw new NotFoundException(`Procesión con ID ${procesionId} no encontrada`);
+        if (!ficha)
+            throw new NotFoundException(
+                `Procesión con ID ${procesionId} no encontrada`,
+            );
 
-        if (ficha.itinerarios.length === 0 && ficha.participaciones.length === 0) {
-            throw new NotFoundException(`La procesión no tiene datos registrados para el año ${anio}`);
+        if (
+            ficha.itinerarios.length === 0 &&
+            ficha.participaciones.length === 0
+        ) {
+            throw new NotFoundException(
+                `La procesión no tiene datos registrados para el año ${anio}`,
+            );
         }
 
         return ficha;
@@ -311,7 +393,13 @@ export class ProcesionesService {
      * @see ProcesionesController.buscar
      * @see https://typeorm.io/#/select-query-builder
      */
-    async buscarProcesiones(ciudadNombre?: string, diaSemana?: string, nombre?: string, hermandad?: string, banda?: string) {
+    async buscarProcesiones(
+        ciudadNombre?: string,
+        diaSemana?: string,
+        nombre?: string,
+        hermandad?: string,
+        banda?: string,
+    ) {
         const query = this.procesionRepo
             .createQueryBuilder('procesion')
             .leftJoinAndSelect('procesion.hermandad', 'hermandad')
@@ -320,19 +408,27 @@ export class ProcesionesService {
             .leftJoinAndSelect('participacion.banda', 'banda');
 
         if (ciudadNombre) {
-            query.andWhere('ciudad.nombre ILIKE :ciudadNombre', { ciudadNombre: `%${ciudadNombre}%` });
+            query.andWhere('ciudad.nombre ILIKE :ciudadNombre', {
+                ciudadNombre: `%${ciudadNombre}%`,
+            });
         }
         if (diaSemana) {
             query.andWhere('procesion.diaSemana = :diaSemana', { diaSemana });
         }
         if (nombre) {
-            query.andWhere('procesion.nombre ILIKE :nombre', { nombre: `%${nombre}%` });
+            query.andWhere('procesion.nombre ILIKE :nombre', {
+                nombre: `%${nombre}%`,
+            });
         }
         if (hermandad) {
-            query.andWhere('hermandad.nombre ILIKE :hermandad', { hermandad: `%${hermandad}%` });
+            query.andWhere('hermandad.nombre ILIKE :hermandad', {
+                hermandad: `%${hermandad}%`,
+            });
         }
         if (banda) {
-            query.andWhere('banda.nombre ILIKE :banda', { banda: `%${banda}%` });
+            query.andWhere('banda.nombre ILIKE :banda', {
+                banda: `%${banda}%`,
+            });
         }
 
         return await query.getMany();

@@ -1,11 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { getCorsOrigin, getListenPort } from './config/env.js';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+    const config = app.get(ConfigService);
     app.use(cookieParser());
 
     app.useGlobalPipes(
@@ -17,11 +20,11 @@ async function bootstrap() {
     );
 
     app.enableCors({
-        origin: process.env.CORS_ORIGIN ?? 'http://localhost:3001',
+        origin: getCorsOrigin(config),
         credentials: true,
     });
 
-    const config = new DocumentBuilder()
+    const swaggerConfig = new DocumentBuilder()
         .setTitle('CofradeNet API')
         .setDescription('API REST de la plataforma integral de gestión cofrade')
         .setVersion('2.0')
@@ -43,9 +46,10 @@ async function bootstrap() {
         .addTag('marchas', 'Marchas procesionales')
         .addTag('search', 'Búsqueda global')
         .addTag('admin', 'Panel de administración')
+        .addTag('archivos', 'Archivos multimedia (PostgreSQL + R2)')
         .build();
 
-    const document = SwaggerModule.createDocument(app, config);
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup('docs', app, document, {
         swaggerOptions: {
             persistAuthorization: true,
@@ -54,6 +58,7 @@ async function bootstrap() {
         },
     });
 
-    await app.listen(process.env.PORT ?? 3000);
+    const port = getListenPort(config);
+    await app.listen(port, '0.0.0.0');
 }
-bootstrap();
+void bootstrap();

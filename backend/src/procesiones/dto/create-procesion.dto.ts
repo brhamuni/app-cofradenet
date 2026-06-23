@@ -15,7 +15,10 @@ class PuntoItinerarioDto {
     @IsNumber()
     orden: number;
 
-    @ApiProperty({ description: 'Nombre del lugar', example: 'Iglesia de San Gil' })
+    @ApiProperty({
+        description: 'Nombre del lugar',
+        example: 'Iglesia de San Gil',
+    })
     @IsString()
     nombreLugar: string;
 
@@ -29,26 +32,41 @@ class PuntoItinerarioDto {
 }
 
 export class CreateProcesionDto {
-    @ApiProperty({ description: 'Nombre de la procesión', example: 'Procesión del Gran Poder' })
+    @ApiProperty({
+        description: 'Nombre de la procesión',
+        example: 'Procesión del Gran Poder',
+    })
     @IsString()
     nombre: string;
 
-    @ApiProperty({ description: 'Día de la semana de la procesión', example: 'Viernes Santo' })
+    @ApiProperty({
+        description: 'Día de la semana de la procesión',
+        example: 'Viernes Santo',
+    })
     @IsString()
     diaSemana: string;
 
-    @ApiProperty({ description: 'Fecha de la procesión en formato ISO 8601', example: '2025-04-18' })
+    @ApiProperty({
+        description: 'Fecha de la procesión en formato ISO 8601',
+        example: '2025-04-18',
+    })
     @IsDateString()
     fecha: string;
 
-    @ApiProperty({ description: 'Hora de salida en formato HH:mm:ss', example: '21:00:00' })
+    @ApiProperty({
+        description: 'Hora de salida en formato HH:mm:ss',
+        example: '21:00:00',
+    })
     @IsString()
     @Matches(/^([01]\d|2[0-3]):?([0-5]\d):?([0-5]\d)$/, {
         message: 'La hora debe tener formato HH:mm:ss',
     })
     horaSalida: string;
 
-    @ApiPropertyOptional({ description: 'Hora de entrada en formato HH:mm:ss', example: '02:30:00' })
+    @ApiPropertyOptional({
+        description: 'Hora de entrada en formato HH:mm:ss',
+        example: '02:30:00',
+    })
     @IsString()
     @IsOptional()
     @Matches(/^([01]\d|2[0-3]):?([0-5]\d):?([0-5]\d)$/, {
@@ -60,7 +78,10 @@ export class CreateProcesionDto {
     @IsNumber()
     hermandadId: number;
 
-    @ApiPropertyOptional({ description: 'Puntos del itinerario procesional', type: [PuntoItinerarioDto] })
+    @ApiPropertyOptional({
+        description: 'Puntos del itinerario procesional',
+        type: [PuntoItinerarioDto],
+    })
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => PuntoItinerarioDto)

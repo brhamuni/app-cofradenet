@@ -7,7 +7,7 @@ import { HermandadesModule } from './hermandades/hermandades.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { BandasModule } from './bandas/bandas.module';
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AdminModule } from './admin/admin.module';
 import { MarchasModule } from './marchas/marchas.module';
 import { ProcesionesModule } from './procesiones/procesiones.module';
@@ -20,20 +20,27 @@ import { SeedModule } from './seed/seed.module';
 import { SearchModule } from './search/search.module';
 import { PublicacionesModule } from './publicaciones/publicaciones.module';
 import { SeguimientosModule } from './seguimientos/seguimientos.module';
+import { UbicacionModule } from './ubicacion/ubicacion.module';
+import { MediaModule } from './media/media.module';
+import { ArchivosModule } from './archivos/archivos.module';
+import { CalendarioModule } from './calendario/calendario.module';
+import { NotificacionesModule } from './notificaciones/notificaciones.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { buildTypeOrmConfig } from './config/database.config';
+import { resolveEnvFilePaths } from './config/env';
+
+const envFiles = resolveEnvFilePaths();
+
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
+            ...(envFiles.length > 0 ? { envFilePath: envFiles } : {}),
         }),
-        TypeOrmModule.forRoot({
-            type: 'postgres',
-            host: process.env.DB_HOST ?? 'localhost',
-            port: parseInt(process.env.DB_PORT ?? '5432', 10),
-            username: process.env.DB_USERNAME ?? 'postgres',
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME ?? 'cofradenet_db',
-            autoLoadEntities: true,
-            synchronize: true,
+        TypeOrmModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: buildTypeOrmConfig,
         }),
         ServeStaticModule.forRoot({
             rootPath: join(__dirname, '..', 'uploads'),
@@ -54,6 +61,12 @@ import { SeguimientosModule } from './seguimientos/seguimientos.module';
         SearchModule,
         PublicacionesModule,
         SeguimientosModule,
+        UbicacionModule,
+        MediaModule,
+        ArchivosModule,
+        CalendarioModule,
+        ScheduleModule.forRoot(),
+        NotificacionesModule,
     ],
     controllers: [AppController],
     providers: [AppService],

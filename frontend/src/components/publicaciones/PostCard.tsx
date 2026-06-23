@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Trash2, MapPin, Clock, Heart, MessageCircle } from 'lucide-react';
+import { Trash2, MapPin, Clock, Heart, MessageCircle, ExternalLink } from 'lucide-react';
 import api from '@/app/api/axios';
 import { resolveImg } from '@/lib/api';
 
@@ -104,6 +104,7 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
   };
 
   const esItinerario = post.tipo === 'itinerario';
+  const esEnlaceSocial = post.tipo === 'enlace_social' && post.urlExterna;
   const currentUserId = typeof window !== 'undefined'
     ? (() => { try { const t = localStorage.getItem('token'); if (!t) return null; return JSON.parse(atob(t.split('.')[1]))?.id ?? null; } catch { return null; } })()
     : null;
@@ -164,6 +165,7 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
             className="mt-3 w-full rounded-xl object-cover max-h-72"
           />
         )}
+        {esEnlaceSocial && <SocialEmbed url={post.urlExterna} />}
       </div>
 
       {/* Barra de acciones */}
@@ -244,6 +246,54 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
         </div>
       )}
     </div>
+  );
+}
+
+function getYoutubeId(url: string): string | null {
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function SocialEmbed({ url }: { url: string }) {
+  const ytId = getYoutubeId(url);
+
+  if (ytId) {
+    return (
+      <div className="mt-3 rounded-xl overflow-hidden border border-gray-100">
+        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+          <iframe
+            className="absolute inset-0 w-full h-full"
+            src={`https://www.youtube.com/embed/${ytId}`}
+            title="YouTube video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const isInstagram = url.includes('instagram.com');
+  const isTwitter = url.includes('twitter.com') || url.includes('x.com');
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-3 flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-xl hover:bg-gray-100 transition-colors group"
+    >
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg">
+        {isInstagram ? '📸' : isTwitter ? '🐦' : '🔗'}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-black text-gray-700 truncate">{url}</p>
+        <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
+          {isInstagram ? 'Instagram' : isTwitter ? 'X / Twitter' : 'Enlace externo'}
+        </p>
+      </div>
+      <ExternalLink size={14} className="text-gray-400 shrink-0 group-hover:text-cofrade-main transition-colors" />
+    </a>
   );
 }
 

@@ -7,18 +7,11 @@ import {
   Eye, Ban, Edit, Trash2, Plus, X,
 } from 'lucide-react';
 import { API } from '@/lib/api';
+import { parseTokenFromStorage } from '@/lib/jwt';
 
 function authHeaders() {
   const token = localStorage.getItem('token');
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-}
-
-function parseToken(): { id: number; rol: string } | null {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-  } catch { return null; }
 }
 
 // --- Badges ---
@@ -200,7 +193,7 @@ export default function AdminPage() {
 
   // Guard: solo admin
   useEffect(() => {
-    const user = parseToken();
+    const user = parseTokenFromStorage();
     if (!user || user.rol !== 'admin') router.replace('/');
   }, [router]);
 

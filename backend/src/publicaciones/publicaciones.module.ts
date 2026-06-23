@@ -8,7 +8,14 @@ import { PublicacionesService } from './publicaciones.service';
 import { PublicacionesController } from './publicaciones.controller';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Publicacion, MeGusta, Comentario, Seguimiento])],
+    imports: [
+        TypeOrmModule.forFeature([
+            Publicacion,
+            MeGusta,
+            Comentario,
+            Seguimiento,
+        ]),
+    ],
     controllers: [PublicacionesController],
     providers: [PublicacionesService],
     exports: [PublicacionesService],

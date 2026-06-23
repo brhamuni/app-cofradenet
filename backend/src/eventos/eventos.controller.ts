@@ -42,7 +42,10 @@ export class EventosController {
     }
 
     @ApiOperation({ summary: 'Actualizar un evento' })
-    @ApiResponse({ status: 200, description: 'Evento actualizado correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Evento actualizado correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Evento no encontrado' })
     @Patch('/:id')
     update(

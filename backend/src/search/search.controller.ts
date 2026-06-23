@@ -7,8 +7,14 @@ import { SearchService } from './search.service';
 export class SearchController {
     constructor(private readonly searchService: SearchService) {}
 
-    @ApiOperation({ summary: 'Búsqueda global por hermandades, bandas, procesiones y usuarios' })
-    @ApiResponse({ status: 200, description: 'Resultados de la búsqueda global' })
+    @ApiOperation({
+        summary:
+            'Búsqueda global por hermandades, bandas, procesiones y usuarios',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Resultados de la búsqueda global',
+    })
     @Get()
     async handleSearch(
         @Query('q') query: string,

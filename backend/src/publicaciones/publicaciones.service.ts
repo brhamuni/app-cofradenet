@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    ForbiddenException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Publicacion } from './entities/publicacion.entity';
@@ -21,18 +25,25 @@ export class PublicacionesService {
         private readonly seguimientoRepo: Repository<Seguimiento>,
     ) {}
 
-    async create(dto: CreatePublicacionDto, autor: Usuario): Promise<Publicacion> {
+    async create(
+        dto: CreatePublicacionDto,
+        autor: Usuario,
+    ): Promise<Publicacion> {
         const publicacion = this.repo.create({ ...dto, autorId: autor.id });
         return this.repo.save(publicacion);
     }
 
     private buildQuery(alias = 'p') {
-        return this.repo.createQueryBuilder(alias)
+        return this.repo
+            .createQueryBuilder(alias)
             .leftJoinAndSelect(`${alias}.autor`, 'autor')
             .leftJoinAndSelect(`${alias}.hermandad`, 'hermandad')
             .leftJoinAndSelect(`${alias}.banda`, 'banda')
             .loadRelationCountAndMap(`${alias}.likesCount`, `${alias}.meGustas`)
-            .loadRelationCountAndMap(`${alias}.comentariosCount`, `${alias}.comentarios`);
+            .loadRelationCountAndMap(
+                `${alias}.comentariosCount`,
+                `${alias}.comentarios`,
+            );
     }
 
     findByHermandad(hermandadId: number): Promise<any[]> {
@@ -51,16 +62,34 @@ export class PublicacionesService {
 
     findByUsuario(autorId: number): Promise<any[]> {
         return this.buildQuery()
-            .where('p.autorId = :id AND p.hermandadId IS NULL AND p.bandaId IS NULL', { id: autorId })
+            .where(
+                'p.autorId = :id AND p.hermandadId IS NULL AND p.bandaId IS NULL',
+                { id: autorId },
+            )
             .orderBy('p.fechaCreacion', 'DESC')
             .getMany();
     }
 
-    async getFeed(userId: number, page = 1, limit = 20): Promise<{ publicaciones: any[]; total: number; page: number; limit: number }> {
-        const seguimientos = await this.seguimientoRepo.find({ where: { seguidorId: userId } });
+    async getFeed(
+        userId: number,
+        page = 1,
+        limit = 20,
+    ): Promise<{
+        publicaciones: any[];
+        total: number;
+        page: number;
+        limit: number;
+    }> {
+        const seguimientos = await this.seguimientoRepo.find({
+            where: { seguidorId: userId },
+        });
 
-        const hermandadIds = seguimientos.filter((s) => s.hermandadId).map((s) => s.hermandadId);
-        const bandaIds = seguimientos.filter((s) => s.bandaId).map((s) => s.bandaId);
+        const hermandadIds = seguimientos
+            .filter((s) => s.hermandadId)
+            .map((s) => s.hermandadId);
+        const bandaIds = seguimientos
+            .filter((s) => s.bandaId)
+            .map((s) => s.bandaId);
 
         if (hermandadIds.length === 0 && bandaIds.length === 0) {
             return { publicaciones: [], total: 0, page, limit };
@@ -68,7 +97,8 @@ export class PublicacionesService {
 
         const qb = this.buildQuery();
         const conditions: string[] = [];
-        if (hermandadIds.length) conditions.push('p.hermandadId IN (:...hermandadIds)');
+        if (hermandadIds.length)
+            conditions.push('p.hermandadId IN (:...hermandadIds)');
         if (bandaIds.length) conditions.push('p.bandaId IN (:...bandaIds)');
 
         qb.where(`(${conditions.join(' OR ')})`, {
@@ -84,15 +114,32 @@ export class PublicacionesService {
         // Enrich with userLiked
         const publicacionIds = publicaciones.map((p) => (p as any).id);
         const likes = publicacionIds.length
-            ? await this.meGustaRepo.find({ where: { usuarioId: userId, publicacionId: In(publicacionIds) } })
+            ? await this.meGustaRepo.find({
+                  where: {
+                      usuarioId: userId,
+                      publicacionId: In(publicacionIds),
+                  },
+              })
             : [];
         const likedSet = new Set(likes.map((l) => l.publicacionId));
-        const enriched = publicaciones.map((p) => ({ ...(p as any), userLiked: likedSet.has((p as any).id) }));
+        const enriched = publicaciones.map((p) => ({
+            ...(p as any),
+            userLiked: likedSet.has((p as any).id),
+        }));
 
         return { publicaciones: enriched, total, page, limit };
     }
 
-    async getGeneral(userId: number | undefined, page = 1, limit = 20): Promise<{ publicaciones: any[]; total: number; page: number; limit: number }> {
+    async getGeneral(
+        userId: number | undefined,
+        page = 1,
+        limit = 20,
+    ): Promise<{
+        publicaciones: any[];
+        total: number;
+        page: number;
+        limit: number;
+    }> {
         const qb = this.buildQuery()
             .orderBy('p.fechaCreacion', 'DESC')
             .skip((page - 1) * limit)
@@ -103,10 +150,18 @@ export class PublicacionesService {
         if (userId) {
             const publicacionIds = publicaciones.map((p) => (p as any).id);
             const likes = publicacionIds.length
-                ? await this.meGustaRepo.find({ where: { usuarioId: userId, publicacionId: In(publicacionIds) } })
+                ? await this.meGustaRepo.find({
+                      where: {
+                          usuarioId: userId,
+                          publicacionId: In(publicacionIds),
+                      },
+                  })
                 : [];
             const likedSet = new Set(likes.map((l) => l.publicacionId));
-            const enriched = publicaciones.map((p) => ({ ...(p as any), userLiked: likedSet.has((p as any).id) }));
+            const enriched = publicaciones.map((p) => ({
+                ...(p as any),
+                userLiked: likedSet.has((p as any).id),
+            }));
             return { publicaciones: enriched, total, page, limit };
         }
 
@@ -124,21 +179,37 @@ export class PublicacionesService {
 
     // ── Me gusta ─────────────────────────────────────────────────────────────
 
-    async toggleLike(userId: number, publicacionId: number): Promise<{ liked: boolean; count: number }> {
-        const existing = await this.meGustaRepo.findOne({ where: { usuarioId: userId, publicacionId } });
+    async toggleLike(
+        userId: number,
+        publicacionId: number,
+    ): Promise<{ liked: boolean; count: number }> {
+        const existing = await this.meGustaRepo.findOne({
+            where: { usuarioId: userId, publicacionId },
+        });
         if (existing) {
             await this.meGustaRepo.remove(existing);
         } else {
-            await this.meGustaRepo.save(this.meGustaRepo.create({ usuarioId: userId, publicacionId }));
+            await this.meGustaRepo.save(
+                this.meGustaRepo.create({ usuarioId: userId, publicacionId }),
+            );
         }
-        const count = await this.meGustaRepo.count({ where: { publicacionId } });
+        const count = await this.meGustaRepo.count({
+            where: { publicacionId },
+        });
         return { liked: !existing, count };
     }
 
-    async getLike(publicacionId: number, userId?: number): Promise<{ count: number; userLiked: boolean }> {
-        const count = await this.meGustaRepo.count({ where: { publicacionId } });
+    async getLike(
+        publicacionId: number,
+        userId?: number,
+    ): Promise<{ count: number; userLiked: boolean }> {
+        const count = await this.meGustaRepo.count({
+            where: { publicacionId },
+        });
         const userLiked = userId
-            ? !!(await this.meGustaRepo.findOne({ where: { usuarioId: userId, publicacionId } }))
+            ? !!(await this.meGustaRepo.findOne({
+                  where: { usuarioId: userId, publicacionId },
+              }))
             : false;
         return { count, userLiked };
     }
@@ -152,15 +223,27 @@ export class PublicacionesService {
         });
     }
 
-    async crearComentario(userId: number, publicacionId: number, contenido: string): Promise<Comentario> {
-        const comentario = this.comentarioRepo.create({ usuarioId: userId, publicacionId, contenido });
+    async crearComentario(
+        userId: number,
+        publicacionId: number,
+        contenido: string,
+    ): Promise<Comentario> {
+        const comentario = this.comentarioRepo.create({
+            usuarioId: userId,
+            publicacionId,
+            contenido,
+        });
         return this.comentarioRepo.save(comentario);
     }
 
     async eliminarComentario(id: number, usuario: Usuario): Promise<void> {
         const comentario = await this.comentarioRepo.findOne({ where: { id } });
-        if (!comentario) throw new NotFoundException('Comentario no encontrado');
-        if (usuario.rol !== RolUsuario.ADMIN && comentario.usuarioId !== usuario.id) {
+        if (!comentario)
+            throw new NotFoundException('Comentario no encontrado');
+        if (
+            usuario.rol !== RolUsuario.ADMIN &&
+            comentario.usuarioId !== usuario.id
+        ) {
             throw new ForbiddenException('No puedes eliminar este comentario');
         }
         await this.comentarioRepo.remove(comentario);

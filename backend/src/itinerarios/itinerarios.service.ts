@@ -27,8 +27,8 @@ export class ItinerariosService {
         return this.itinerarioRepository.findOne({ where: { id } });
     }
 
-    update(id: number, updateItinerarioDto: UpdateItinerarioDto) {
-        return `This action updates a #${id} itinerario`; // Lo dejamos para otro día
+    update(id: number, _updateItinerarioDto: UpdateItinerarioDto) {
+        return `This action updates a #${id} itinerario`;
     }
 
     remove(id: number) {

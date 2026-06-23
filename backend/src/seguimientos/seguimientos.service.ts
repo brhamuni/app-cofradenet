@@ -4,7 +4,11 @@ import { Repository } from 'typeorm';
 import { Seguimiento } from './entities/seguimiento.entity';
 import { Usuario } from '@backend/usuarios/entities/usuario.entity';
 
-type Objetivo = { hermandadId?: number; bandaId?: number; seguidoUsuarioId?: number };
+type Objetivo = {
+    hermandadId?: number;
+    bandaId?: number;
+    seguidoUsuarioId?: number;
+};
 
 @Injectable()
 export class SeguimientosService {
@@ -14,29 +18,46 @@ export class SeguimientosService {
     ) {}
 
     private validarObjetivo(obj: Objetivo) {
-        const rellenos = [obj.hermandadId, obj.bandaId, obj.seguidoUsuarioId].filter(Boolean);
-        if (rellenos.length !== 1) throw new BadRequestException('Debes especificar exactamente un objetivo a seguir');
+        const rellenos = [
+            obj.hermandadId,
+            obj.bandaId,
+            obj.seguidoUsuarioId,
+        ].filter(Boolean);
+        if (rellenos.length !== 1)
+            throw new BadRequestException(
+                'Debes especificar exactamente un objetivo a seguir',
+            );
     }
 
-    async seguir(usuario: Usuario, obj: Objetivo): Promise<{ seguidores: number }> {
+    async seguir(
+        usuario: Usuario,
+        obj: Objetivo,
+    ): Promise<{ seguidores: number }> {
         this.validarObjetivo(obj);
         const existe = await this.repo.findOne({
             where: { seguidorId: usuario.id, ...obj },
         });
         if (!existe) {
-            await this.repo.save(this.repo.create({ seguidorId: usuario.id, ...obj }));
+            await this.repo.save(
+                this.repo.create({ seguidorId: usuario.id, ...obj }),
+            );
         }
         return { seguidores: await this.contarSeguidores(obj) };
     }
 
-    async dejarDeSeguir(usuario: Usuario, obj: Objetivo): Promise<{ seguidores: number }> {
+    async dejarDeSeguir(
+        usuario: Usuario,
+        obj: Objetivo,
+    ): Promise<{ seguidores: number }> {
         this.validarObjetivo(obj);
         await this.repo.delete({ seguidorId: usuario.id, ...obj });
         return { seguidores: await this.contarSeguidores(obj) };
     }
 
     async yoSigo(usuarioId: number, obj: Objetivo): Promise<boolean> {
-        const existe = await this.repo.findOne({ where: { seguidorId: usuarioId, ...obj } });
+        const existe = await this.repo.findOne({
+            where: { seguidorId: usuarioId, ...obj },
+        });
         return !!existe;
     }
 
@@ -44,7 +65,10 @@ export class SeguimientosService {
         return this.repo.count({ where: obj });
     }
 
-    async estadoParaUsuario(usuarioId: number, obj: Objetivo): Promise<{ sigues: boolean; seguidores: number }> {
+    async estadoParaUsuario(
+        usuarioId: number,
+        obj: Objetivo,
+    ): Promise<{ sigues: boolean; seguidores: number }> {
         const [sigues, seguidores] = await Promise.all([
             this.yoSigo(usuarioId, obj),
             this.contarSeguidores(obj),

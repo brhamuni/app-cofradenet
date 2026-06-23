@@ -193,7 +193,7 @@ export class UsuariosService {
         return await this.usuariosRepo.findOneBy({ id });
     }
 
-    update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
+    update(id: number, _updateUsuarioDto: UpdateUsuarioDto) {
         return `This action updates a #${id} usuario`;
     }
 

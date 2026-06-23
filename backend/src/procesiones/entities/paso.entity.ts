@@ -1,5 +1,11 @@
 import { Procesion } from '@backend/procesiones/entities/procesion.entity';
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('pasos')
 export class Paso {

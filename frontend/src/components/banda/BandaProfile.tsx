@@ -4,16 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { MapPin, Music, Users, Home, CheckCircle2, Edit3, ChevronRight, Calendar, BookOpen, Plus, Trash2, X } from 'lucide-react';
 import PostFeed from '../publicaciones/PostFeed';
 import FollowButton from '../seguimientos/FollowButton';
+import GaleriaMedia from '../media/GaleriaMedia';
 import { API, resolveImg } from '@/lib/api';
+import { parseTokenFromStorage } from '@/lib/jwt';
 import EditBandaModal from './EditBandaModal';
-
-function parseToken(): { id: number; rol: string } | null {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-    return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-  } catch { return null; }
-}
 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem('token');
@@ -166,6 +160,7 @@ const TABS = [
   { key: 'info', label: 'Información' },
   { key: 'repertorio', label: 'Repertorio' },
   { key: 'agenda', label: 'Agenda' },
+  { key: 'multimedia', label: 'Multimedia' },
 ] as const;
 type Tab = typeof TABS[number]['key'];
 
@@ -176,10 +171,12 @@ export default function BandaProfile({ banda }: { banda: any }) {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [modalEvento, setModalEvento] = useState<Partial<Evento> | null | false>(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [userId, setUserId] = useState<number | undefined>();
 
   useEffect(() => {
-    const user = parseToken();
+    const user = parseTokenFromStorage();
     if (!user) return;
+    setUserId(user.id);
     setCanEdit(user.rol === 'admin' || banda.usuarioId === user.id);
   }, [banda.usuarioId]);
 
@@ -376,6 +373,9 @@ export default function BandaProfile({ banda }: { banda: any }) {
                 </div>
               )}
             </div>
+          )}
+          {activeTab === 'multimedia' && (
+            <GaleriaMedia bandaId={banda.id} canEdit={canEdit} userId={userId} />
           )}
         </div>
       </div>

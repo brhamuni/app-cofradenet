@@ -55,16 +55,26 @@ export class AdminService {
      * @see AdminController.findAllUsers
      * @see getCiudadesConContadores
      */
-    async findAllUsers(filters: { rol?: string; verificado?: string; bloqueado?: string }) {
+    async findAllUsers(filters: {
+        rol?: string;
+        verificado?: string;
+        bloqueado?: string;
+    }) {
         const query = this.usuariosRepo
             .createQueryBuilder('u')
             .leftJoin('u.ciudadResidencia', 'ciudad')
             .leftJoin('u.hermandad', 'hermandad')
             .leftJoin('u.banda', 'banda')
             .select([
-                'u.id', 'u.nombre', 'u.username', 'u.email',
-                'u.rol', 'u.verificado', 'u.estaBloqueado',
-                'ciudad.id', 'ciudad.nombre',
+                'u.id',
+                'u.nombre',
+                'u.username',
+                'u.email',
+                'u.rol',
+                'u.verificado',
+                'u.estaBloqueado',
+                'ciudad.id',
+                'ciudad.nombre',
                 'hermandad.id',
                 'banda.id',
             ]);
@@ -73,10 +83,14 @@ export class AdminService {
             query.andWhere('u.rol = :rol', { rol: filters.rol });
         }
         if (filters.verificado !== undefined) {
-            query.andWhere('u.verificado = :verificado', { verificado: filters.verificado === 'true' });
+            query.andWhere('u.verificado = :verificado', {
+                verificado: filters.verificado === 'true',
+            });
         }
         if (filters.bloqueado !== undefined) {
-            query.andWhere('u.estaBloqueado = :bloqueado', { bloqueado: filters.bloqueado === 'true' });
+            query.andWhere('u.estaBloqueado = :bloqueado', {
+                bloqueado: filters.bloqueado === 'true',
+            });
         }
 
         return query.getMany();
@@ -96,7 +110,11 @@ export class AdminService {
         if (!usuario) throw new NotFoundException('Usuario no encontrado');
         usuario.verificado = true;
         await this.usuariosRepo.save(usuario);
-        return { message: 'Usuario verificado', id: usuario.id, verificado: true };
+        return {
+            message: 'Usuario verificado',
+            id: usuario.id,
+            verificado: true,
+        };
     }
 
     async bloquearUsuario(id: number) {
@@ -104,7 +122,11 @@ export class AdminService {
         if (!usuario) throw new NotFoundException('Usuario no encontrado');
         usuario.estaBloqueado = true;
         await this.usuariosRepo.save(usuario);
-        return { message: 'Usuario bloqueado', id: usuario.id, estaBloqueado: true };
+        return {
+            message: 'Usuario bloqueado',
+            id: usuario.id,
+            estaBloqueado: true,
+        };
     }
 
     async desbloquearUsuario(id: number) {
@@ -112,7 +134,11 @@ export class AdminService {
         if (!usuario) throw new NotFoundException('Usuario no encontrado');
         usuario.estaBloqueado = false;
         await this.usuariosRepo.save(usuario);
-        return { message: 'Usuario desbloqueado', id: usuario.id, estaBloqueado: false };
+        return {
+            message: 'Usuario desbloqueado',
+            id: usuario.id,
+            estaBloqueado: false,
+        };
     }
 
     async cambiarRol(id: number, rol: RolUsuario) {
@@ -123,7 +149,16 @@ export class AdminService {
         return { message: 'Rol actualizado', id: usuario.id, rol: usuario.rol };
     }
 
-    async editarUsuario(id: number, dto: { nombre?: string; username?: string; email?: string; rol?: RolUsuario; password?: string }) {
+    async editarUsuario(
+        id: number,
+        dto: {
+            nombre?: string;
+            username?: string;
+            email?: string;
+            rol?: RolUsuario;
+            password?: string;
+        },
+    ) {
         const usuario = await this.usuariosRepo.findOneBy({ id });
         if (!usuario) throw new NotFoundException('Usuario no encontrado');
 
@@ -132,10 +167,14 @@ export class AdminService {
         if (dto.username !== undefined) updates.username = dto.username;
         if (dto.email !== undefined) updates.email = dto.email;
         if (dto.rol !== undefined) updates.rol = dto.rol;
-        if (dto.password) updates.password = await bcrypt.hash(dto.password, 10);
+        if (dto.password)
+            updates.password = await bcrypt.hash(dto.password, 10);
 
         await this.usuariosRepo.update(id, updates);
-        return this.usuariosRepo.findOne({ where: { id }, relations: ['ciudadResidencia'] });
+        return this.usuariosRepo.findOne({
+            where: { id },
+            relations: ['ciudadResidencia'],
+        });
     }
 
     async eliminarUsuario(id: number) {
@@ -156,7 +195,11 @@ export class AdminService {
         if (!hermandad) throw new NotFoundException('Hermandad no encontrada');
         hermandad.verificada = true;
         await this.hermandadesRepo.save(hermandad);
-        return { message: 'Hermandad verificada', id: hermandad.id, verificada: true };
+        return {
+            message: 'Hermandad verificada',
+            id: hermandad.id,
+            verificada: true,
+        };
     }
 
     async editarHermandad(id: number, dto: any) {
@@ -199,14 +242,23 @@ export class AdminService {
     // --- Estadísticas ---
 
     async getEstadisticas() {
-        const [totalUsuarios, hermandadesVerificadas, bandasVerificadas, totalCiudades] =
-            await Promise.all([
-                this.usuariosRepo.count(),
-                this.hermandadesRepo.count({ where: { verificada: true } }),
-                this.bandasRepo.count({ where: { verificada: true } }),
-                this.ciudadesRepo.count(),
-            ]);
-        return { totalUsuarios, hermandadesVerificadas, bandasVerificadas, totalCiudades };
+        const [
+            totalUsuarios,
+            hermandadesVerificadas,
+            bandasVerificadas,
+            totalCiudades,
+        ] = await Promise.all([
+            this.usuariosRepo.count(),
+            this.hermandadesRepo.count({ where: { verificada: true } }),
+            this.bandasRepo.count({ where: { verificada: true } }),
+            this.ciudadesRepo.count(),
+        ]);
+        return {
+            totalUsuarios,
+            hermandadesVerificadas,
+            bandasVerificadas,
+            totalCiudades,
+        };
     }
 
     // --- Ciudades con contadores ---
@@ -242,7 +294,11 @@ export class AdminService {
      * @see AdminController.getCiudades
      * @see findAllUsers
      */
-    async getCiudadesConContadores(page: number = 1, limit: number = 25, buscar?: string) {
+    async getCiudadesConContadores(
+        page: number = 1,
+        limit: number = 25,
+        buscar?: string,
+    ) {
         const skip = (page - 1) * limit;
 
         const qb = this.ciudadesRepo
@@ -252,7 +308,9 @@ export class AdminService {
             .take(limit);
 
         if (buscar) {
-            qb.where('unaccent(c.nombre) ILIKE unaccent(:buscar)', { buscar: `%${buscar}%` });
+            qb.where('unaccent(c.nombre) ILIKE unaccent(:buscar)', {
+                buscar: `%${buscar}%`,
+            });
         }
 
         const [ciudades, total] = await qb.getManyAndCount();
@@ -260,10 +318,20 @@ export class AdminService {
         const data = await Promise.all(
             ciudades.map(async (c) => ({
                 ...c,
-                numHermandades: await this.hermandadesRepo.count({ where: { ciudadId: c.id } }),
-                numBandas: await this.bandasRepo.count({ where: { ciudadId: c.id } }),
+                numHermandades: await this.hermandadesRepo.count({
+                    where: { ciudadId: c.id },
+                }),
+                numBandas: await this.bandasRepo.count({
+                    where: { ciudadId: c.id },
+                }),
             })),
         );
-        return { data, total, page, totalPages: Math.ceil(total / limit), limit };
+        return {
+            data,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit),
+            limit,
+        };
     }
 }

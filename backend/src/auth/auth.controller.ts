@@ -9,7 +9,10 @@ export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
     @ApiOperation({ summary: 'Iniciar sesión con usuario y contraseña' })
-    @ApiResponse({ status: 200, description: 'Login exitoso, devuelve access_token y refresh_token' })
+    @ApiResponse({
+        status: 200,
+        description: 'Login exitoso, devuelve access_token y refresh_token',
+    })
     @ApiResponse({ status: 401, description: 'Credenciales incorrectas' })
     @HttpCode(HttpStatus.OK)
     @Post('login')
@@ -17,9 +20,14 @@ export class AuthController {
         return this.authService.login(loginDTO);
     }
 
-    @ApiOperation({ summary: 'Renovar el access token usando un refresh token' })
+    @ApiOperation({
+        summary: 'Renovar el access token usando un refresh token',
+    })
     @ApiResponse({ status: 200, description: 'Token renovado correctamente' })
-    @ApiResponse({ status: 401, description: 'Refresh token inválido o expirado' })
+    @ApiResponse({
+        status: 401,
+        description: 'Refresh token inválido o expirado',
+    })
     @HttpCode(HttpStatus.OK)
     @Post('refresh')
     refresh(@Body('refresh_token') refreshToken: string) {
