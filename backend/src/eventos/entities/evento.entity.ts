@@ -2,7 +2,6 @@ import { Banda } from '@backend/bandas/entities/banda.entity';
 import {
     Column,
     Entity,
-    JoinColumn,
     ManyToOne,
     PrimaryGeneratedColumn,
 } from 'typeorm';

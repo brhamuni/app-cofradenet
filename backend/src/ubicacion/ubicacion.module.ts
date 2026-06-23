@@ -8,7 +8,9 @@ import { EstadoPaso } from './entities/estado-paso.entity';
 import { Procesion } from '@backend/procesiones/entities/procesion.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([UbicacionTiempoReal, EstadoPaso, Procesion])],
+    imports: [
+        TypeOrmModule.forFeature([UbicacionTiempoReal, EstadoPaso, Procesion]),
+    ],
     controllers: [UbicacionController],
     providers: [UbicacionService, UbicacionGateway],
     exports: [UbicacionService],

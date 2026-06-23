@@ -13,7 +13,14 @@ import {
     BadRequestException,
     UploadedFile,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
+import {
+    ApiTags,
+    ApiOperation,
+    ApiResponse,
+    ApiBearerAuth,
+    ApiConsumes,
+} from '@nestjs/swagger';
+import type { Request } from 'express';
 import { HermandadesService } from './hermandades.service';
 import { CreateHermandadDto } from './dto/create-hermandad.dto';
 import { UpdateHermandadDto } from './dto/update-hermandad.dto';
@@ -75,7 +82,10 @@ export class HermandadesController {
 
     @ApiOperation({ summary: 'Actualizar el perfil de una hermandad' })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 200, description: 'Hermandad actualizada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Hermandad actualizada correctamente',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @ApiResponse({ status: 403, description: 'Sin permisos suficientes' })
     @ApiResponse({ status: 404, description: 'Hermandad no encontrada' })
@@ -87,12 +97,15 @@ export class HermandadesController {
         @Body() updateDto: UpdateHermandadDto,
         @Req() req,
     ) {
-        return this.hermandadesService.updatePerfil(id, updateDto, req.user);
+        return this.hermandadesService.updatePerfil(id, updateDto, req.user!);
     }
 
     @ApiOperation({ summary: 'Eliminar una hermandad (solo administrador)' })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 200, description: 'Hermandad eliminada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Hermandad eliminada correctamente',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @ApiResponse({ status: 403, description: 'Sin permisos de administrador' })
     @Delete(':id')
@@ -106,7 +119,10 @@ export class HermandadesController {
     @ApiBearerAuth('access-token')
     @ApiConsumes('multipart/form-data')
     @ApiResponse({ status: 201, description: 'Logo actualizado correctamente' })
-    @ApiResponse({ status: 400, description: 'No se proporcionó ningún archivo válido' })
+    @ApiResponse({
+        status: 400,
+        description: 'No se proporcionó ningún archivo válido',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @Post(':id/logo')
     @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard) // ✅ Actualizado
@@ -145,9 +161,14 @@ export class HermandadesController {
         );
     }
 
-    @ApiOperation({ summary: 'Verificar o desverificar una hermandad (solo administrador)' })
+    @ApiOperation({
+        summary: 'Verificar o desverificar una hermandad (solo administrador)',
+    })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 200, description: 'Estado de verificación actualizado' })
+    @ApiResponse({
+        status: 200,
+        description: 'Estado de verificación actualizado',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @ApiResponse({ status: 403, description: 'Sin permisos de administrador' })
     @Patch(':id/verificar')
@@ -169,7 +190,9 @@ export class HermandadesController {
         return this.mediaService.findByHermandad(id);
     }
 
-    @ApiOperation({ summary: 'Subir una foto/vídeo a la galería de una hermandad' })
+    @ApiOperation({
+        summary: 'Subir una foto/vídeo a la galería de una hermandad',
+    })
     @ApiBearerAuth('access-token')
     @ApiConsumes('multipart/form-data')
     @ApiResponse({ status: 201, description: 'Media añadido correctamente' })
@@ -181,8 +204,17 @@ export class HermandadesController {
         FileInterceptor('file', {
             storage: memoryStorage(),
             fileFilter: (req, file, cb) => {
-                if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp|mp4|mov|avi|webm)$/)) {
-                    return cb(new BadRequestException('Formato de archivo no permitido'), false);
+                if (
+                    !file.mimetype.match(
+                        /\/(jpg|jpeg|png|gif|webp|mp4|mov|avi|webm)$/,
+                    )
+                ) {
+                    return cb(
+                        new BadRequestException(
+                            'Formato de archivo no permitido',
+                        ),
+                        false,
+                    );
                 }
                 cb(null, true);
             },
@@ -194,13 +226,16 @@ export class HermandadesController {
         @Body() body: { titulo?: string; descripcion?: string; anio?: string },
         @Req() req,
     ) {
-        if (!file) throw new BadRequestException('No se ha subido ningún archivo');
+        if (!file)
+            throw new BadRequestException('No se ha subido ningún archivo');
         const archivo = await this.archivosService.store({
             buffer: file.buffer,
             mimeType: file.mimetype,
             originalName: file.originalname,
         });
-        const tipo = file.mimetype.startsWith('video/') ? TipoMedia.VIDEO : TipoMedia.FOTO;
+        const tipo = file.mimetype.startsWith('video/')
+            ? TipoMedia.VIDEO
+            : TipoMedia.FOTO;
         return this.mediaService.create(
             {
                 hermandadId: id,
@@ -210,22 +245,21 @@ export class HermandadesController {
             },
             this.archivosService.publicPath(archivo.id),
             tipo,
-            req.user.id,
+            req.user!.id,
             archivo.id,
         );
     }
 
-    @ApiOperation({ summary: 'Eliminar un item de la galería de una hermandad' })
+    @ApiOperation({
+        summary: 'Eliminar un item de la galería de una hermandad',
+    })
     @ApiBearerAuth('access-token')
     @ApiResponse({ status: 200, description: 'Media eliminado correctamente' })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @Delete(':id/galeria/:itemId')
     @UseGuards(JwtAuthGuard, RolesGuard, NotBlockedGuard)
     @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
-    removeGaleria(
-        @Param('itemId', ParseIntPipe) itemId: number,
-        @Req() req,
-    ) {
-        return this.mediaService.remove(itemId, req.user);
+    removeGaleria(@Param('itemId', ParseIntPipe) itemId: number, @Req() req: Request) {
+        return this.mediaService.remove(itemId, req.user!);
     }
 }

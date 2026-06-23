@@ -12,7 +12,8 @@ export class ArchivosController {
     @Get(':id')
     async serve(@Param('id') id: string, @Res() res: Response) {
         try {
-            const { archivo, stream } = await this.archivosService.getStream(id);
+            const { archivo, stream } =
+                await this.archivosService.getStream(id);
             res.setHeader('Content-Type', archivo.mimeType);
             if (archivo.originalName) {
                 res.setHeader(

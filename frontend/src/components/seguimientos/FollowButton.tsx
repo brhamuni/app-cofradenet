@@ -33,7 +33,7 @@ export default function FollowButton({ tipo, id, onCountChange }: FollowButtonPr
         }
       })
       .finally(() => setCargando(false));
-  }, [tipo, id]);
+  }, [tipo, id, onCountChange]);
 
   const toggle = async () => {
     const token = localStorage.getItem('token');

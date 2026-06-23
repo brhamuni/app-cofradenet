@@ -7,7 +7,11 @@ import { MediaItem } from './entities/media-item.entity';
 import { ArchivosModule } from '@backend/archivos/archivos.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([MediaItem]), ArchivosModule, HttpModule],
+    imports: [
+        TypeOrmModule.forFeature([MediaItem]),
+        ArchivosModule,
+        HttpModule,
+    ],
     controllers: [MediaController],
     providers: [MediaService],
     exports: [MediaService],

@@ -31,8 +31,9 @@ export class R2StorageService implements IStorageService, OnModuleInit {
             endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
             credentials: {
                 accessKeyId: this.config.getOrThrow<string>('R2_ACCESS_KEY_ID'),
-                secretAccessKey:
-                    this.config.getOrThrow<string>('R2_SECRET_ACCESS_KEY'),
+                secretAccessKey: this.config.getOrThrow<string>(
+                    'R2_SECRET_ACCESS_KEY',
+                ),
             },
         });
     }

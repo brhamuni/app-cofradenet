@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ForbiddenException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MediaItem, TipoMedia } from './entities/media-item.entity';
@@ -54,14 +59,25 @@ export class MediaService {
         ciudadId?: number;
         anio?: number;
     }): Promise<MediaItem[]> {
-        const query = this.mediaRepo.createQueryBuilder('m')
+        const query = this.mediaRepo
+            .createQueryBuilder('m')
             .orderBy('m.createdAt', 'DESC')
             .take(50);
 
-        if (filters.hermandadId) query.andWhere('m.hermandadId = :hermandadId', { hermandadId: filters.hermandadId });
-        if (filters.bandaId) query.andWhere('m.bandaId = :bandaId', { bandaId: filters.bandaId });
-        if (filters.ciudadId) query.andWhere('m.ciudadId = :ciudadId', { ciudadId: filters.ciudadId });
-        if (filters.anio) query.andWhere('m.anio = :anio', { anio: filters.anio });
+        if (filters.hermandadId)
+            query.andWhere('m.hermandadId = :hermandadId', {
+                hermandadId: filters.hermandadId,
+            });
+        if (filters.bandaId)
+            query.andWhere('m.bandaId = :bandaId', {
+                bandaId: filters.bandaId,
+            });
+        if (filters.ciudadId)
+            query.andWhere('m.ciudadId = :ciudadId', {
+                ciudadId: filters.ciudadId,
+            });
+        if (filters.anio)
+            query.andWhere('m.anio = :anio', { anio: filters.anio });
 
         return query.getMany();
     }
@@ -70,7 +86,9 @@ export class MediaService {
         const item = await this.mediaRepo.findOne({ where: { id } });
         if (!item) throw new NotFoundException('Media no encontrado');
         if (item.autorId !== user.id && user.rol !== RolUsuario.ADMIN) {
-            throw new ForbiddenException('Sin permisos para eliminar este media');
+            throw new ForbiddenException(
+                'Sin permisos para eliminar este media',
+            );
         }
         if (item.archivoId) {
             await this.archivosService.remove(item.archivoId);
@@ -78,8 +96,13 @@ export class MediaService {
         await this.mediaRepo.remove(item);
     }
 
-    async explorar(page = 1, limit = 20, tipo?: TipoMedia): Promise<{ data: MediaItem[]; total: number }> {
-        const qb = this.mediaRepo.createQueryBuilder('m')
+    async explorar(
+        page = 1,
+        limit = 20,
+        tipo?: TipoMedia,
+    ): Promise<{ data: MediaItem[]; total: number }> {
+        const qb = this.mediaRepo
+            .createQueryBuilder('m')
             .orderBy('m.createdAt', 'DESC')
             .skip((page - 1) * limit)
             .take(limit);
@@ -91,7 +114,8 @@ export class MediaService {
     async tendencias(): Promise<MediaItem[]> {
         const hace7Dias = new Date();
         hace7Dias.setDate(hace7Dias.getDate() - 7);
-        return this.mediaRepo.createQueryBuilder('m')
+        return this.mediaRepo
+            .createQueryBuilder('m')
             .where('m.createdAt >= :desde', { desde: hace7Dias })
             .orderBy('m.createdAt', 'DESC')
             .take(12)
@@ -112,14 +136,18 @@ export class MediaService {
         } else if (url.includes('twitter.com') || url.includes('x.com')) {
             apiUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}`;
         } else {
-            throw new BadRequestException('Plataforma no soportada para oEmbed');
+            throw new BadRequestException(
+                'Plataforma no soportada para oEmbed',
+            );
         }
 
         try {
             const { data } = await firstValueFrom(this.httpService.get(apiUrl));
             return data;
         } catch {
-            throw new BadRequestException('No se pudo obtener el embed para esta URL');
+            throw new BadRequestException(
+                'No se pudo obtener el embed para esta URL',
+            );
         }
     }
 }

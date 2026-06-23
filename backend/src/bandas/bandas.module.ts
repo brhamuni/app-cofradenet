@@ -12,7 +12,13 @@ import { MediaModule } from '@backend/media/media.module';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Banda, Marcha, Participacion, Evento, EnlaceExterno]),
+        TypeOrmModule.forFeature([
+            Banda,
+            Marcha,
+            Participacion,
+            Evento,
+            EnlaceExterno,
+        ]),
         ArchivosModule,
         MediaModule,
     ],

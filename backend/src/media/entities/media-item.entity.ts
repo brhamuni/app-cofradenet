@@ -45,21 +45,33 @@ export class MediaItem {
     @Column({ nullable: true })
     ciudadId: number;
 
-    @ManyToOne(() => Ciudad, { nullable: true, onDelete: 'SET NULL', eager: true })
+    @ManyToOne(() => Ciudad, {
+        nullable: true,
+        onDelete: 'SET NULL',
+        eager: true,
+    })
     @JoinColumn({ name: 'ciudadId' })
     ciudad: Ciudad;
 
     @Column({ nullable: true })
     hermandadId: number;
 
-    @ManyToOne(() => Hermandad, { nullable: true, onDelete: 'SET NULL', eager: true })
+    @ManyToOne(() => Hermandad, {
+        nullable: true,
+        onDelete: 'SET NULL',
+        eager: true,
+    })
     @JoinColumn({ name: 'hermandadId' })
     hermandad: Hermandad;
 
     @Column({ nullable: true })
     bandaId: number;
 
-    @ManyToOne(() => Banda, { nullable: true, onDelete: 'SET NULL', eager: true })
+    @ManyToOne(() => Banda, {
+        nullable: true,
+        onDelete: 'SET NULL',
+        eager: true,
+    })
     @JoinColumn({ name: 'bandaId' })
     banda: Banda;
 

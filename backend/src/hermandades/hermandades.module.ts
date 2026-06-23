@@ -8,7 +8,11 @@ import { ArchivosModule } from '@backend/archivos/archivos.module';
 import { MediaModule } from '@backend/media/media.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Hermandad, Ciudad]), ArchivosModule, MediaModule],
+    imports: [
+        TypeOrmModule.forFeature([Hermandad, Ciudad]),
+        ArchivosModule,
+        MediaModule,
+    ],
     controllers: [HermandadesController],
     providers: [HermandadesService],
     exports: [TypeOrmModule],

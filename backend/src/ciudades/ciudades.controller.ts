@@ -10,7 +10,12 @@ import {
     ParseIntPipe,
     UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+    ApiTags,
+    ApiOperation,
+    ApiResponse,
+    ApiBearerAuth,
+} from '@nestjs/swagger';
 import { CiudadesService } from './ciudades.service';
 import { CreateCiudadeDto } from './dto/create-ciudade.dto';
 import { UpdateCiudadeDto } from './dto/update-ciudade.dto';
@@ -32,7 +37,10 @@ export class CiudadesController {
     }
 
     @ApiOperation({ summary: 'Buscar ciudades por nombre' })
-    @ApiResponse({ status: 200, description: 'Ciudades que coinciden con el nombre' })
+    @ApiResponse({
+        status: 200,
+        description: 'Ciudades que coinciden con el nombre',
+    })
     @Get('buscar')
     buscar(@Query('nombre') nombre: string) {
         return this.ciudadesService.buscarPorNombre(nombre);
@@ -64,9 +72,14 @@ export class CiudadesController {
         return this.ciudadesService.create(createCiudadeDto);
     }
 
-    @ApiOperation({ summary: 'Actualizar los datos de una ciudad (solo administrador)' })
+    @ApiOperation({
+        summary: 'Actualizar los datos de una ciudad (solo administrador)',
+    })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 200, description: 'Ciudad actualizada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Ciudad actualizada correctamente',
+    })
     @Patch(':id')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RolUsuario.ADMIN)

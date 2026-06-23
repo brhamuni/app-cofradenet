@@ -27,9 +27,14 @@ export class AuthService {
         if (!usuario) throw new UnauthorizedException('El login no existe');
 
         const passwordValido = await bcrypt.compare(password, usuario.password);
-        if (!passwordValido) throw new UnauthorizedException('Contraseña incorrecta');
+        if (!passwordValido)
+            throw new UnauthorizedException('Contraseña incorrecta');
 
-        const payload = { id: usuario.id, username: usuario.username, rol: usuario.rol };
+        const payload = {
+            id: usuario.id,
+            username: usuario.username,
+            rol: usuario.rol,
+        };
         const refreshToken = randomUUID();
 
         usuario.refreshToken = refreshToken;
@@ -48,18 +53,26 @@ export class AuthService {
     }
 
     async refresh(refreshToken: string | undefined) {
-        if (!refreshToken) throw new UnauthorizedException('No hay refresh token');
+        if (!refreshToken)
+            throw new UnauthorizedException('No hay refresh token');
 
         const usuario = await this.usuarioRepository.findOne({
             where: { refreshToken },
         });
-        if (!usuario) throw new UnauthorizedException('Refresh token inválido o expirado');
+        if (!usuario)
+            throw new UnauthorizedException(
+                'Refresh token inválido o expirado',
+            );
 
         const newRefreshToken = randomUUID();
         usuario.refreshToken = newRefreshToken;
         await this.usuarioRepository.save(usuario);
 
-        const payload = { id: usuario.id, username: usuario.username, rol: usuario.rol };
+        const payload = {
+            id: usuario.id,
+            username: usuario.username,
+            rol: usuario.rol,
+        };
         return {
             access_token: this.jwtService.sign(payload),
             refresh_token: newRefreshToken,
@@ -68,7 +81,10 @@ export class AuthService {
 
     async logout(refreshToken: string | undefined) {
         if (refreshToken) {
-            await this.usuarioRepository.update({ refreshToken }, { refreshToken: null });
+            await this.usuarioRepository.update(
+                { refreshToken },
+                { refreshToken: null },
+            );
         }
         return { mensaje: 'Sesión cerrada' };
     }

@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { createReadStream, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import {
+    createReadStream,
+    existsSync,
+    mkdirSync,
+    unlinkSync,
+    writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';

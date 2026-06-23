@@ -4,15 +4,18 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { CreateBandaDto } from './dto/create-banda.dto';
+import { UpdateBandaDto } from './dto/update-banda.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Banda } from './entities/banda.entity';
 import { In, Repository } from 'typeorm';
 import { Marcha } from '@backend/marchas/entities/marcha.entity';
 import { Evento } from '@backend/eventos/entities/evento.entity';
 import { CreateEventoDto } from '@backend/eventos/dto/create-evento.dto';
+import { UpdateEventoDto } from '@backend/eventos/dto/update-evento.dto';
 import { Participacion } from '@backend/participaciones/entities/participacion.entity';
 import { EnlaceExterno } from './entities/enlace-externo.entity';
 import { CreateEnlaceDto } from './dto/create-enlace.dto';
+import type { RequestUser } from '@backend/auth/request-user.interface';
 
 @Injectable()
 export class BandasService {
@@ -54,7 +57,7 @@ export class BandasService {
         return banda;
     }
 
-    async update(id: number, updateBandaDto: any, user: any) {
+    async update(id: number, updateBandaDto: UpdateBandaDto, user: RequestUser) {
         const banda = await this.bandaRepo.findOne({
             where: { id },
             relations: ['usuario'],
@@ -76,7 +79,9 @@ export class BandasService {
 
         // Si nos pasan IDs de marchas, buscamos las entidades y las vinculamos
         if (repertorioIds) {
-            const marchas = await this.marchaRepo.findBy({ id: In(repertorioIds) });
+            const marchas = await this.marchaRepo.findBy({
+                id: In(repertorioIds),
+            });
             banda.repertorio = marchas;
         }
 
@@ -188,26 +193,39 @@ export class BandasService {
         );
     }
 
-    async actualizarEvento(bandaId: number, eventoId: number, dto: any, user: any) {
-        const evento = await this.eventoRepo.findOne({ where: { id: eventoId, bandaId } });
+    async actualizarEvento(
+        bandaId: number,
+        eventoId: number,
+        dto: UpdateEventoDto,
+        user: RequestUser,
+    ) {
+        const evento = await this.eventoRepo.findOne({
+            where: { id: eventoId, bandaId },
+        });
         if (!evento) throw new NotFoundException('Evento no encontrado');
         if (user.rol !== 'admin') {
             const banda = await this.bandaRepo.findOneBy({ id: bandaId });
             if (!banda || banda.usuarioId !== user.id) {
-                throw new ForbiddenException('No tienes permiso para editar este evento');
+                throw new ForbiddenException(
+                    'No tienes permiso para editar este evento',
+                );
             }
         }
         Object.assign(evento, dto);
         return this.eventoRepo.save(evento);
     }
 
-    async eliminarEvento(bandaId: number, eventoId: number, user: any) {
-        const evento = await this.eventoRepo.findOne({ where: { id: eventoId, bandaId } });
+    async eliminarEvento(bandaId: number, eventoId: number, user: RequestUser) {
+        const evento = await this.eventoRepo.findOne({
+            where: { id: eventoId, bandaId },
+        });
         if (!evento) throw new NotFoundException('Evento no encontrado');
         if (user.rol !== 'admin') {
             const banda = await this.bandaRepo.findOneBy({ id: bandaId });
             if (!banda || banda.usuarioId !== user.id) {
-                throw new ForbiddenException('No tienes permiso para eliminar este evento');
+                throw new ForbiddenException(
+                    'No tienes permiso para eliminar este evento',
+                );
             }
         }
         return this.eventoRepo.remove(evento);
@@ -221,17 +239,23 @@ export class BandasService {
     }
 
     async getEnlaces(bandaId: number): Promise<EnlaceExterno[]> {
-        return this.enlaceRepo.find({ where: { bandaId }, order: { createdAt: 'ASC' } });
+        return this.enlaceRepo.find({
+            where: { bandaId },
+            order: { createdAt: 'ASC' },
+        });
     }
 
-    async addEnlace(bandaId: number, dto: CreateEnlaceDto): Promise<EnlaceExterno> {
+    async addEnlace(
+        bandaId: number,
+        dto: CreateEnlaceDto,
+    ): Promise<EnlaceExterno> {
         const banda = await this.bandaRepo.findOneBy({ id: bandaId });
         if (!banda) throw new NotFoundException('Banda no encontrada');
         const enlace = this.enlaceRepo.create({ bandaId, ...dto });
         return this.enlaceRepo.save(enlace);
     }
 
-    async removeEnlace(enlaceId: number, user: any): Promise<void> {
+    async removeEnlace(enlaceId: number, user: RequestUser): Promise<void> {
         const enlace = await this.enlaceRepo.findOne({
             where: { id: enlaceId },
             relations: ['banda'],
@@ -239,7 +263,10 @@ export class BandasService {
         if (!enlace) throw new NotFoundException('Enlace no encontrado');
         const isOwner = enlace.banda?.usuarioId === user.id;
         const isAdmin = user.rol === 'admin';
-        if (!isOwner && !isAdmin) throw new ForbiddenException('Sin permisos para eliminar este enlace');
+        if (!isOwner && !isAdmin)
+            throw new ForbiddenException(
+                'Sin permisos para eliminar este enlace',
+            );
         await this.enlaceRepo.remove(enlace);
     }
 }

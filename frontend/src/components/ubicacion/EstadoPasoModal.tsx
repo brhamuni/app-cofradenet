@@ -52,7 +52,10 @@ export default function EstadoPasoModal({ procesionId, onClose, onSaved }: Props
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const body: any = { nombrePaso: nombrePaso.trim(), estado: estado.trim() };
+      const body: { nombrePaso: string; estado: string; latitud?: number; longitud?: number } = {
+        nombrePaso: nombrePaso.trim(),
+        estado: estado.trim(),
+      };
       if (conUbicacion && coords) {
         body.latitud = coords.lat;
         body.longitud = coords.lng;
@@ -64,8 +67,8 @@ export default function EstadoPasoModal({ procesionId, onClose, onSaved }: Props
       });
       if (!res.ok) throw new Error(`Error ${res.status}`);
       onSaved();
-    } catch (e: any) {
-      setError(e.message ?? 'Error al guardar');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error al guardar');
     } finally {
       setSaving(false);
     }

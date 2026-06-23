@@ -18,7 +18,10 @@ export class ItinerariosController {
     constructor(private readonly itinerariosService: ItinerariosService) {}
 
     @ApiOperation({ summary: 'Crear un itinerario para una procesión' })
-    @ApiResponse({ status: 201, description: 'Itinerario creado correctamente' })
+    @ApiResponse({
+        status: 201,
+        description: 'Itinerario creado correctamente',
+    })
     @ApiResponse({ status: 400, description: 'Datos de entrada inválidos' })
     @Post()
     create(@Body() createItinerarioDto: CreateItinerarioDto) {
@@ -41,7 +44,10 @@ export class ItinerariosController {
     }
 
     @ApiOperation({ summary: 'Actualizar un itinerario' })
-    @ApiResponse({ status: 200, description: 'Itinerario actualizado correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Itinerario actualizado correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Itinerario no encontrado' })
     @Patch(':id')
     update(
@@ -52,7 +58,10 @@ export class ItinerariosController {
     }
 
     @ApiOperation({ summary: 'Eliminar un itinerario' })
-    @ApiResponse({ status: 200, description: 'Itinerario eliminado correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Itinerario eliminado correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Itinerario no encontrado' })
     @Delete(':id')
     remove(@Param('id') id: string) {

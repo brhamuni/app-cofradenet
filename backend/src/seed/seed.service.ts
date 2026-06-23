@@ -58,7 +58,9 @@ export class SeedService {
             }
         }
 
-        console.log(`🎯 ${ciudadesAInsertar.length} pueblos extraídos. Insertando...`);
+        console.log(
+            `🎯 ${ciudadesAInsertar.length} pueblos extraídos. Insertando...`,
+        );
 
         const chunkSize = 1000;
         for (let i = 0; i < ciudadesAInsertar.length; i += chunkSize) {
@@ -72,7 +74,9 @@ export class SeedService {
 
     private async seedAdmin() {
         const email = 'admin@test.com';
-        const existing = await this.usuarioRepository.findOne({ where: { email } });
+        const existing = await this.usuarioRepository.findOne({
+            where: { email },
+        });
 
         if (existing) {
             console.log(`✅ Admin ya existe (${email}).`);

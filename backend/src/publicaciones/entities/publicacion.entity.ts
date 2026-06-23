@@ -49,7 +49,11 @@ export class Publicacion {
     @Column({ type: 'enum', enum: PlataformaEmbed, nullable: true })
     embedPlataforma: PlataformaEmbed;
 
-    @Column({ type: 'enum', enum: TipoPublicacion, default: TipoPublicacion.GENERAL })
+    @Column({
+        type: 'enum',
+        enum: TipoPublicacion,
+        default: TipoPublicacion.GENERAL,
+    })
     tipo: TipoPublicacion;
 
     @CreateDateColumn()
@@ -65,14 +69,22 @@ export class Publicacion {
     @Column({ nullable: true })
     hermandadId: number;
 
-    @ManyToOne(() => Hermandad, { nullable: true, onDelete: 'CASCADE', eager: true })
+    @ManyToOne(() => Hermandad, {
+        nullable: true,
+        onDelete: 'CASCADE',
+        eager: true,
+    })
     @JoinColumn({ name: 'hermandadId' })
     hermandad: Hermandad;
 
     @Column({ nullable: true })
     bandaId: number;
 
-    @ManyToOne(() => Banda, { nullable: true, onDelete: 'CASCADE', eager: true })
+    @ManyToOne(() => Banda, {
+        nullable: true,
+        onDelete: 'CASCADE',
+        eager: true,
+    })
     @JoinColumn({ name: 'bandaId' })
     banda: Banda;
 

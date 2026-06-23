@@ -1,4 +1,10 @@
-import { ForbiddenException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import {
+    ForbiddenException,
+    Inject,
+    Injectable,
+    NotFoundException,
+    forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UbicacionTiempoReal } from './entities/ubicacion-tiempo-real.entity';
@@ -8,6 +14,8 @@ import { CreateEstadoPasoDto } from './dto/create-estado-paso.dto';
 import { Procesion } from '@backend/procesiones/entities/procesion.entity';
 import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
 import { UbicacionGateway } from './ubicacion.gateway';
+import type { RequestUser } from '@backend/auth/request-user.interface';
+import type { FindOptionsWhere } from 'typeorm';
 
 @Injectable()
 export class UbicacionService {
@@ -22,7 +30,7 @@ export class UbicacionService {
         private readonly gateway: UbicacionGateway,
     ) {}
 
-    async assertHermandadOwner(procesionId: number, user: any) {
+    async assertHermandadOwner(procesionId: number, user: RequestUser) {
         const procesion = await this.procesionRepo.findOne({
             where: { id: procesionId },
             relations: ['hermandad'],
@@ -31,7 +39,9 @@ export class UbicacionService {
         const isOwner = procesion.hermandad?.usuarioId === user.id;
         const isAdmin = user.rol === RolUsuario.ADMIN;
         if (!isOwner && !isAdmin) {
-            throw new ForbiddenException('Solo el administrador de la hermandad puede realizar esta acción');
+            throw new ForbiddenException(
+                'Solo el administrador de la hermandad puede realizar esta acción',
+            );
         }
         return procesion;
     }
@@ -47,9 +57,11 @@ export class UbicacionService {
         return this.ubicacionRepo.findOne({ where: { procesionId } });
     }
 
-    async iniciar(procesionId: number, user: any) {
+    async iniciar(procesionId: number, user: RequestUser) {
         await this.assertHermandadOwner(procesionId, user);
-        let ubicacion = await this.ubicacionRepo.findOne({ where: { procesionId } });
+        let ubicacion = await this.ubicacionRepo.findOne({
+            where: { procesionId },
+        });
         if (!ubicacion) {
             ubicacion = this.ubicacionRepo.create({ procesionId });
         }
@@ -58,17 +70,25 @@ export class UbicacionService {
         return this.ubicacionRepo.save(ubicacion);
     }
 
-    async finalizar(procesionId: number, user: any) {
+    async finalizar(procesionId: number, user: RequestUser) {
         await this.assertHermandadOwner(procesionId, user);
-        const ubicacion = await this.ubicacionRepo.findOne({ where: { procesionId } });
+        const ubicacion = await this.ubicacionRepo.findOne({
+            where: { procesionId },
+        });
         if (!ubicacion) throw new NotFoundException('Ubicación no encontrada');
         ubicacion.estaActiva = false;
         return this.ubicacionRepo.save(ubicacion);
     }
 
-    async updateUbicacion(procesionId: number, dto: UpdateUbicacionDto, user: any) {
+    async updateUbicacion(
+        procesionId: number,
+        dto: UpdateUbicacionDto,
+        user: RequestUser,
+    ) {
         await this.assertHermandadOwner(procesionId, user);
-        let ubicacion = await this.ubicacionRepo.findOne({ where: { procesionId } });
+        let ubicacion = await this.ubicacionRepo.findOne({
+            where: { procesionId },
+        });
         if (!ubicacion) {
             ubicacion = this.ubicacionRepo.create({ procesionId });
         }
@@ -82,7 +102,7 @@ export class UbicacionService {
     }
 
     async getEstadosPaso(procesionId: number, pasoId?: number) {
-        const where: any = { procesionId };
+        const where: FindOptionsWhere<EstadoPaso> = { procesionId };
         if (pasoId !== undefined) where.pasoId = pasoId;
         return this.estadoPasoRepo.find({
             where,
@@ -100,7 +120,12 @@ export class UbicacionService {
         });
     }
 
-    async createEstadoPaso(procesionId: number, pasoId: number, dto: CreateEstadoPasoDto, userId: number) {
+    async createEstadoPaso(
+        procesionId: number,
+        pasoId: number,
+        dto: CreateEstadoPasoDto,
+        userId: number,
+    ) {
         const estado = this.estadoPasoRepo.create({
             procesionId,
             pasoId: dto.pasoId ?? pasoId,
@@ -114,17 +139,20 @@ export class UbicacionService {
         return saved;
     }
 
-    async deleteEstadoPaso(estadoId: number, user: any) {
+    async deleteEstadoPaso(estadoId: number, user: RequestUser) {
         const estado = await this.estadoPasoRepo.findOne({
             where: { id: estadoId },
             relations: ['procesion', 'procesion.hermandad'],
         });
-        if (!estado) throw new NotFoundException('Estado de paso no encontrado');
+        if (!estado)
+            throw new NotFoundException('Estado de paso no encontrado');
         const isOwner = estado.procesion?.hermandad?.usuarioId === user.id;
         const isAdmin = user.rol === RolUsuario.ADMIN;
         const isAuthor = estado.autorId === user.id;
         if (!isOwner && !isAdmin && !isAuthor) {
-            throw new ForbiddenException('Sin permisos para eliminar este estado');
+            throw new ForbiddenException(
+                'Sin permisos para eliminar este estado',
+            );
         }
         await this.estadoPasoRepo.remove(estado);
     }

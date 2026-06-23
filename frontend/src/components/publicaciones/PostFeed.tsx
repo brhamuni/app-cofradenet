@@ -1,13 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { PenLine } from 'lucide-react';
 import PostCard from './PostCard';
 import CreatePostModal from './CreatePostModal';
 import { API } from '@/lib/api';
 
+interface Post {
+  id: number;
+  autorId: number;
+  [key: string]: unknown;
+}
+
 interface PostFeedProps {
-  endpoint: string;         // ej: '/publicaciones/hermandad/3'
+  endpoint: string;
   canPost?: boolean;
   hermandadId?: number;
   bandaId?: number;
@@ -15,23 +21,23 @@ interface PostFeedProps {
 }
 
 export default function PostFeed({ endpoint, canPost, hermandadId, bandaId, currentUserId }: PostFeedProps) {
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [cargando, setCargando] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const cargar = useCallback(async () => {
+  useEffect(() => {
+    let active = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCargando(true);
-    try {
-      const res = await fetch(`${API}${endpoint}`);
-      if (res.ok) setPosts(await res.json());
-    } finally {
-      setCargando(false);
-    }
+    fetch(`${API}${endpoint}`)
+      .then(res => res.ok ? res.json() as Promise<Post[]> : Promise.resolve([]))
+      .then(data => { if (active) setPosts(data); })
+      .catch(() => {})
+      .finally(() => { if (active) setCargando(false); });
+    return () => { active = false; };
   }, [endpoint]);
 
-  useEffect(() => { cargar(); }, [cargar]);
-
-  const handleCreated = (post: any) => {
+  const handleCreated = (post: Post) => {
     setPosts(prev => [post, ...prev]);
   };
 

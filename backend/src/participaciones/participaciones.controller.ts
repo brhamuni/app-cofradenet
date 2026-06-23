@@ -19,8 +19,13 @@ export class ParticipacionesController {
         private readonly participacionesService: ParticipacionesService,
     ) {}
 
-    @ApiOperation({ summary: 'Registrar una participación de banda en una procesión' })
-    @ApiResponse({ status: 201, description: 'Participación creada correctamente' })
+    @ApiOperation({
+        summary: 'Registrar una participación de banda en una procesión',
+    })
+    @ApiResponse({
+        status: 201,
+        description: 'Participación creada correctamente',
+    })
     @ApiResponse({ status: 400, description: 'Datos de entrada inválidos' })
     @Post()
     create(@Body() createParticipacioneDto: CreateParticipacionDto) {
@@ -43,7 +48,10 @@ export class ParticipacionesController {
     }
 
     @ApiOperation({ summary: 'Actualizar una participación' })
-    @ApiResponse({ status: 200, description: 'Participación actualizada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Participación actualizada correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Participación no encontrada' })
     @Patch(':id')
     update(
@@ -54,7 +62,10 @@ export class ParticipacionesController {
     }
 
     @ApiOperation({ summary: 'Eliminar una participación' })
-    @ApiResponse({ status: 200, description: 'Participación eliminada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Participación eliminada correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Participación no encontrada' })
     @Delete(':id')
     remove(@Param('id') id: string) {

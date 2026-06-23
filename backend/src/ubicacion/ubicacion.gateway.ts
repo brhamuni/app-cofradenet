@@ -13,22 +13,32 @@ export class UbicacionGateway {
     server: Server;
 
     @SubscribeMessage('join-procesion')
-    handleJoin(@MessageBody() data: { procesionId: number }, @ConnectedSocket() client: Socket) {
+    handleJoin(
+        @MessageBody() data: { procesionId: number },
+        @ConnectedSocket() client: Socket,
+    ) {
         const room = `procesion-${data.procesionId}`;
-        client.join(room);
+        void client.join(room);
         client.emit('joined', { room });
     }
 
     @SubscribeMessage('leave-procesion')
-    handleLeave(@MessageBody() data: { procesionId: number }, @ConnectedSocket() client: Socket) {
-        client.leave(`procesion-${data.procesionId}`);
+    handleLeave(
+        @MessageBody() data: { procesionId: number },
+        @ConnectedSocket() client: Socket,
+    ) {
+        void client.leave(`procesion-${data.procesionId}`);
     }
 
     emitUbicacionActualizada(procesionId: number, payload: any) {
-        this.server.to(`procesion-${procesionId}`).emit('ubicacion-actualizada', payload);
+        this.server
+            .to(`procesion-${procesionId}`)
+            .emit('ubicacion-actualizada', payload);
     }
 
     emitEstadoPasoActualizado(procesionId: number, payload: any) {
-        this.server.to(`procesion-${procesionId}`).emit('estado-paso-actualizado', payload);
+        this.server
+            .to(`procesion-${procesionId}`)
+            .emit('estado-paso-actualizado', payload);
     }
 }

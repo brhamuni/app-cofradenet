@@ -61,4 +61,4 @@ async function bootstrap() {
     const port = getListenPort(config);
     await app.listen(port, '0.0.0.0');
 }
-bootstrap();
+void bootstrap();

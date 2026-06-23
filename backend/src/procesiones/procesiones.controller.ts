@@ -14,7 +14,12 @@ import {
     HttpCode,
     HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+    ApiTags,
+    ApiOperation,
+    ApiResponse,
+    ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ProcesionesService } from './procesiones.service';
 import { CreateProcesionDto } from './dto/create-procesion.dto';
 import { UpdateProcesionDto } from './dto/update-procesion.dto';
@@ -54,8 +59,14 @@ export class ProcesionesController {
         return this.procesionesService.findAll();
     }
 
-    @ApiOperation({ summary: 'Buscar procesiones por filtros (ciudad, día, nombre, hermandad, banda)' })
-    @ApiResponse({ status: 200, description: 'Procesiones que coinciden con los filtros' })
+    @ApiOperation({
+        summary:
+            'Buscar procesiones por filtros (ciudad, día, nombre, hermandad, banda)',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Procesiones que coinciden con los filtros',
+    })
     @Get('buscar')
     buscar(
         @Query('ciudad') ciudad?: string,
@@ -64,10 +75,18 @@ export class ProcesionesController {
         @Query('hermandad') hermandad?: string,
         @Query('banda') banda?: string,
     ) {
-        return this.procesionesService.buscarProcesiones(ciudad, diaSemana, nombre, hermandad, banda);
+        return this.procesionesService.buscarProcesiones(
+            ciudad,
+            diaSemana,
+            nombre,
+            hermandad,
+            banda,
+        );
     }
 
-    @ApiOperation({ summary: 'Obtener todas las procesiones activas con ubicación' })
+    @ApiOperation({
+        summary: 'Obtener todas las procesiones activas con ubicación',
+    })
     @ApiResponse({ status: 200, description: 'Lista de procesiones activas' })
     @Get('activas')
     getProcesionesActivas() {
@@ -91,16 +110,25 @@ export class ProcesionesController {
     }
 
     @ApiOperation({ summary: 'Actualizar los datos de una procesión' })
-    @ApiResponse({ status: 200, description: 'Procesión actualizada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Procesión actualizada correctamente',
+    })
     @ApiResponse({ status: 404, description: 'Procesión no encontrada' })
     @Patch(':id')
-    update(@Param('id') id: string, @Body() updateProcesionDto: UpdateProcesionDto) {
+    update(
+        @Param('id') id: string,
+        @Body() updateProcesionDto: UpdateProcesionDto,
+    ) {
         return this.procesionesService.update(+id, updateProcesionDto);
     }
 
     @ApiOperation({ summary: 'Eliminar una procesión' })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 200, description: 'Procesión eliminada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Procesión eliminada correctamente',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @ApiResponse({ status: 403, description: 'Sin permisos suficientes' })
     @Delete(':id')
@@ -121,11 +149,21 @@ export class ProcesionesController {
         @Param('id', ParseIntPipe) procesionId: number,
         @Body() body: { bandaId: number; anio: number; ubicacion: string },
     ) {
-        return this.procesionesService.asignarBanda(procesionId, body.bandaId, body.anio, body.ubicacion);
+        return this.procesionesService.asignarBanda(
+            procesionId,
+            body.bandaId,
+            body.anio,
+            body.ubicacion,
+        );
     }
 
-    @ApiOperation({ summary: 'Obtener la ficha completa de una procesión en un año' })
-    @ApiResponse({ status: 200, description: 'Ficha completa de la procesión para el año indicado' })
+    @ApiOperation({
+        summary: 'Obtener la ficha completa de una procesión en un año',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Ficha completa de la procesión para el año indicado',
+    })
     @ApiResponse({ status: 404, description: 'Procesión no encontrada' })
     @Get(':id/ficha/:anio')
     obtenerFichaCompleta(
@@ -137,16 +175,23 @@ export class ProcesionesController {
 
     // --- Participaciones (HUR-07) ---
 
-    @ApiOperation({ summary: 'Obtener las participaciones de bandas en una procesión' })
+    @ApiOperation({
+        summary: 'Obtener las participaciones de bandas en una procesión',
+    })
     @ApiResponse({ status: 200, description: 'Lista de participaciones' })
     @Get(':id/participaciones')
     getParticipaciones(@Param('id', ParseIntPipe) id: number) {
         return this.procesionesService.getParticipaciones(id);
     }
 
-    @ApiOperation({ summary: 'Añadir una participación de banda a una procesión' })
+    @ApiOperation({
+        summary: 'Añadir una participación de banda a una procesión',
+    })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 201, description: 'Participación añadida correctamente' })
+    @ApiResponse({
+        status: 201,
+        description: 'Participación añadida correctamente',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @Post(':id/participaciones')
     @UseGuards(JwtAuthGuard, RolesGuard)
@@ -160,7 +205,10 @@ export class ProcesionesController {
 
     @ApiOperation({ summary: 'Actualizar una participación de una procesión' })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 200, description: 'Participación actualizada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Participación actualizada correctamente',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @Put(':id/participaciones/:pid')
     @UseGuards(JwtAuthGuard, RolesGuard)
@@ -168,14 +216,18 @@ export class ProcesionesController {
     updateParticipacion(
         @Param('id', ParseIntPipe) _id: number,
         @Param('pid', ParseIntPipe) pid: number,
-        @Body() body: Partial<{ bandaId: number; anio: number; ubicacion: string }>,
+        @Body()
+        body: Partial<{ bandaId: number; anio: number; ubicacion: string }>,
     ) {
         return this.procesionesService.updateParticipacion(pid, body);
     }
 
     @ApiOperation({ summary: 'Eliminar una participación de una procesión' })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 200, description: 'Participación eliminada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Participación eliminada correctamente',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @Delete(':id/participaciones/:pid')
     @UseGuards(JwtAuthGuard, RolesGuard)
@@ -198,28 +250,46 @@ export class ProcesionesController {
 
     @ApiOperation({ summary: 'Crear un itinerario para una procesión' })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 201, description: 'Itinerario creado correctamente' })
+    @ApiResponse({
+        status: 201,
+        description: 'Itinerario creado correctamente',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @Post(':id/itinerario')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
     createItinerario(
         @Param('id', ParseIntPipe) id: number,
-        @Body() body: { anio: number; horarioSalida?: string; horarioEntrada?: string; recorrido?: string },
+        @Body()
+        body: {
+            anio: number;
+            horarioSalida?: string;
+            horarioEntrada?: string;
+            recorrido?: string;
+        },
     ) {
         return this.procesionesService.createItinerario(id, body);
     }
 
     @ApiOperation({ summary: 'Actualizar el itinerario de una procesión' })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 200, description: 'Itinerario actualizado correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Itinerario actualizado correctamente',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @Put(':id/itinerario')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
     updateItinerario(
         @Param('id', ParseIntPipe) _id: number,
-        @Body() body: { itinerarioId: number; horarioSalida?: string; horarioEntrada?: string; recorrido?: string },
+        @Body()
+        body: {
+            itinerarioId: number;
+            horarioSalida?: string;
+            horarioEntrada?: string;
+            recorrido?: string;
+        },
     ) {
         const { itinerarioId, ...updates } = body;
         return this.procesionesService.updateItinerario(itinerarioId, updates);
@@ -236,7 +306,13 @@ export class ProcesionesController {
     @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
     createPaso(
         @Param('id', ParseIntPipe) id: number,
-        @Body() body: { nombre: string; tipo?: string; orden?: number; descripcion?: string },
+        @Body()
+        body: {
+            nombre: string;
+            tipo?: string;
+            orden?: number;
+            descripcion?: string;
+        },
     ) {
         return this.procesionesService.createPaso(id, body);
     }
@@ -251,7 +327,13 @@ export class ProcesionesController {
     updatePaso(
         @Param('id', ParseIntPipe) _id: number,
         @Param('pasoId', ParseIntPipe) pasoId: number,
-        @Body() body: Partial<{ nombre: string; tipo: string; orden: number; descripcion: string }>,
+        @Body()
+        body: Partial<{
+            nombre: string;
+            tipo: string;
+            orden: number;
+            descripcion: string;
+        }>,
     ) {
         return this.procesionesService.updatePaso(pasoId, body);
     }
@@ -272,7 +354,9 @@ export class ProcesionesController {
 
     // --- Ubicación en tiempo real ---
 
-    @ApiOperation({ summary: 'Iniciar retransmisión de ubicación de una procesión' })
+    @ApiOperation({
+        summary: 'Iniciar retransmisión de ubicación de una procesión',
+    })
     @ApiBearerAuth('access-token')
     @ApiResponse({ status: 200, description: 'Retransmisión iniciada' })
     @Post(':id/ubicacion/iniciar')
@@ -295,7 +379,9 @@ export class ProcesionesController {
         return this.ubicacionService.updateUbicacion(id, dto, req.user);
     }
 
-    @ApiOperation({ summary: 'Finalizar retransmisión de ubicación de una procesión' })
+    @ApiOperation({
+        summary: 'Finalizar retransmisión de ubicación de una procesión',
+    })
     @ApiBearerAuth('access-token')
     @ApiResponse({ status: 200, description: 'Retransmisión finalizada' })
     @HttpCode(HttpStatus.OK)
@@ -337,7 +423,10 @@ export class ProcesionesController {
 
     @ApiOperation({ summary: 'Registrar un estado de paso en una procesión' })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 201, description: 'Estado registrado correctamente' })
+    @ApiResponse({
+        status: 201,
+        description: 'Estado registrado correctamente',
+    })
     @Post(':id/pasos/:pasoId/estados')
     @UseGuards(JwtAuthGuard, NotBlockedGuard)
     createEstadoPaso(
@@ -346,7 +435,12 @@ export class ProcesionesController {
         @Body() dto: CreateEstadoPasoDto,
         @Req() req,
     ) {
-        return this.ubicacionService.createEstadoPaso(id, pasoId, dto, req.user.id);
+        return this.ubicacionService.createEstadoPaso(
+            id,
+            pasoId,
+            dto,
+            req.user.id,
+        );
     }
 
     @ApiOperation({ summary: 'Eliminar un estado de paso' })

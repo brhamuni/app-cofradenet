@@ -7,12 +7,18 @@ export class CreateParticipacionDto {
     @IsNotEmpty()
     anio: number;
 
-    @ApiPropertyOptional({ description: 'Posición de la banda en el cortejo procesional', example: 'Tras el paso de Cristo' })
+    @ApiPropertyOptional({
+        description: 'Posición de la banda en el cortejo procesional',
+        example: 'Tras el paso de Cristo',
+    })
     @IsString()
     @IsOptional()
     posicion?: string;
 
-    @ApiProperty({ description: 'ID de la procesión en la que participa la banda', example: 1 })
+    @ApiProperty({
+        description: 'ID de la procesión en la que participa la banda',
+        example: 1,
+    })
     @IsInt()
     @IsNotEmpty()
     procesionId: number;

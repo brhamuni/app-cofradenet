@@ -4,7 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import { Readable } from 'node:stream';
 import { Archivo } from './entities/archivo.entity';
-import { STORAGE_SERVICE, UploadInput } from '@backend/storage/storage.interface';
+import {
+    STORAGE_SERVICE,
+    UploadInput,
+} from '@backend/storage/storage.interface';
 import type { IStorageService } from '@backend/storage/storage.interface';
 
 @Injectable()
@@ -39,7 +42,9 @@ export class ArchivosService {
         return archivo;
     }
 
-    async getStream(id: string): Promise<{ archivo: Archivo; stream: Readable }> {
+    async getStream(
+        id: string,
+    ): Promise<{ archivo: Archivo; stream: Readable }> {
         const archivo = await this.findOne(id);
         const stream = await this.storage.getStream(archivo.fileId);
         return { archivo, stream };

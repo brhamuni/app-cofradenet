@@ -27,7 +27,11 @@ export class EnlaceExterno {
     @JoinColumn({ name: 'bandaId' })
     banda: Banda;
 
-    @Column({ type: 'enum', enum: PlataformaEnlace, default: PlataformaEnlace.OTRO })
+    @Column({
+        type: 'enum',
+        enum: PlataformaEnlace,
+        default: PlataformaEnlace.OTRO,
+    })
     plataforma: PlataformaEnlace;
 
     @Column()

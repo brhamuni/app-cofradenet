@@ -34,18 +34,25 @@ export class NotificacionesService {
     }
 
     async marcarLeida(id: number, usuarioId: number): Promise<Notificacion> {
-        const notif = await this.notificacionRepo.findOne({ where: { id, usuarioId } });
+        const notif = await this.notificacionRepo.findOne({
+            where: { id, usuarioId },
+        });
         if (!notif) throw new NotFoundException('Notificación no encontrada');
         notif.leida = true;
         return this.notificacionRepo.save(notif);
     }
 
     async marcarTodasLeidas(usuarioId: number): Promise<void> {
-        await this.notificacionRepo.update({ usuarioId, leida: false }, { leida: true });
+        await this.notificacionRepo.update(
+            { usuarioId, leida: false },
+            { leida: true },
+        );
     }
 
     async eliminar(id: number, usuarioId: number): Promise<void> {
-        const notif = await this.notificacionRepo.findOne({ where: { id, usuarioId } });
+        const notif = await this.notificacionRepo.findOne({
+            where: { id, usuarioId },
+        });
         if (!notif) throw new NotFoundException('Notificación no encontrada');
         await this.notificacionRepo.remove(notif);
     }
@@ -57,14 +64,30 @@ export class NotificacionesService {
         cuerpo?: string,
         urlDestino?: string,
     ): Promise<Notificacion> {
-        const notif = this.notificacionRepo.create({ usuarioId, tipo, titulo, cuerpo, urlDestino });
+        const notif = this.notificacionRepo.create({
+            usuarioId,
+            tipo,
+            titulo,
+            cuerpo,
+            urlDestino,
+        });
         const saved = await this.notificacionRepo.save(notif);
-        await this.enviarPushAUsuario(usuarioId, titulo, cuerpo ?? '', urlDestino);
+        await this.enviarPushAUsuario(
+            usuarioId,
+            titulo,
+            cuerpo ?? '',
+            urlDestino,
+        );
         return saved;
     }
 
-    async suscribir(usuarioId: number, sub: { endpoint: string; keys: { p256dh: string; auth: string } }): Promise<SuscripcionPush> {
-        let suscripcion = await this.suscripcionRepo.findOne({ where: { usuarioId, endpoint: sub.endpoint } });
+    async suscribir(
+        usuarioId: number,
+        sub: { endpoint: string; keys: { p256dh: string; auth: string } },
+    ): Promise<SuscripcionPush> {
+        let suscripcion = await this.suscripcionRepo.findOne({
+            where: { usuarioId, endpoint: sub.endpoint },
+        });
         if (!suscripcion) {
             suscripcion = this.suscripcionRepo.create({
                 usuarioId,
@@ -80,35 +103,73 @@ export class NotificacionesService {
     }
 
     async desuscribir(usuarioId: number, endpoint: string): Promise<void> {
-        const sub = await this.suscripcionRepo.findOne({ where: { usuarioId, endpoint } });
+        const sub = await this.suscripcionRepo.findOne({
+            where: { usuarioId, endpoint },
+        });
         if (sub) await this.suscripcionRepo.remove(sub);
     }
 
-    private async enviarPushAUsuario(usuarioId: number, titulo: string, cuerpo: string, url?: string): Promise<void> {
-        const suscripciones = await this.suscripcionRepo.find({ where: { usuarioId } });
+    private async enviarPushAUsuario(
+        usuarioId: number,
+        titulo: string,
+        cuerpo: string,
+        url?: string,
+    ): Promise<void> {
+        const suscripciones = await this.suscripcionRepo.find({
+            where: { usuarioId },
+        });
         const payload = JSON.stringify({ title: titulo, body: cuerpo, url });
         for (const sub of suscripciones) {
             try {
-                await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload);
+                await webpush.sendNotification(
+                    {
+                        endpoint: sub.endpoint,
+                        keys: { p256dh: sub.p256dh, auth: sub.auth },
+                    },
+                    payload,
+                );
             } catch {
                 await this.suscripcionRepo.remove(sub);
             }
         }
     }
 
-    async getEventosImportantes(usuarioId: number): Promise<EventoImportante[]> {
-        return this.eventoImportanteRepo.find({ where: { usuarioId }, order: { createdAt: 'DESC' } });
+    async getEventosImportantes(
+        usuarioId: number,
+    ): Promise<EventoImportante[]> {
+        return this.eventoImportanteRepo.find({
+            where: { usuarioId },
+            order: { createdAt: 'DESC' },
+        });
     }
 
-    async marcarEventoImportante(usuarioId: number, eventoTipo: string, eventoId: number, titulo?: string): Promise<EventoImportante> {
-        const existente = await this.eventoImportanteRepo.findOne({ where: { usuarioId, eventoTipo, eventoId } });
+    async marcarEventoImportante(
+        usuarioId: number,
+        eventoTipo: string,
+        eventoId: number,
+        titulo?: string,
+    ): Promise<EventoImportante> {
+        const existente = await this.eventoImportanteRepo.findOne({
+            where: { usuarioId, eventoTipo, eventoId },
+        });
         if (existente) return existente;
-        const ev = this.eventoImportanteRepo.create({ usuarioId, eventoTipo, eventoId, titulo });
+        const ev = this.eventoImportanteRepo.create({
+            usuarioId,
+            eventoTipo,
+            eventoId,
+            titulo,
+        });
         return this.eventoImportanteRepo.save(ev);
     }
 
-    async desmarcarEventoImportante(usuarioId: number, eventoTipo: string, eventoId: number): Promise<void> {
-        const ev = await this.eventoImportanteRepo.findOne({ where: { usuarioId, eventoTipo, eventoId } });
+    async desmarcarEventoImportante(
+        usuarioId: number,
+        eventoTipo: string,
+        eventoId: number,
+    ): Promise<void> {
+        const ev = await this.eventoImportanteRepo.findOne({
+            where: { usuarioId, eventoTipo, eventoId },
+        });
         if (ev) await this.eventoImportanteRepo.remove(ev);
     }
 }

@@ -35,7 +35,7 @@ export class EventosService {
         return `This action returns a #${id} evento`;
     }
 
-    update(id: number, updateEventoDto: UpdateEventoDto) {
+    update(id: number, _updateEventoDto: UpdateEventoDto) {
         return `This action updates a #${id} evento`;
     }
 

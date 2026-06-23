@@ -1,8 +1,18 @@
-import { Controller, Get, NotFoundException, Param, ParseIntPipe, Query, Req, Res, UseGuards } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    NotFoundException,
+    Param,
+    ParseIntPipe,
+    Query,
+    Req,
+    Res,
+    UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { CalendarioService } from './calendario.service';
-import type { TipoFiltro } from './calendario.service';
+import type { EventoCalendario, TipoFiltro } from './calendario.service';
 import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 
 @ApiTags('calendario')
@@ -10,28 +20,37 @@ import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 export class CalendarioController {
     constructor(private readonly service: CalendarioService) {}
 
-    @ApiOperation({ summary: 'Obtener mis eventos del calendario (de hermandades y bandas seguidas)' })
+    @ApiOperation({
+        summary:
+            'Obtener mis eventos del calendario (de hermandades y bandas seguidas)',
+    })
     @ApiBearerAuth('access-token')
     @Get('mis-eventos')
     @UseGuards(JwtAuthGuard)
     getMisEventos(
-        @Req() req: any,
+        @Req() req: Request,
         @Query('tipo') tipo = 'all',
         @Query('ciudadId') ciudadId?: string,
     ) {
-        return this.service.getMisEventos(req.user.id, tipo as TipoFiltro, ciudadId ? +ciudadId : undefined);
+        return this.service.getMisEventos(
+            req.user!.id,
+            tipo as TipoFiltro,
+            ciudadId ? +ciudadId : undefined,
+        );
     }
 
-    @ApiOperation({ summary: 'Obtener mis eventos agrupados por día para un mes concreto' })
+    @ApiOperation({
+        summary: 'Obtener mis eventos agrupados por día para un mes concreto',
+    })
     @ApiBearerAuth('access-token')
     @Get('mis-eventos/mes/:anio/:mes')
     @UseGuards(JwtAuthGuard)
     getMisEventosMes(
-        @Req() req: any,
+        @Req() req: Request,
         @Param('anio', ParseIntPipe) anio: number,
         @Param('mes', ParseIntPipe) mes: number,
     ) {
-        return this.service.getMisEventosMes(req.user.id, anio, mes);
+        return this.service.getMisEventosMes(req.user!.id, anio, mes);
     }
 
     @ApiOperation({ summary: 'Exportar todos mis eventos como archivo ICS' })
@@ -39,15 +58,22 @@ export class CalendarioController {
     @Get('mis-eventos/ical')
     @UseGuards(JwtAuthGuard)
     async exportarIcs(
-        @Req() req: any,
+        @Req() req: Request,
         @Query('tipo') tipo = 'all',
         @Query('ciudadId') ciudadId?: string,
         @Res() res?: Response,
     ) {
-        const eventos = await this.service.getMisEventos(req.user.id, tipo as TipoFiltro, ciudadId ? +ciudadId : undefined);
+        const eventos = await this.service.getMisEventos(
+            req.user!.id,
+            tipo as TipoFiltro,
+            ciudadId ? +ciudadId : undefined,
+        );
         const ics = buildIcsContent(eventos);
         res!.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-        res!.setHeader('Content-Disposition', 'attachment; filename="mi-calendario-cofradenet.ics"');
+        res!.setHeader(
+            'Content-Disposition',
+            'attachment; filename="mi-calendario-cofradenet.ics"',
+        );
         res!.send(ics);
     }
 
@@ -58,11 +84,17 @@ export class CalendarioController {
         @Param('id', ParseIntPipe) id: number,
         @Res() res?: Response,
     ) {
-        const ev = await this.service.getEventoById(tipo as 'procesion' | 'concierto', id);
+        const ev = await this.service.getEventoById(
+            tipo as 'procesion' | 'concierto',
+            id,
+        );
         if (!ev) throw new NotFoundException('Evento no encontrado');
         const ics = buildIcsContent([ev]);
         res!.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-        res!.setHeader('Content-Disposition', `attachment; filename="evento-${tipo}-${id}.ics"`);
+        res!.setHeader(
+            'Content-Disposition',
+            `attachment; filename="evento-${tipo}-${id}.ics"`,
+        );
         res!.send(ics);
     }
 }
@@ -77,10 +109,12 @@ function padIcsDate(date: Date): string {
 }
 
 function icsEscape(str: string): string {
-    return (str ?? '').replace(/[\\;,]/g, (c) => `\\${c}`).replace(/\n/g, '\\n');
+    return (str ?? '')
+        .replace(/[\\;,]/g, (c) => `\\${c}`)
+        .replace(/\n/g, '\\n');
 }
 
-function buildIcsContent(eventos: any[]): string {
+function buildIcsContent(eventos: EventoCalendario[]): string {
     const lines: string[] = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
@@ -92,7 +126,9 @@ function buildIcsContent(eventos: any[]): string {
 
     for (const ev of eventos) {
         const dtstart = padIcsDate(new Date(ev.fecha));
-        const dtend = padIcsDate(new Date(new Date(ev.fecha).getTime() + 3600000));
+        const dtend = padIcsDate(
+            new Date(new Date(ev.fecha).getTime() + 3600000),
+        );
         const summary = icsEscape(ev.titulo);
         const location = icsEscape(ev.lugar || ev.ciudad || '');
         const description = icsEscape(

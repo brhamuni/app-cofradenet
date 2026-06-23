@@ -7,7 +7,13 @@ import { SuscripcionPush } from './entities/suscripcion-push.entity';
 import { EventoImportante } from './entities/evento-importante.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Notificacion, SuscripcionPush, EventoImportante])],
+    imports: [
+        TypeOrmModule.forFeature([
+            Notificacion,
+            SuscripcionPush,
+            EventoImportante,
+        ]),
+    ],
     controllers: [NotificacionesController],
     providers: [NotificacionesService],
     exports: [NotificacionesService],

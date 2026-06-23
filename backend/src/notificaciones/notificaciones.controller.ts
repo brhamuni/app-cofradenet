@@ -48,7 +48,11 @@ export class NotificacionesController {
 
     @ApiOperation({ summary: 'Suscribirse a push notifications' })
     @Post('push/suscribir')
-    suscribir(@Req() req: any, @Body() body: { endpoint: string; keys: { p256dh: string; auth: string } }) {
+    suscribir(
+        @Req() req: any,
+        @Body()
+        body: { endpoint: string; keys: { p256dh: string; auth: string } },
+    ) {
         return this.service.suscribir(req.user.id, body);
     }
 
@@ -70,7 +74,12 @@ export class NotificacionesController {
         @Req() req: any,
         @Body() body: { eventoTipo: string; eventoId: number; titulo?: string },
     ) {
-        return this.service.marcarEventoImportante(req.user.id, body.eventoTipo, body.eventoId, body.titulo);
+        return this.service.marcarEventoImportante(
+            req.user.id,
+            body.eventoTipo,
+            body.eventoId,
+            body.titulo,
+        );
     }
 
     @ApiOperation({ summary: 'Desmarcar un evento como importante' })
@@ -86,8 +95,21 @@ export class NotificacionesController {
     @ApiOperation({ summary: 'Enviar una notificación (uso interno / admin)' })
     @Post('enviar')
     enviar(
-        @Body() body: { usuarioId: number; tipo: TipoNotificacion; titulo: string; cuerpo?: string; urlDestino?: string },
+        @Body()
+        body: {
+            usuarioId: number;
+            tipo: TipoNotificacion;
+            titulo: string;
+            cuerpo?: string;
+            urlDestino?: string;
+        },
     ) {
-        return this.service.crearNotificacion(body.usuarioId, body.tipo, body.titulo, body.cuerpo, body.urlDestino);
+        return this.service.crearNotificacion(
+            body.usuarioId,
+            body.tipo,
+            body.titulo,
+            body.cuerpo,
+            body.urlDestino,
+        );
     }
 }

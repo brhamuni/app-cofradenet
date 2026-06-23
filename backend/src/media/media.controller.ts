@@ -13,7 +13,12 @@ import {
     UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
+import {
+    ApiTags,
+    ApiOperation,
+    ApiBearerAuth,
+    ApiConsumes,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { MediaService } from './media.service';
@@ -42,7 +47,12 @@ export class MediaController {
             fileFilter: (req, file, cb) => {
                 const allowed = /\/(jpg|jpeg|png|gif|webp|mp4|webm|mov|avi)$/;
                 if (!file.mimetype.match(allowed)) {
-                    return cb(new BadRequestException('Formato no permitido. Usa jpg, png, gif, webp, mp4 o webm.'), false);
+                    return cb(
+                        new BadRequestException(
+                            'Formato no permitido. Usa jpg, png, gif, webp, mp4 o webm.',
+                        ),
+                        false,
+                    );
                 }
                 cb(null, true);
             },
@@ -54,8 +64,11 @@ export class MediaController {
         @Body() dto: CreateMediaItemDto,
         @Req() req: any,
     ) {
-        if (!file) throw new BadRequestException('No se ha subido ningún archivo');
-        const tipo = file.mimetype.startsWith('video') ? TipoMedia.VIDEO : TipoMedia.FOTO;
+        if (!file)
+            throw new BadRequestException('No se ha subido ningún archivo');
+        const tipo = file.mimetype.startsWith('video')
+            ? TipoMedia.VIDEO
+            : TipoMedia.FOTO;
 
         const archivo = await this.archivosService.store({
             buffer: file.buffer,
@@ -77,7 +90,8 @@ export class MediaController {
     @Post('enlace')
     @UseGuards(JwtAuthGuard, NotBlockedGuard)
     async addEnlace(@Body() dto: CreateMediaItemDto, @Req() req: any) {
-        if (!dto.url) throw new BadRequestException('Se requiere la URL del enlace');
+        if (!dto.url)
+            throw new BadRequestException('Se requiere la URL del enlace');
         return this.service.create(dto, dto.url, TipoMedia.ENLACE, req.user.id);
     }
 
@@ -131,7 +145,9 @@ export class MediaController {
         );
     }
 
-    @ApiOperation({ summary: 'Tendencias: media más reciente de los últimos 7 días' })
+    @ApiOperation({
+        summary: 'Tendencias: media más reciente de los últimos 7 días',
+    })
     @Get('explorar/tendencias')
     tendencias() {
         return this.service.tendencias();

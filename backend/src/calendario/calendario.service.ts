@@ -16,7 +16,12 @@ export interface EventoCalendario {
     ciudad?: string;
     ciudadId?: number;
     lugar?: string;
-    hermandad?: { id: number; nombre: string; nombrePopular?: string; imagenEscudo?: string };
+    hermandad?: {
+        id: number;
+        nombre: string;
+        nombrePopular?: string;
+        imagenEscudo?: string;
+    };
     banda?: { id: number; nombre: string; imagenLogo?: string };
 }
 
@@ -36,10 +41,16 @@ export class CalendarioService {
         tipo: TipoFiltro = 'all',
         ciudadId?: number,
     ): Promise<EventoCalendario[]> {
-        const seguimientos = await this.seguimientoRepo.find({ where: { seguidorId: userId } });
+        const seguimientos = await this.seguimientoRepo.find({
+            where: { seguidorId: userId },
+        });
 
-        const hermandadIds = seguimientos.filter((s) => s.hermandadId).map((s) => s.hermandadId);
-        const bandaIds = seguimientos.filter((s) => s.bandaId).map((s) => s.bandaId);
+        const hermandadIds = seguimientos
+            .filter((s) => s.hermandadId)
+            .map((s) => s.hermandadId);
+        const bandaIds = seguimientos
+            .filter((s) => s.bandaId)
+            .map((s) => s.bandaId);
 
         const resultados: EventoCalendario[] = [];
 
@@ -86,14 +97,18 @@ export class CalendarioService {
                 .getMany();
 
             for (const e of eventos) {
-                if (ciudadId && (e.banda as any)?.ciudadId !== ciudadId) continue;
+                if (ciudadId && (e.banda as any)?.ciudadId !== ciudadId)
+                    continue;
                 resultados.push({
                     id: e.id,
                     tipo: 'concierto',
                     titulo: e.titulo,
                     fecha: e.fechaHora,
                     hora: e.fechaHora
-                        ? new Date(e.fechaHora).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                        ? new Date(e.fechaHora).toLocaleTimeString('es-ES', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                          })
                         : undefined,
                     ciudad: (e.banda as any)?.ciudad?.nombre,
                     ciudadId: (e.banda as any)?.ciudadId,
@@ -109,7 +124,9 @@ export class CalendarioService {
             }
         }
 
-        resultados.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+        resultados.sort(
+            (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
+        );
         return resultados;
     }
 
@@ -132,7 +149,10 @@ export class CalendarioService {
         return agrupados;
     }
 
-    async getEventoById(tipo: 'procesion' | 'concierto', id: number): Promise<EventoCalendario | null> {
+    async getEventoById(
+        tipo: 'procesion' | 'concierto',
+        id: number,
+    ): Promise<EventoCalendario | null> {
         if (tipo === 'procesion') {
             const p = await this.procesionRepo.findOne({
                 where: { id },
@@ -148,11 +168,19 @@ export class CalendarioService {
                 ciudad: (p.hermandad as any)?.ciudad?.nombre,
                 ciudadId: p.hermandad?.ciudadId,
                 hermandad: p.hermandad
-                    ? { id: p.hermandad.id, nombre: p.hermandad.nombre, nombrePopular: p.hermandad.nombrePopular, imagenEscudo: p.hermandad.imagenEscudo }
+                    ? {
+                          id: p.hermandad.id,
+                          nombre: p.hermandad.nombre,
+                          nombrePopular: p.hermandad.nombrePopular,
+                          imagenEscudo: p.hermandad.imagenEscudo,
+                      }
                     : undefined,
             };
         }
-        const e = await this.eventoRepo.findOne({ where: { id }, relations: ['banda', 'banda.ciudad'] });
+        const e = await this.eventoRepo.findOne({
+            where: { id },
+            relations: ['banda', 'banda.ciudad'],
+        });
         if (!e) return null;
         return {
             id: e.id,
@@ -162,7 +190,13 @@ export class CalendarioService {
             lugar: e.lugar,
             ciudad: (e.banda as any)?.ciudad?.nombre,
             ciudadId: (e.banda as any)?.ciudadId,
-            banda: e.banda ? { id: e.banda.id, nombre: e.banda.nombre, imagenLogo: e.banda.imagenLogo } : undefined,
+            banda: e.banda
+                ? {
+                      id: e.banda.id,
+                      nombre: e.banda.nombre,
+                      imagenLogo: e.banda.imagenLogo,
+                  }
+                : undefined,
         };
     }
 }

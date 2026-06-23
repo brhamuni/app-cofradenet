@@ -26,7 +26,10 @@ export function getCorsOrigin(
 
     const extra = config.get<string>('CORS_ORIGINS');
     if (extra) {
-        return extra.split(',').map((o) => o.trim()).filter(Boolean);
+        return extra
+            .split(',')
+            .map((o) => o.trim())
+            .filter(Boolean);
     }
 
     const host = config.get<string>('APP_HOST');

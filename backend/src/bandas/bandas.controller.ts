@@ -14,14 +14,21 @@ import {
     UploadedFile,
     BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
+import {
+    ApiTags,
+    ApiOperation,
+    ApiResponse,
+    ApiBearerAuth,
+    ApiConsumes,
+} from '@nestjs/swagger';
+import type { Request } from 'express';
 import { BandasService } from './bandas.service';
 import { CreateBandaDto } from './dto/create-banda.dto';
 import { UpdateBandaDto } from './dto/update-banda.dto';
 import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
-import { RolUsuario, Usuario } from '@backend/usuarios/entities/usuario.entity';
+import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
 import { CreateEventoDto } from '@backend/eventos/dto/create-evento.dto';
 import { UpdateEventoDto } from '@backend/eventos/dto/update-evento.dto';
 import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
@@ -75,7 +82,10 @@ export class BandasController {
 
     @ApiOperation({ summary: 'Actualizar los datos de una banda' })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 200, description: 'Banda actualizada correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Banda actualizada correctamente',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @ApiResponse({ status: 403, description: 'Sin permisos suficientes' })
     @ApiResponse({ status: 404, description: 'Banda no encontrada' })
@@ -85,9 +95,9 @@ export class BandasController {
     update(
         @Param('id') id: string,
         @Body() updateBandaDto: UpdateBandaDto,
-        @Req() req: { user: Usuario },
+        @Req() req: Request,
     ) {
-        return this.bandasService.update(+id, updateBandaDto, req.user);
+        return this.bandasService.update(+id, updateBandaDto, req.user!);
     }
 
     @ApiOperation({ summary: 'Eliminar una banda' })
@@ -127,7 +137,10 @@ export class BandasController {
 
     @ApiOperation({ summary: 'Actualizar un evento de la agenda de una banda' })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 200, description: 'Evento actualizado correctamente' })
+    @ApiResponse({
+        status: 200,
+        description: 'Evento actualizado correctamente',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @ApiResponse({ status: 403, description: 'Sin permisos suficientes' })
     @ApiResponse({ status: 404, description: 'Evento o banda no encontrado' })
@@ -138,9 +151,9 @@ export class BandasController {
         @Param('id', ParseIntPipe) id: number,
         @Param('eventoId', ParseIntPipe) eventoId: number,
         @Body() dto: UpdateEventoDto,
-        @Req() req: { user: Usuario },
+        @Req() req: Request,
     ) {
-        return this.bandasService.actualizarEvento(id, eventoId, dto, req.user);
+        return this.bandasService.actualizarEvento(id, eventoId, dto, req.user!);
     }
 
     @ApiOperation({ summary: 'Eliminar un evento de la agenda de una banda' })
@@ -154,14 +167,19 @@ export class BandasController {
     eliminarEvento(
         @Param('id', ParseIntPipe) id: number,
         @Param('eventoId', ParseIntPipe) eventoId: number,
-        @Req() req: { user: Usuario },
+        @Req() req: Request,
     ) {
-        return this.bandasService.eliminarEvento(id, eventoId, req.user);
+        return this.bandasService.eliminarEvento(id, eventoId, req.user!);
     }
 
-    @ApiOperation({ summary: 'Verificar o desverificar una banda (solo administrador)' })
+    @ApiOperation({
+        summary: 'Verificar o desverificar una banda (solo administrador)',
+    })
     @ApiBearerAuth('access-token')
-    @ApiResponse({ status: 200, description: 'Estado de verificación actualizado' })
+    @ApiResponse({
+        status: 200,
+        description: 'Estado de verificación actualizado',
+    })
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @ApiResponse({ status: 403, description: 'Sin permisos de administrador' })
     @Patch(':id/verificar')
@@ -191,8 +209,17 @@ export class BandasController {
         FileInterceptor('file', {
             storage: memoryStorage(),
             fileFilter: (req, file, cb) => {
-                if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp|mp4|mov|avi|webm)$/)) {
-                    return cb(new BadRequestException('Formato de archivo no permitido'), false);
+                if (
+                    !file.mimetype.match(
+                        /\/(jpg|jpeg|png|gif|webp|mp4|mov|avi|webm)$/,
+                    )
+                ) {
+                    return cb(
+                        new BadRequestException(
+                            'Formato de archivo no permitido',
+                        ),
+                        false,
+                    );
                 }
                 cb(null, true);
             },
@@ -204,13 +231,16 @@ export class BandasController {
         @Body() body: { titulo?: string; descripcion?: string; anio?: string },
         @Req() req,
     ) {
-        if (!file) throw new BadRequestException('No se ha subido ningún archivo');
+        if (!file)
+            throw new BadRequestException('No se ha subido ningún archivo');
         const archivo = await this.archivosService.store({
             buffer: file.buffer,
             mimeType: file.mimetype,
             originalName: file.originalname,
         });
-        const tipo = file.mimetype.startsWith('video/') ? TipoMedia.VIDEO : TipoMedia.FOTO;
+        const tipo = file.mimetype.startsWith('video/')
+            ? TipoMedia.VIDEO
+            : TipoMedia.FOTO;
         return this.mediaService.create(
             {
                 bandaId: id,
@@ -220,7 +250,7 @@ export class BandasController {
             },
             this.archivosService.publicPath(archivo.id),
             tipo,
-            req.user.id,
+            req.user!.id,
             archivo.id,
         );
     }
@@ -231,11 +261,8 @@ export class BandasController {
     @Delete(':id/galeria/:itemId')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
-    removeGaleria(
-        @Param('itemId', ParseIntPipe) itemId: number,
-        @Req() req,
-    ) {
-        return this.mediaService.remove(itemId, req.user);
+    removeGaleria(@Param('itemId', ParseIntPipe) itemId: number, @Req() req: Request) {
+        return this.mediaService.remove(itemId, req.user!);
     }
 
     // --- Enlaces externos ---
@@ -253,7 +280,10 @@ export class BandasController {
     @Post(':id/enlaces')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
-    addEnlace(@Param('id', ParseIntPipe) id: number, @Body() dto: CreateEnlaceDto) {
+    addEnlace(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: CreateEnlaceDto,
+    ) {
         return this.bandasService.addEnlace(id, dto);
     }
 
@@ -267,6 +297,6 @@ export class BandasController {
         @Param('enlaceId', ParseIntPipe) enlaceId: number,
         @Req() req,
     ) {
-        return this.bandasService.removeEnlace(enlaceId, req.user);
+        return this.bandasService.removeEnlace(enlaceId, req.user!);
     }
 }
