@@ -1,0 +1,32 @@
+# Despliegue del backend en Render (https://render.com)
+# Conecta el repo → New Blueprint → selecciona este archivo
+# O crea un Web Service manual con rootDir=backend
+
+services:
+  - type: web
+    name: cofradenet-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: MEDIA_STORAGE_PROVIDER
+        value: r2
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false
+      - key: FRONTEND_URL
+        sync: false

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+
+# Variables de entorno (solo config/.env.example se sube a GitHub)
+config/.env
+.env
+.env.local
+.env*.local
+*.log
+.DS_Store
+Thumbs.db
+.claude/

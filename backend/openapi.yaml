@@ -1,0 +1,2286 @@
+openapi: 3.1.0
+info:
+  title: CofradeNet API
+  description: |
+    API REST de la plataforma CofradeNet. Gestiona hermandades, bandas, procesiones,
+    usuarios cofrades y el panel de administración de la plataforma.
+
+    ## Autenticación
+    La mayoría de los endpoints de escritura requieren un token JWT Bearer.
+    Obtén el token con `POST /auth/login` e inclúyelo en la cabecera:
+    `Authorization: Bearer <token>`
+
+    ## Roles disponibles
+    | Rol | Descripción |
+    |-----|-------------|
+    | `cofrade` | Usuario registrado. Puede seguir entidades, crear publicaciones y gestionar su perfil. |
+    | `hermandad` | Administra el perfil de su hermandad y sus procesiones. |
+    | `banda` | Administra el perfil de su banda y su agenda de actuaciones. |
+    | `admin` | Acceso completo a la plataforma. |
+  version: 1.0.0
+  contact:
+    name: Equipo CofradeNet
+
+servers:
+  - url: http://localhost:3000
+    description: Desarrollo local
+
+tags:
+  - name: auth
+    description: Autenticación y registro
+  - name: usuarios
+    description: Gestión de perfiles de usuario
+  - name: hermandades
+    description: Perfiles oficiales de hermandades y cofradías
+  - name: bandas
+    description: Perfiles oficiales de bandas de música
+  - name: procesiones
+    description: Información de procesiones, participaciones e itinerarios
+  - name: seguimientos
+    description: Sistema de seguimiento entre usuarios y entidades
+  - name: publicaciones
+    description: Publicaciones y actualizaciones de hermandades/bandas
+  - name: search
+    description: Búsqueda global en la plataforma
+  - name: ciudades
+    description: Gestión del catálogo de ciudades (solo ADMIN)
+  - name: admin
+    description: Panel de control de la plataforma (solo ADMIN)
+
+# ─────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────
+paths:
+
+  # ── AUTH ──────────────────────────────────
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Iniciar sesión
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "cofrade@example.com"
+              password: "secreto123"
+      responses:
+        '200':
+          description: Login correcto. Devuelve el token JWT y datos básicos del usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Error401'
+
+  # ── USUARIOS ──────────────────────────────
+  /usuarios:
+    post:
+      tags: [usuarios]
+      summary: Registrar nuevo usuario
+      operationId: registrarUsuario
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUsuarioRequest'
+      responses:
+        '201':
+          description: Usuario creado correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          $ref: '#/components/responses/Error400'
+
+  /usuarios/lista-completa:
+    get:
+      tags: [usuarios]
+      summary: Listar todos los usuarios (solo ADMIN)
+      operationId: listarUsuarios
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista completa de usuarios.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Usuario'
+        '403':
+          $ref: '#/components/responses/Error403'
+
+  /usuarios/{id}:
+    get:
+      tags: [usuarios]
+      summary: Obtener perfil de usuario
+      operationId: getUsuario
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Perfil del usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '404':
+          $ref: '#/components/responses/Error404'
+    patch:
+      tags: [usuarios]
+      summary: Actualizar perfil propio
+      operationId: actualizarUsuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUsuarioRequest'
+      responses:
+        '200':
+          description: Perfil actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+    delete:
+      tags: [usuarios]
+      summary: Eliminar usuario
+      operationId: eliminarUsuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Usuario eliminado.
+
+  /usuarios/favoritos/hermandad/{id}:
+    post:
+      tags: [usuarios]
+      summary: Añadir / quitar hermandad de favoritos (toggle)
+      operationId: toggleFavoritoHermandad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Estado de favorito actualizado.
+
+  /usuarios/favoritos/banda/{id}:
+    post:
+      tags: [usuarios]
+      summary: Añadir / quitar banda de favoritos (toggle)
+      operationId: toggleFavoritoBanda
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Estado de favorito actualizado.
+
+  # ── HERMANDADES ───────────────────────────
+  /hermandades:
+    get:
+      tags: [hermandades]
+      summary: Listar todas las hermandades
+      operationId: listarHermandades
+      security: []
+      responses:
+        '200':
+          description: Lista de hermandades con sus datos básicos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hermandad'
+    post:
+      tags: [hermandades]
+      summary: Crear perfil de hermandad
+      operationId: crearHermandad
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHermandadRequest'
+      responses:
+        '201':
+          description: Hermandad creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hermandad'
+
+  /hermandades/{id}:
+    get:
+      tags: [hermandades]
+      summary: Obtener perfil de hermandad
+      operationId: getHermandad
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Perfil completo de la hermandad.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hermandad'
+        '404':
+          $ref: '#/components/responses/Error404'
+    patch:
+      tags: [hermandades]
+      summary: Editar perfil de hermandad (propietario o ADMIN)
+      operationId: editarHermandad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateHermandadRequest'
+      responses:
+        '200':
+          description: Hermandad actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hermandad'
+        '403':
+          $ref: '#/components/responses/Error403'
+    delete:
+      tags: [hermandades]
+      summary: Eliminar hermandad (solo ADMIN)
+      operationId: eliminarHermandad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Hermandad eliminada.
+
+  /hermandades/{id}/logo:
+    post:
+      tags: [hermandades]
+      summary: Subir escudo / logo de la hermandad
+      operationId: subirLogoHermandad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Imagen subida y ruta guardada.
+        '400':
+          $ref: '#/components/responses/Error400'
+
+  /hermandades/{id}/verificar:
+    patch:
+      tags: [hermandades]
+      summary: Verificar / desverificar hermandad (solo ADMIN)
+      operationId: verificarHermandad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                verificada:
+                  type: boolean
+      responses:
+        '200':
+          description: Estado de verificación actualizado.
+
+  # ── BANDAS ────────────────────────────────
+  /bandas:
+    get:
+      tags: [bandas]
+      summary: Listar todas las bandas
+      operationId: listarBandas
+      security: []
+      responses:
+        '200':
+          description: Lista de bandas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Banda'
+    post:
+      tags: [bandas]
+      summary: Crear perfil de banda
+      operationId: crearBanda
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBandaRequest'
+      responses:
+        '201':
+          description: Banda creada.
+
+  /bandas/ciudad/{id}:
+    get:
+      tags: [bandas]
+      summary: Listar bandas de una ciudad
+      operationId: bandasPorCiudad
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Bandas de la ciudad indicada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Banda'
+
+  /bandas/{id}:
+    get:
+      tags: [bandas]
+      summary: Obtener perfil de banda
+      operationId: getBanda
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Perfil completo de la banda con repertorio y eventos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Banda'
+        '404':
+          $ref: '#/components/responses/Error404'
+    patch:
+      tags: [bandas]
+      summary: Editar perfil de banda (propietario o ADMIN)
+      operationId: editarBanda
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBandaRequest'
+      responses:
+        '200':
+          description: Banda actualizada.
+        '403':
+          $ref: '#/components/responses/Error403'
+
+  /bandas/{id}/verificar:
+    patch:
+      tags: [bandas]
+      summary: Verificar / desverificar banda (solo ADMIN)
+      operationId: verificarBanda
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                estado:
+                  type: boolean
+      responses:
+        '200':
+          description: Estado de verificación actualizado.
+
+  /bandas/{id}/eventos:
+    get:
+      tags: [bandas]
+      summary: Obtener todos los eventos de una banda
+      operationId: eventosDeUnaBanda
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Lista de eventos ordenada cronológicamente.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Evento'
+    post:
+      tags: [bandas]
+      summary: Añadir evento a la agenda de la banda
+      operationId: crearEvento
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventoRequest'
+      responses:
+        '201':
+          description: Evento creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evento'
+
+  /bandas/{id}/eventos/{eventoId}:
+    put:
+      tags: [bandas]
+      summary: Actualizar evento de la banda (propietario o ADMIN)
+      operationId: actualizarEvento
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: eventoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventoRequest'
+      responses:
+        '200':
+          description: Evento actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evento'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+    delete:
+      tags: [bandas]
+      summary: Eliminar evento de la banda (propietario o ADMIN)
+      operationId: eliminarEvento
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: eventoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Evento eliminado.
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+
+  /bandas/{id}/agenda/{anio}:
+    get:
+      tags: [bandas]
+      summary: Agenda completa de una banda para un año
+      description: |
+        Combina los eventos propios de la banda (conciertos, actuaciones) con las
+        procesiones en las que participa ese año, ordenados cronológicamente.
+      operationId: agendaAnual
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: anio
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 2025
+      responses:
+        '200':
+          description: Agenda unificada del año.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgendaItem'
+
+  # ── PROCESIONES ───────────────────────────
+  /procesiones:
+    get:
+      tags: [procesiones]
+      summary: Listar todas las procesiones
+      operationId: listarProcesiones
+      security: []
+      responses:
+        '200':
+          description: Lista de procesiones ordenada por fecha.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Procesion'
+    post:
+      tags: [procesiones]
+      summary: Crear procesión (HERMANDAD o ADMIN)
+      operationId: crearProcesion
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProcesionRequest'
+      responses:
+        '201':
+          description: Procesión creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Procesion'
+        '403':
+          $ref: '#/components/responses/Error403'
+
+  /procesiones/buscar:
+    get:
+      tags: [procesiones]
+      summary: Buscar procesiones con filtros
+      description: |
+        Permite filtrar procesiones por ciudad, día de la semana, nombre, hermandad o banda.
+        Al menos uno de los parámetros debe estar presente.
+      operationId: buscarProcesiones
+      security: []
+      parameters:
+        - name: ciudad
+          in: query
+          schema:
+            type: string
+          example: "Sevilla"
+        - name: dia
+          in: query
+          schema:
+            type: string
+          example: "Viernes Santo"
+        - name: nombre
+          in: query
+          schema:
+            type: string
+        - name: hermandad
+          in: query
+          schema:
+            type: string
+        - name: banda
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Procesiones que coinciden con los filtros.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Procesion'
+
+  /procesiones/hermandad/{id}:
+    get:
+      tags: [procesiones]
+      summary: Procesiones de una hermandad
+      operationId: procesionesPorHermandad
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Procesiones de la hermandad indicada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Procesion'
+
+  /procesiones/{id}:
+    get:
+      tags: [procesiones]
+      summary: Obtener procesión por ID
+      operationId: getProcesion
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Procesión con itinerario (puntos de mapa) ordenado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Procesion'
+        '404':
+          $ref: '#/components/responses/Error404'
+    delete:
+      tags: [procesiones]
+      summary: Eliminar procesión (HERMANDAD propietaria o ADMIN)
+      operationId: eliminarProcesion
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Procesión eliminada.
+        '403':
+          $ref: '#/components/responses/Error403'
+
+  /procesiones/{id}/ficha/{anio}:
+    get:
+      tags: [procesiones]
+      summary: Ficha completa de una procesión para un año
+      description: |
+        Devuelve la procesión enriquecida con el itinerario oficial y las bandas
+        participantes del año indicado.
+      operationId: fichaAnual
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: anio
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 2025
+      responses:
+        '200':
+          description: Ficha anual completa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FichaAnual'
+        '404':
+          $ref: '#/components/responses/Error404'
+
+  /procesiones/{id}/participaciones:
+    get:
+      tags: [procesiones]
+      summary: Listar bandas participantes en la procesión
+      operationId: listarParticipaciones
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Lista de participaciones ordenada por año descendente.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Participacion'
+    post:
+      tags: [procesiones]
+      summary: Añadir banda a la procesión (HERMANDAD o ADMIN)
+      operationId: addParticipacion
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateParticipacionRequest'
+      responses:
+        '201':
+          description: Participación registrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Participacion'
+
+  /procesiones/{id}/participaciones/{pid}:
+    put:
+      tags: [procesiones]
+      summary: Actualizar participación (HERMANDAD o ADMIN)
+      operationId: updateParticipacion
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: pid
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateParticipacionRequest'
+      responses:
+        '200':
+          description: Participación actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Participacion'
+    delete:
+      tags: [procesiones]
+      summary: Eliminar participación (HERMANDAD o ADMIN)
+      operationId: deleteParticipacion
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: pid
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Participación eliminada.
+
+  /procesiones/{id}/itinerario:
+    get:
+      tags: [procesiones]
+      summary: Obtener itinerarios anuales de la procesión
+      operationId: getItinerarios
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Lista de itinerarios anuales (horarios y recorrido).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Itinerario'
+    post:
+      tags: [procesiones]
+      summary: Publicar itinerario de un año (HERMANDAD o ADMIN)
+      operationId: crearItinerario
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItinerarioRequest'
+      responses:
+        '201':
+          description: Itinerario creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Itinerario'
+    put:
+      tags: [procesiones]
+      summary: Actualizar itinerario existente (HERMANDAD o ADMIN)
+      description: El cuerpo debe incluir `itinerarioId` para identificar cuál actualizar.
+      operationId: updateItinerario
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateItinerarioRequest'
+      responses:
+        '200':
+          description: Itinerario actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Itinerario'
+
+  /procesiones/{id}/pasos:
+    post:
+      tags: [procesiones]
+      summary: Añadir paso a la procesión (HERMANDAD o ADMIN)
+      operationId: crearPaso
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePasoRequest'
+      responses:
+        '201':
+          description: Paso creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paso'
+
+  /procesiones/{id}/pasos/{pasoId}:
+    put:
+      tags: [procesiones]
+      summary: Actualizar paso (HERMANDAD o ADMIN)
+      operationId: updatePaso
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: pasoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasoRequest'
+      responses:
+        '200':
+          description: Paso actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paso'
+    delete:
+      tags: [procesiones]
+      summary: Eliminar paso (HERMANDAD o ADMIN)
+      operationId: deletePaso
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: pasoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paso eliminado.
+
+  # ── SEGUIMIENTOS ──────────────────────────
+  /seguimientos/hermandad/{id}:
+    get:
+      tags: [seguimientos]
+      summary: Estado de seguimiento de una hermandad
+      description: Devuelve si el usuario autenticado sigue la hermandad y el total de seguidores.
+      operationId: estadoSeguimientoHermandad
+      security:
+        - BearerAuth: []
+        - {}
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Estado de seguimiento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeguimientoEstado'
+    post:
+      tags: [seguimientos]
+      summary: Seguir hermandad
+      operationId: seguirHermandad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '201':
+          description: Seguimiento registrado.
+    delete:
+      tags: [seguimientos]
+      summary: Dejar de seguir hermandad
+      operationId: dejarHermandad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Seguimiento eliminado.
+
+  /seguimientos/banda/{id}:
+    get:
+      tags: [seguimientos]
+      summary: Estado de seguimiento de una banda
+      operationId: estadoSeguimientoBanda
+      security:
+        - BearerAuth: []
+        - {}
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Estado de seguimiento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeguimientoEstado'
+    post:
+      tags: [seguimientos]
+      summary: Seguir banda
+      operationId: seguirBanda
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '201':
+          description: Seguimiento registrado.
+    delete:
+      tags: [seguimientos]
+      summary: Dejar de seguir banda
+      operationId: dejarBanda
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Seguimiento eliminado.
+
+  /seguimientos/usuario/{id}:
+    get:
+      tags: [seguimientos]
+      summary: Estado de seguimiento de un usuario
+      operationId: estadoSeguimientoUsuario
+      security:
+        - BearerAuth: []
+        - {}
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Estado de seguimiento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeguimientoEstado'
+    post:
+      tags: [seguimientos]
+      summary: Seguir usuario
+      operationId: seguirUsuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '201':
+          description: Seguimiento registrado.
+    delete:
+      tags: [seguimientos]
+      summary: Dejar de seguir usuario
+      operationId: dejarUsuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Seguimiento eliminado.
+
+  # ── PUBLICACIONES ─────────────────────────
+  /publicaciones:
+    post:
+      tags: [publicaciones]
+      summary: Crear publicación
+      operationId: crearPublicacion
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePublicacionRequest'
+      responses:
+        '201':
+          description: Publicación creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publicacion'
+
+  /publicaciones/hermandad/{id}:
+    get:
+      tags: [publicaciones]
+      summary: Publicaciones de una hermandad
+      operationId: publicacionesPorHermandad
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Lista de publicaciones ordenada por fecha descendente.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Publicacion'
+
+  /publicaciones/banda/{id}:
+    get:
+      tags: [publicaciones]
+      summary: Publicaciones de una banda
+      operationId: publicacionesPorBanda
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Lista de publicaciones.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Publicacion'
+
+  /publicaciones/usuario/{id}:
+    get:
+      tags: [publicaciones]
+      summary: Publicaciones de un usuario
+      operationId: publicacionesPorUsuario
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Lista de publicaciones.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Publicacion'
+
+  /publicaciones/{id}:
+    delete:
+      tags: [publicaciones]
+      summary: Eliminar publicación (autor o ADMIN)
+      operationId: eliminarPublicacion
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Publicación eliminada.
+        '403':
+          $ref: '#/components/responses/Error403'
+
+  # ── SEARCH ────────────────────────────────
+  /search:
+    get:
+      tags: [search]
+      summary: Búsqueda global en la plataforma
+      description: Devuelve ciudades, hermandades, bandas y procesiones que coincidan con el término.
+      operationId: busquedaGlobal
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 3
+          example: "Sevilla"
+        - name: filtro
+          in: query
+          schema:
+            type: string
+            enum: [todo, procesiones, hermandades, bandas]
+            default: todo
+      responses:
+        '200':
+          description: Resultados de búsqueda agrupados por categoría.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResult'
+
+  # ── CIUDADES ──────────────────────────────
+  /ciudades:
+    get:
+      tags: [ciudades]
+      summary: Listar ciudades (solo ADMIN)
+      operationId: listarCiudades
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de ciudades.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ciudad'
+    post:
+      tags: [ciudades]
+      summary: Crear ciudad (solo ADMIN)
+      operationId: crearCiudad
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCiudadRequest'
+      responses:
+        '201':
+          description: Ciudad creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ciudad'
+
+  /ciudades/buscar:
+    get:
+      tags: [ciudades]
+      summary: Buscar ciudades por nombre (solo ADMIN)
+      operationId: buscarCiudad
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: nombre
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ciudades que coinciden con el nombre.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ciudad'
+
+  /ciudades/{id}:
+    patch:
+      tags: [ciudades]
+      summary: Actualizar ciudad (solo ADMIN)
+      operationId: actualizarCiudad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCiudadRequest'
+      responses:
+        '200':
+          description: Ciudad actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ciudad'
+    delete:
+      tags: [ciudades]
+      summary: Eliminar ciudad (solo ADMIN)
+      operationId: eliminarCiudad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Ciudad eliminada.
+
+  # ── ADMIN ─────────────────────────────────
+  /admin/estadisticas:
+    get:
+      tags: [admin]
+      summary: Estadísticas globales de la plataforma
+      operationId: getEstadisticas
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Contadores globales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Estadisticas'
+
+  /admin/usuarios:
+    get:
+      tags: [admin]
+      summary: Listar usuarios con filtros
+      operationId: adminListarUsuarios
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rol
+          in: query
+          schema:
+            type: string
+            enum: [cofrade, hermandad, banda, admin]
+        - name: verificado
+          in: query
+          schema:
+            type: string
+            enum: ['true', 'false']
+        - name: bloqueado
+          in: query
+          schema:
+            type: string
+            enum: ['true', 'false']
+      responses:
+        '200':
+          description: Lista filtrada de usuarios.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UsuarioAdmin'
+
+  /admin/usuarios/{id}:
+    get:
+      tags: [admin]
+      summary: Obtener detalle de un usuario
+      operationId: adminGetUsuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Datos completos del usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioAdmin'
+    delete:
+      tags: [admin]
+      summary: Eliminar usuario
+      operationId: adminEliminarUsuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Usuario eliminado.
+
+  /admin/usuarios/{id}/verificar:
+    put:
+      tags: [admin]
+      summary: Verificar cuenta de usuario
+      operationId: adminVerificarUsuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Usuario verificado.
+
+  /admin/usuarios/{id}/bloquear:
+    put:
+      tags: [admin]
+      summary: Bloquear usuario
+      operationId: adminBloquearUsuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Usuario bloqueado.
+
+  /admin/usuarios/{id}/desbloquear:
+    put:
+      tags: [admin]
+      summary: Desbloquear usuario
+      operationId: adminDesbloquearUsuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Usuario desbloqueado.
+
+  /admin/usuarios/{id}/rol:
+    put:
+      tags: [admin]
+      summary: Cambiar rol de un usuario
+      operationId: adminCambiarRol
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rol]
+              properties:
+                rol:
+                  type: string
+                  enum: [cofrade, hermandad, banda, admin]
+      responses:
+        '200':
+          description: Rol actualizado.
+
+  /admin/hermandades:
+    get:
+      tags: [admin]
+      summary: Listar hermandades (con datos de propietario)
+      operationId: adminListarHermandades
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista completa de hermandades.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hermandad'
+
+  /admin/hermandades/{id}/verificar:
+    put:
+      tags: [admin]
+      summary: Verificar hermandad
+      operationId: adminVerificarHermandad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Hermandad verificada.
+
+  /admin/hermandades/{id}:
+    put:
+      tags: [admin]
+      summary: Editar datos de hermandad
+      operationId: adminEditarHermandad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateHermandadRequest'
+      responses:
+        '200':
+          description: Hermandad actualizada.
+    delete:
+      tags: [admin]
+      summary: Eliminar hermandad
+      operationId: adminEliminarHermandad
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Hermandad eliminada.
+
+  /admin/bandas:
+    get:
+      tags: [admin]
+      summary: Listar bandas (con datos de propietario)
+      operationId: adminListarBandas
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista completa de bandas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Banda'
+
+  /admin/bandas/{id}/verificar:
+    put:
+      tags: [admin]
+      summary: Verificar banda
+      operationId: adminVerificarBanda
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Banda verificada.
+
+  /admin/publicaciones/{id}:
+    delete:
+      tags: [admin]
+      summary: Eliminar cualquier publicación (moderación)
+      operationId: adminEliminarPublicacion
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Publicación eliminada.
+
+  /admin/ciudades:
+    get:
+      tags: [admin]
+      summary: Listar ciudades con contadores de entidades
+      description: Devuelve las ciudades enriquecidas con `numHermandades` y `numBandas`.
+      operationId: adminCiudades
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Ciudades con contadores.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CiudadConContadores'
+
+# ─────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenido en `POST /auth/login`.
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Identificador numérico del recurso.
+
+  responses:
+    Error400:
+      description: Solicitud incorrecta — datos de entrada inválidos.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error401:
+      description: No autenticado — token ausente o inválido.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error403:
+      description: Sin permisos — el usuario no tiene el rol necesario.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error404:
+      description: Recurso no encontrado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    # ── Auth ──────────────────────────────────
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: cofrade@example.com
+        password:
+          type: string
+          minLength: 6
+          example: secreto123
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT válido para autenticar el resto de peticiones.
+        usuario:
+          type: object
+          properties:
+            id:
+              type: integer
+            nombre:
+              type: string
+            rol:
+              $ref: '#/components/schemas/RolUsuario'
+
+    # ── Usuarios ──────────────────────────────
+    RolUsuario:
+      type: string
+      enum: [admin, cofrade, hermandad, banda]
+
+    CreateUsuarioRequest:
+      type: object
+      required: [nombre, username, email, password]
+      properties:
+        nombre:
+          type: string
+          example: "Juan Cofrade"
+        username:
+          type: string
+          example: "juancofrade"
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        rol:
+          $ref: '#/components/schemas/RolUsuario'
+
+    UpdateUsuarioRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+        ciudadResidenciaId:
+          type: integer
+
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        rol:
+          $ref: '#/components/schemas/RolUsuario'
+        verificado:
+          type: boolean
+        ciudadResidencia:
+          $ref: '#/components/schemas/Ciudad'
+
+    UsuarioAdmin:
+      allOf:
+        - $ref: '#/components/schemas/Usuario'
+        - type: object
+          properties:
+            estaBloqueado:
+              type: boolean
+
+    # ── Hermandades ───────────────────────────
+    CreateHermandadRequest:
+      type: object
+      required: [nombre, nombrePopular, titulares, templo, ciudadId]
+      properties:
+        nombre:
+          type: string
+          example: "Real Hermandad Sacramental de Nuestro Padre Jesús del Gran Poder"
+        nombrePopular:
+          type: string
+          example: "Gran Poder"
+        titulares:
+          type: array
+          items:
+            type: string
+          example: ["Señor del Gran Poder", "María Santísima del Mayor Dolor"]
+        añoFundacion:
+          type: integer
+          example: 1431
+        templo:
+          type: string
+          example: "Basílica de Jesús del Gran Poder"
+        direccion:
+          type: string
+        codigoPostal:
+          type: string
+        diaSalida:
+          type: string
+          example: "Madrugada"
+        descripcion:
+          type: string
+        ciudadId:
+          type: integer
+
+    UpdateHermandadRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+        nombrePopular:
+          type: string
+        descripcion:
+          type: string
+        templo:
+          type: string
+        diaSalida:
+          type: string
+
+    Hermandad:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+        nombrePopular:
+          type: string
+        titulares:
+          type: array
+          items:
+            type: string
+        añoFundacion:
+          type: integer
+          nullable: true
+        templo:
+          type: string
+        diaSalida:
+          type: string
+          nullable: true
+        descripcion:
+          type: string
+          nullable: true
+        imagenEscudo:
+          type: string
+          nullable: true
+        verificada:
+          type: boolean
+        ciudad:
+          $ref: '#/components/schemas/Ciudad'
+
+    # ── Bandas ────────────────────────────────
+    CreateBandaRequest:
+      type: object
+      required: [nombre, estiloMusical]
+      properties:
+        nombre:
+          type: string
+          example: "Banda de Música de la Esperanza"
+        estiloMusical:
+          type: string
+          example: "Banda de Cornetas y Tambores"
+        direccion:
+          type: string
+        localidad:
+          type: string
+        codigoPostal:
+          type: string
+        numeroComponentes:
+          type: integer
+        ciudadId:
+          type: integer
+        historia:
+          type: string
+
+    UpdateBandaRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+        estiloMusical:
+          type: string
+        historia:
+          type: string
+        numeroComponentes:
+          type: integer
+        repertorioIds:
+          type: array
+          items:
+            type: integer
+          description: IDs de marchas para actualizar el repertorio completo.
+
+    Banda:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+        estiloMusical:
+          type: string
+        historia:
+          type: string
+          nullable: true
+        numeroComponentes:
+          type: integer
+          nullable: true
+        imagenLogo:
+          type: string
+          nullable: true
+        verificada:
+          type: boolean
+        ciudad:
+          $ref: '#/components/schemas/Ciudad'
+        repertorio:
+          type: array
+          items:
+            $ref: '#/components/schemas/Marcha'
+        eventos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evento'
+
+    # ── Procesiones ───────────────────────────
+    CreateProcesionRequest:
+      type: object
+      required: [nombre, diaSemana, fecha, horaSalida, hermandadId]
+      properties:
+        nombre:
+          type: string
+          example: "Estación de Penitencia 2025"
+        diaSemana:
+          type: string
+          example: "Madrugada"
+        fecha:
+          type: string
+          format: date
+          example: "2025-04-18"
+        horaSalida:
+          type: string
+          example: "00:30:00"
+        horaEntrada:
+          type: string
+          nullable: true
+        hermandadId:
+          type: integer
+
+    Procesion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+        diaSemana:
+          type: string
+        fecha:
+          type: string
+          format: date
+        horaSalida:
+          type: string
+        horaEntrada:
+          type: string
+          nullable: true
+        hermandad:
+          $ref: '#/components/schemas/Hermandad'
+        itinerario:
+          type: array
+          items:
+            $ref: '#/components/schemas/PuntoItinerario'
+          description: Puntos GPS del recorrido ordenados por `orden`.
+
+    PuntoItinerario:
+      type: object
+      properties:
+        id:
+          type: integer
+        orden:
+          type: integer
+        latitud:
+          type: number
+          format: double
+        longitud:
+          type: number
+          format: double
+
+    FichaAnual:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        hermandad:
+          $ref: '#/components/schemas/Hermandad'
+        itinerarios:
+          type: array
+          items:
+            $ref: '#/components/schemas/Itinerario'
+        participaciones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Participacion'
+
+    # ── Participaciones ───────────────────────
+    CreateParticipacionRequest:
+      type: object
+      required: [bandaId, anio]
+      properties:
+        bandaId:
+          type: integer
+        anio:
+          type: integer
+          example: 2025
+        ubicacion:
+          type: string
+          nullable: true
+          example: "Paso de Cristo"
+
+    UpdateParticipacionRequest:
+      type: object
+      properties:
+        anio:
+          type: integer
+        ubicacion:
+          type: string
+
+    Participacion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        anio:
+          type: integer
+        ubicacion:
+          type: string
+          nullable: true
+        banda:
+          $ref: '#/components/schemas/Banda'
+
+    # ── Itinerarios ───────────────────────────
+    CreateItinerarioRequest:
+      type: object
+      required: [anio]
+      properties:
+        anio:
+          type: integer
+          example: 2025
+        horarioSalida:
+          type: string
+          pattern: '^\d{2}:\d{2}:\d{2}$'
+          example: "00:30:00"
+        horarioEntrada:
+          type: string
+          pattern: '^\d{2}:\d{2}:\d{2}$'
+          example: "08:45:00"
+        recorrido:
+          type: string
+          example: "Iglesia → C/ Sierpes → Plaza de San Francisco → Catedral"
+
+    UpdateItinerarioRequest:
+      type: object
+      required: [itinerarioId]
+      properties:
+        itinerarioId:
+          type: integer
+          description: ID del itinerario a actualizar.
+        horarioSalida:
+          type: string
+          pattern: '^\d{2}:\d{2}:\d{2}$'
+        horarioEntrada:
+          type: string
+          pattern: '^\d{2}:\d{2}:\d{2}$'
+        recorrido:
+          type: string
+
+    Itinerario:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        anio:
+          type: integer
+        horarioSalida:
+          type: string
+          nullable: true
+        horarioEntrada:
+          type: string
+          nullable: true
+        recorrido:
+          type: string
+          nullable: true
+
+    # ── Pasos ─────────────────────────────────
+    CreatePasoRequest:
+      type: object
+      required: [nombre]
+      properties:
+        nombre:
+          type: string
+          example: "Santísimo Cristo de la Buena Muerte"
+        tipo:
+          type: string
+          example: "Cristo"
+        orden:
+          type: integer
+          example: 1
+        descripcion:
+          type: string
+
+    UpdatePasoRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+        tipo:
+          type: string
+        orden:
+          type: integer
+        descripcion:
+          type: string
+
+    Paso:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+        tipo:
+          type: string
+          nullable: true
+        orden:
+          type: integer
+          nullable: true
+        descripcion:
+          type: string
+          nullable: true
+
+    # ── Eventos ───────────────────────────────
+    CreateEventoRequest:
+      type: object
+      required: [titulo, fechaHora, lugar, bandaId]
+      properties:
+        titulo:
+          type: string
+          minLength: 5
+          example: "Concierto de Primavera 2025"
+        fechaHora:
+          type: string
+          format: date-time
+          example: "2025-05-10T20:00:00"
+        lugar:
+          type: string
+          example: "Auditorio Municipal de Sevilla"
+        descripcion:
+          type: string
+          nullable: true
+        tipo:
+          type: string
+          enum: [procesion, concierto]
+          default: concierto
+        bandaId:
+          type: integer
+
+    UpdateEventoRequest:
+      type: object
+      properties:
+        titulo:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+        lugar:
+          type: string
+        descripcion:
+          type: string
+        tipo:
+          type: string
+
+    Evento:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        titulo:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+        lugar:
+          type: string
+        descripcion:
+          type: string
+          nullable: true
+        tipo:
+          type: string
+          nullable: true
+        bandaId:
+          type: integer
+
+    AgendaItem:
+      type: object
+      properties:
+        fecha:
+          type: string
+          format: date-time
+        tipo:
+          type: string
+          example: "Procesión"
+        nombre:
+          type: string
+        lugar:
+          type: string
+        detalle:
+          type: string
+          nullable: true
+
+    # ── Publicaciones ─────────────────────────
+    CreatePublicacionRequest:
+      type: object
+      required: [contenido]
+      properties:
+        contenido:
+          type: string
+          example: "Este año nuestra hermandad ha incorporado a la Banda de la Macarena."
+        tipo:
+          type: string
+          enum: [general, itinerario]
+          default: general
+        hermandadId:
+          type: integer
+          nullable: true
+        bandaId:
+          type: integer
+          nullable: true
+
+    Publicacion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        contenido:
+          type: string
+        tipo:
+          type: string
+          enum: [general, itinerario]
+        fechaCreacion:
+          type: string
+          format: date-time
+          readOnly: true
+        autor:
+          $ref: '#/components/schemas/Usuario'
+        hermandad:
+          $ref: '#/components/schemas/Hermandad'
+          nullable: true
+        banda:
+          $ref: '#/components/schemas/Banda'
+          nullable: true
+
+    # ── Seguimientos ──────────────────────────
+    SeguimientoEstado:
+      type: object
+      properties:
+        sigues:
+          type: boolean
+          description: Si el usuario autenticado sigue esta entidad.
+        seguidores:
+          type: integer
+          description: Número total de seguidores.
+
+    # ── Search ────────────────────────────────
+    SearchResult:
+      type: object
+      properties:
+        ciudades:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ciudad'
+        hermandades:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hermandad'
+        bandas:
+          type: array
+          items:
+            $ref: '#/components/schemas/Banda'
+        procesiones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Procesion'
+
+    # ── Ciudades ──────────────────────────────
+    CreateCiudadRequest:
+      type: object
+      required: [nombre, provincia, pais]
+      properties:
+        nombre:
+          type: string
+          example: "Sevilla"
+        provincia:
+          type: string
+          example: "Sevilla"
+        pais:
+          type: string
+          default: "España"
+
+    UpdateCiudadRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+        provincia:
+          type: string
+        pais:
+          type: string
+
+    Ciudad:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+        provincia:
+          type: string
+        pais:
+          type: string
+
+    CiudadConContadores:
+      allOf:
+        - $ref: '#/components/schemas/Ciudad'
+        - type: object
+          properties:
+            numHermandades:
+              type: integer
+              description: Número de hermandades asociadas a esta ciudad.
+            numBandas:
+              type: integer
+              description: Número de bandas asociadas a esta ciudad.
+
+    # ── Marchas ───────────────────────────────
+    Marcha:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        titulo:
+          type: string
+        compositor:
+          type: string
+          nullable: true
+
+    # ── Admin ─────────────────────────────────
+    Estadisticas:
+      type: object
+      properties:
+        totalUsuarios:
+          type: integer
+        hermandadesVerificadas:
+          type: integer
+        bandasVerificadas:
+          type: integer
+        totalCiudades:
+          type: integer
+
+    # ── Errors ────────────────────────────────
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: "La procesión no existe"
+        error:
+          type: string
+          example: "Not Found"
+
+security:
+  - BearerAuth: []
