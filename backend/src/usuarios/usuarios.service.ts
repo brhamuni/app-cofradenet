@@ -208,6 +208,13 @@ export class UsuariosService {
         return await this.usuariosRepo.save(usuario);
     }
 
+    async updateAvatar(userId: number, avatarUrl: string) {
+        const usuario = await this.usuariosRepo.findOneBy({ id: userId });
+        if (!usuario) throw new NotFoundException('Usuario no encontrado');
+        usuario.avatar = avatarUrl;
+        return await this.usuariosRepo.save(usuario);
+    }
+
     async setBloqueo(id: number, bloqueado: boolean, motivo?: string) {
         const usuario = await this.usuariosRepo.findOneBy({ id });
         if (!usuario) throw new NotFoundException('Usuario no encontrado');

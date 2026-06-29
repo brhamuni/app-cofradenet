@@ -78,4 +78,7 @@ export class Usuario {
 
     @Column({ nullable: true, type: 'text' })
     refreshToken: string | null;
+
+    @Column({ nullable: true, type: 'text' })
+    avatar: string | null;
 }

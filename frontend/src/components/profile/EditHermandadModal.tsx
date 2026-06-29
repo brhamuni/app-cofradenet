@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, X } from "lucide-react";
-import { API } from '@/lib/api';
+import { API, resolveImg } from '@/lib/api';
+import ImageUpload from "@/components/ui/ImageUpload";
 
 export default function EditHermandadModal({ hermandad, isOpen, onClose }: any) {
   const [cargando, setCargando] = useState(false);
@@ -139,7 +140,19 @@ export default function EditHermandadModal({ hermandad, isOpen, onClose }: any) 
               />
             </div>
 
-            {field("URL del escudo", "imagenEscudo")}
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Escudo</label>
+              <div className="flex items-center gap-4">
+                <ImageUpload
+                  currentImage={resolveImg(formData.imagenEscudo) || undefined}
+                  uploadUrl={`/hermandades/${hermandad.id}/logo`}
+                  onSuccess={(data) => setFormData(f => ({ ...f, imagenEscudo: data.imagenEscudo ?? f.imagenEscudo }))}
+                  shape="square"
+                  size={88}
+                />
+                <p className="text-xs text-gray-400 leading-relaxed">Haz clic en la imagen<br/>para subir un nuevo escudo</p>
+              </div>
+            </div>
           </form>
         </div>
 

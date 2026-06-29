@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { MapPin, BadgeCheck } from "lucide-react";
 import EditHermandadModal from "../../components/profile/EditHermandadModal";
+import ImageUpload from "@/components/ui/ImageUpload";
 import { API, resolveImg } from '@/lib/api';
 import { parseJwtPayload } from '@/lib/jwt';
 
@@ -12,6 +13,7 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = useState<any>(null);
   const [rawData, setRawData] = useState<any>(null);
   const [cargando, setCargando] = useState(true);
+  const [hermandadId, setHermandadId] = useState<number | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -29,12 +31,13 @@ export default function ProfilePage() {
         .then(data => {
           if (data) {
             setRawData(data);
+            setHermandadId(data.id);
             setProfileData({
               name: data.nombrePopular || data.nombre || "Mi perfil",
               username: "@" + (data.nombrePopular || data.nombre || "perfil").toLowerCase().replace(/\s+/g, '_'),
               bio: data.descripcion || "",
               location: data.ciudad?.nombre ? `${data.ciudad.nombre}, Andalucía` : 'Andalucía, España',
-              avatarImage: resolveImg(data.imagenEscudo) || "https://via.placeholder.com/150",
+              avatarImage: resolveImg(data.imagenEscudo) || null,
               coverImage: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=2000&q=80",
             });
           }
@@ -56,8 +59,22 @@ export default function ProfilePage() {
 
       <div className="max-w-4xl mx-auto px-4">
         <div className="relative flex justify-between items-end -mt-16 mb-4">
-          <div className="relative h-32 w-32 rounded-full border-4 border-white bg-white overflow-hidden shadow-sm">
-            <Image src={profileData.avatarImage} alt="Avatar" fill className="object-cover" />
+          <div className="border-4 border-white rounded-full shadow-sm">
+            {hermandadId ? (
+              <ImageUpload
+                currentImage={profileData.avatarImage}
+                uploadUrl={`/hermandades/${hermandadId}/logo`}
+                onSuccess={(data) =>
+                  setProfileData((p: any) => ({ ...p, avatarImage: resolveImg(data.imagenEscudo) ?? p.avatarImage }))
+                }
+                shape="circle"
+                size={128}
+              />
+            ) : (
+              <div className="h-32 w-32 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-4xl font-bold">
+                {profileData.name?.[0] ?? "?"}
+              </div>
+            )}
           </div>
 
           <div className="pb-4">
