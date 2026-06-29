@@ -31,13 +31,7 @@ export class SeedService {
 
         console.log('🌱 Base de datos vacía. Leyendo ciudades.csv...');
 
-        const filePath = path.join(
-            process.cwd(),
-            'src',
-            'seed',
-            'data',
-            'ciudades.csv',
-        );
+        const filePath = path.join(__dirname, 'data', 'ciudades.csv');
         const fileContent = fs.readFileSync(filePath, 'utf-8');
         const lineas = fileContent.split(/\r?\n/);
         const ciudadesAInsertar: {
