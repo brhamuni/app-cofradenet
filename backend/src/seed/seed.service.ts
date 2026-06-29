@@ -236,7 +236,7 @@ export class SeedService implements OnModuleInit {
                 ciudadId: andujar.id,
                 usuarioId: null,
                 verificada: true,
-            } as Hermandad);
+            } as unknown as Hermandad);
 
             for (const year of [2026, 2027]) {
                 const easter = this.getEasterDate(year);
