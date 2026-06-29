@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -8,13 +8,17 @@ import { Ciudad } from '../ciudades/entities/ciudad.entity';
 import { RolUsuario, Usuario } from '../usuarios/entities/usuario.entity';
 
 @Injectable()
-export class SeedService {
+export class SeedService implements OnModuleInit {
     constructor(
         @InjectRepository(Ciudad)
         private readonly ciudadRepository: Repository<Ciudad>,
         @InjectRepository(Usuario)
         private readonly usuarioRepository: Repository<Usuario>,
     ) {}
+
+    async onModuleInit() {
+        await this.runSeed();
+    }
 
     async runSeed() {
         await this.seedCiudades();
