@@ -209,10 +209,9 @@ export class SeedService implements OnModuleInit {
             console.log(
                 `⚠️ Datos parciales (${count}/${hermandades.length}). Limpiando para resembrar...`,
             );
-            await this.participacionRepository.clear();
-            await this.pasoRepository.clear();
-            await this.procesionRepository.clear();
-            await this.hermandadRepository.clear();
+            await this.hermandadRepository.query(
+                'TRUNCATE TABLE hermandades RESTART IDENTITY CASCADE',
+            );
         }
 
         const andujar = await this.ciudadRepository.findOne({
