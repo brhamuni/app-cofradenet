@@ -162,7 +162,7 @@ export class SeedService implements OnModuleInit {
             return;
         }
 
-        const filePath = path.join(process.cwd(), 'src', 'seed', 'data', 'bandas.json');
+        const filePath = path.join(__dirname, 'data', 'bandas.json');
         const bandas: BandaSeed[] = JSON.parse(
             fs.readFileSync(filePath, 'utf-8'),
         );
@@ -214,7 +214,7 @@ export class SeedService implements OnModuleInit {
             bandaMap.set(b.nombre, b);
         }
 
-        const filePath = path.join(process.cwd(), 'src', 'seed', 'data', 'hermandades.json');
+        const filePath = path.join(__dirname, 'data', 'hermandades.json');
         const hermandades: HermandadSeed[] = JSON.parse(
             fs.readFileSync(filePath, 'utf-8'),
         );
