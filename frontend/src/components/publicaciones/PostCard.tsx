@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Trash2, MapPin, Clock, Heart, MessageCircle, ExternalLink } from 'lucide-react';
+import { Trash2, MapPin, Clock, Heart, MessageCircle, ExternalLink, Church, Music } from 'lucide-react';
+import Link from 'next/link';
 import api from '@/app/api/axios';
 import { resolveImg } from '@/lib/api';
 
@@ -109,32 +110,74 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
     ? (() => { try { const t = localStorage.getItem('token'); if (!t) return null; return JSON.parse(atob(t.split('.')[1]))?.id ?? null; } catch { return null; } })()
     : null;
 
+  const isHermandad = !!post.hermandad;
+  const isBanda = !!post.banda;
   const avatarImg = resolveImg(post.hermandad?.imagenEscudo ?? post.banda?.imagenLogo ?? null);
   const avatarName = post.hermandad?.nombrePopular || post.hermandad?.nombre || post.banda?.nombre || post.autor?.nombre || post.autor?.username || '?';
+  const profileHref = post.hermandad ? `/hermandad/${post.hermandad.id}` : post.banda ? `/banda/${post.banda.id}` : null;
+
+  const accentColor = esItinerario ? 'border-cofrade-gold' : isHermandad ? 'border-cofrade-main' : isBanda ? 'border-blue-400' : 'border-gray-200';
 
   return (
-    <div className={`bg-white rounded-2xl shadow-sm border overflow-hidden ${esItinerario ? 'border-cofrade-gold/40' : 'border-gray-100'}`}>
+    <div className={`bg-white rounded-2xl shadow-sm border overflow-hidden border-gray-100`}>
+      {/* Accent stripe */}
+      <div className={`h-0.5 w-full ${esItinerario ? 'bg-cofrade-gold' : isHermandad ? 'bg-cofrade-main' : isBanda ? 'bg-blue-400' : 'bg-gray-100'}`} />
+
+      {/* Imagen destacada (arriba si existe) */}
+      {post.imagenUrl && (
+        <div className="relative overflow-hidden">
+          <img
+            src={post.imagenUrl}
+            alt=""
+            className="w-full object-cover max-h-80"
+          />
+          {esItinerario && (
+            <span className="absolute top-3 left-3 px-2.5 py-1 bg-cofrade-gold text-white text-[10px] font-black uppercase tracking-wider rounded-full shadow">
+              Itinerario
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Cabecera */}
-      <div className="flex items-start justify-between p-4 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-cofrade-main/10 border border-gray-100 overflow-hidden flex items-center justify-center shrink-0">
-            {avatarImg ? (
-              <img src={avatarImg} alt={avatarName} className="w-full h-full object-cover" />
+      <div className="flex items-start justify-between px-4 pt-4 pb-2">
+        <div className="flex items-center gap-3 min-w-0">
+          {profileHref ? (
+            <Link href={profileHref} className="shrink-0">
+              <div className="w-10 h-10 rounded-full bg-cofrade-main/10 border border-gray-100 overflow-hidden flex items-center justify-center">
+                {avatarImg ? (
+                  <img src={avatarImg} alt={avatarName} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-cofrade-main font-black text-sm">{avatarName.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+            </Link>
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-cofrade-main/10 border border-gray-100 overflow-hidden flex items-center justify-center shrink-0">
+              {avatarImg ? (
+                <img src={avatarImg} alt={avatarName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-cofrade-main font-black text-sm">{avatarName.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+          )}
+          <div className="min-w-0">
+            {profileHref ? (
+              <Link href={profileHref} className="font-black text-gray-900 text-sm leading-none hover:text-cofrade-main transition-colors">
+                {avatarName}
+              </Link>
             ) : (
-              <span className="text-cofrade-main font-black text-sm">
-                {avatarName.charAt(0).toUpperCase()}
-              </span>
+              <p className="font-black text-gray-900 text-sm leading-none">{avatarName}</p>
             )}
-          </div>
-          <div>
-            <p className="font-black text-gray-900 text-sm leading-none">
-              {post.hermandad?.nombrePopular || post.hermandad?.nombre || post.banda?.nombre || post.autor?.nombre || post.autor?.username}
-            </p>
-            <p className="text-[11px] text-gray-400 font-semibold mt-0.5">{timeAgo(post.fechaCreacion)}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {isHermandad && <Church size={10} className="text-cofrade-main" />}
+              {isBanda && <Music size={10} className="text-blue-400" />}
+              <p className="text-[11px] text-gray-400 font-semibold">{timeAgo(post.fechaCreacion)}</p>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {esItinerario && (
+        <div className="flex items-center gap-2 shrink-0">
+          {esItinerario && !post.imagenUrl && (
             <span className="px-2.5 py-1 bg-cofrade-gold/10 text-cofrade-gold text-[10px] font-black uppercase tracking-wider rounded-full">
               Itinerario
             </span>
@@ -157,13 +200,6 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
           <ItinerarioContent contenido={post.contenido} />
         ) : (
           <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-line">{post.contenido}</p>
-        )}
-        {post.imagenUrl && (
-          <img
-            src={post.imagenUrl}
-            alt=""
-            className="mt-3 w-full rounded-xl object-cover max-h-72"
-          />
         )}
         {esEnlaceSocial && <SocialEmbed url={post.urlExterna} />}
       </div>
@@ -189,7 +225,6 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
       {/* Panel de comentarios */}
       {showComments && (
         <div className="px-4 pb-4 border-t border-gray-100 pt-3">
-          {/* Lista de comentarios */}
           <div className="space-y-3 mb-3 max-h-64 overflow-y-auto">
             {comentarios.length === 0 && (
               <p className="text-xs text-gray-400 text-center py-2 font-semibold">Sé el primero en comentar</p>
@@ -204,9 +239,7 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="bg-gray-50 rounded-xl px-3 py-2">
-                      <p className={`text-xs font-black mb-0.5 ${isOwn ? 'text-cofrade-main' : 'text-gray-700'}`}>
-                        {cName}
-                      </p>
+                      <p className={`text-xs font-black mb-0.5 ${isOwn ? 'text-cofrade-main' : 'text-gray-700'}`}>{cName}</p>
                       <p className="text-sm text-gray-800 leading-snug">{c.contenido}</p>
                     </div>
                     <p className="text-[10px] text-gray-400 font-semibold mt-0.5 ml-1">{timeAgo(c.createdAt)}</p>
@@ -214,7 +247,7 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
                   {(currentUserId === c.usuarioId || canDelete) && (
                     <button
                       onClick={() => handleEliminarComentario(c.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 transition-all self-start mt-0.5 rounded shrink-0"
+                      className="sm:opacity-0 sm:group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 transition-all self-start mt-0.5 rounded shrink-0"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -224,7 +257,6 @@ export default function PostCard({ post, canDelete, onDeleted }: PostCardProps) 
             })}
           </div>
 
-          {/* Input nuevo comentario */}
           <div className="flex gap-2 items-end">
             <textarea
               ref={textareaRef}

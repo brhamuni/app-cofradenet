@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Calendar,
@@ -9,13 +9,16 @@ import {
   Church,
   Bell,
   BellOff,
-  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  List,
   Download,
 } from 'lucide-react';
 import api from '@/app/api/axios';
 import { API, resolveImg } from '@/lib/api';
 
 type TipoFiltro = 'all' | 'procesion' | 'concierto';
+type Vista = 'lista' | 'calendario';
 
 interface EventoCalendario {
   id: number;
@@ -120,6 +123,9 @@ export default function CalendarioPage() {
   const [filtroTipo, setFiltroTipo] = useState<TipoFiltro>('all');
   const [filtroCiudad, setFiltroCiudad] = useState('all');
   const [importantes, setImportantes] = useState<Set<string>>(new Set());
+  const [vista, setVista] = useState<Vista>('lista');
+  const [calMes, setCalMes] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
+  const [diaSeleccionado, setDiaSeleccionado] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -157,6 +163,39 @@ export default function CalendarioPage() {
 
   const proximos = filtrados.slice(0, 4);
 
+  // Calendar helpers
+  const eventosPorDia = useMemo(() => {
+    const map = new Map<string, EventoCalendario[]>();
+    for (const ev of filtrados) {
+      const key = ev.fecha.slice(0, 10);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(ev);
+    }
+    return map;
+  }, [filtrados]);
+
+  const calDias = useMemo(() => {
+    const year = calMes.getFullYear();
+    const month = calMes.getMonth();
+    const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+    const startOffset = (firstDay + 6) % 7; // shift so Mon=0
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells: (number | null)[] = [
+      ...Array(startOffset).fill(null),
+      ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    ];
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  }, [calMes]);
+
+  const diaStr = (day: number) => {
+    const y = calMes.getFullYear();
+    const m = String(calMes.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}-${String(day).padStart(2, '0')}`;
+  };
+
+  const eventosDiaSeleccionado = diaSeleccionado ? (eventosPorDia.get(diaSeleccionado) ?? []) : [];
+
   const handleExportarIcs = () => {
     const token = localStorage.getItem('token');
     const url = `${API}/calendario/exportar-ics?tipo=${filtroTipo}${filtroCiudad !== 'all' ? '' : ''}`;
@@ -182,11 +221,27 @@ export default function CalendarioPage() {
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
 
         {/* Header */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h1 className="text-2xl font-black text-gray-900 mb-1">Mi Calendario</h1>
-          <p className="text-gray-500 text-sm font-semibold">
-            Eventos de las hermandades y bandas que sigues
-          </p>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-black text-gray-900 mb-1">Mi Calendario</h1>
+            <p className="text-gray-500 text-sm font-semibold">
+              Eventos de las hermandades y bandas que sigues
+            </p>
+          </div>
+          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+            <button
+              onClick={() => setVista('lista')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${vista === 'lista' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <List size={14} /> Lista
+            </button>
+            <button
+              onClick={() => setVista('calendario')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${vista === 'calendario' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Calendar size={14} /> Calendario
+            </button>
+          </div>
         </div>
 
         {/* Filtros */}
@@ -244,9 +299,95 @@ export default function CalendarioPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Lista principal */}
+          {/* Vista principal */}
           <div className="lg:col-span-2">
-            {cargando ? (
+            {vista === 'calendario' ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                {/* Cabecera mes */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                  <button onClick={() => { setCalMes(m => new Date(m.getFullYear(), m.getMonth() - 1, 1)); setDiaSeleccionado(null); }}
+                    className="p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
+                    <ChevronLeft size={18} className="text-gray-500" />
+                  </button>
+                  <p className="font-black text-gray-900 capitalize">
+                    {calMes.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                  </p>
+                  <button onClick={() => { setCalMes(m => new Date(m.getFullYear(), m.getMonth() + 1, 1)); setDiaSeleccionado(null); }}
+                    className="p-1.5 rounded-xl hover:bg-gray-100 transition-colors">
+                    <ChevronRight size={18} className="text-gray-500" />
+                  </button>
+                </div>
+
+                {/* Días semana */}
+                <div className="grid grid-cols-7 border-b border-gray-100">
+                  {['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(d => (
+                    <div key={d} className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest py-2">{d}</div>
+                  ))}
+                </div>
+
+                {/* Celdas */}
+                <div className="grid grid-cols-7">
+                  {calDias.map((day, i) => {
+                    if (!day) return <div key={`empty-${i}`} className="min-h-15 border-b border-r border-gray-50 last:border-r-0" />;
+                    const ds = diaStr(day);
+                    const evsDia = eventosPorDia.get(ds) ?? [];
+                    const isSelected = diaSeleccionado === ds;
+                    const today = new Date();
+                    const isToday = today.getFullYear() === calMes.getFullYear() && today.getMonth() === calMes.getMonth() && today.getDate() === day;
+                    return (
+                      <button
+                        key={ds}
+                        onClick={() => setDiaSeleccionado(isSelected ? null : ds)}
+                        className={`min-h-15 border-b border-r border-gray-50 last:border-r-0 flex flex-col items-center pt-2 pb-1.5 gap-1 transition-colors ${
+                          isSelected ? 'bg-cofrade-main/10' : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className={`text-xs font-black w-6 h-6 flex items-center justify-center rounded-full ${
+                          isToday ? 'bg-cofrade-main text-white' : isSelected ? 'text-cofrade-main' : 'text-gray-700'
+                        }`}>{day}</span>
+                        {evsDia.length > 0 && (
+                          <div className="flex gap-0.5 flex-wrap justify-center px-1">
+                            {evsDia.slice(0, 3).map((ev, ei) => (
+                              <span key={ei} className={`w-1.5 h-1.5 rounded-full ${ev.tipo === 'procesion' ? 'bg-cofrade-main' : 'bg-blue-500'}`} />
+                            ))}
+                            {evsDia.length > 3 && <span className="text-[8px] font-black text-gray-400">+{evsDia.length - 3}</span>}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Eventos del día seleccionado */}
+                {diaSeleccionado && eventosDiaSeleccionado.length > 0 && (
+                  <div className="border-t border-gray-100 p-4 space-y-3">
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                      {new Date(diaSeleccionado + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </p>
+                    {eventosDiaSeleccionado.map((ev) => {
+                      const key = eventoKey(ev);
+                      return (
+                        <div key={key} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${ev.tipo === 'procesion' ? 'bg-cofrade-main/10' : 'bg-blue-100'}`}>
+                            {ev.tipo === 'procesion' ? <Church size={15} className="text-cofrade-main" /> : <Music size={15} className="text-blue-600" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-black text-gray-900 truncate">{ev.titulo}</p>
+                            <p className="text-xs text-gray-500 font-semibold">{ev.tipo === 'procesion' ? (ev.hermandad?.nombrePopular || ev.hermandad?.nombre) : ev.banda?.nombre}</p>
+                          </div>
+                          {ev.hora && <span className="text-xs font-bold text-gray-500 shrink-0">{ev.hora}</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {diaSeleccionado && eventosDiaSeleccionado.length === 0 && (
+                  <div className="border-t border-gray-100 p-4 text-center text-xs text-gray-400 font-semibold">
+                    Sin eventos este día
+                  </div>
+                )}
+              </div>
+            ) : cargando ? (
               <Skeleton />
             ) : filtrados.length === 0 ? (
               <EmptyState />

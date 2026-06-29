@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { MapPin, Church, Calendar, Hash, Home, CheckCircle2, Edit3, ChevronRight, ChevronDown, Clock, Users, Music, Trash2, Plus } from 'lucide-react';
 import EditHermandadModal from '../profile/EditHermandadModal';
 import PostFeed from '../publicaciones/PostFeed';
@@ -415,21 +416,25 @@ function ProcesonExpandible({ procesion }: { procesion: any }) {
 
 // ─── Read-only procesión card ─────────────────────────────────────────────────
 
+function formatFecha(fecha: string | undefined): string {
+  if (!fecha) return '';
+  const d = new Date(fecha + 'T00:00:00');
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 function ProcesonCard({ procesion }: { procesion: any }) {
   return (
-    <div className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
+    <Link href={`/procesion/${procesion.id}`} className="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-cofrade-main/30 hover:bg-gray-50 transition-all">
       <div className="w-10 h-10 rounded-xl bg-cofrade-main/10 flex items-center justify-center shrink-0">
         <Clock size={18} className="text-cofrade-main" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-black text-gray-900 truncate">{procesion.nombre}</p>
-        <p className="text-xs text-gray-500 font-semibold mt-0.5">
-          {procesion.diaSemana} · Salida: {procesion.horaSalida}
-          {procesion.horaEntrada ? ` · Entrada: ${procesion.horaEntrada}` : ''}
-        </p>
+        <p className="text-xs text-gray-500 font-semibold mt-0.5">{procesion.diaSemana}{procesion.fecha ? ` · ${formatFecha(procesion.fecha)}` : ''}</p>
+        <p className="text-xs text-gray-400 font-semibold">Salida: {procesion.horaSalida}{procesion.horaEntrada ? ` · Entrada: ${procesion.horaEntrada}` : ''}</p>
       </div>
-      <ChevronRight size={16} className="text-gray-300 shrink-0" />
-    </div>
+      <ChevronRight size={16} className="text-cofrade-main shrink-0" />
+    </Link>
   );
 }
 
@@ -463,26 +468,35 @@ export default function HermandadProfile({ hermandad }: { hermandad: any }) {
     ? hermandad.titulares
     : hermandad.titulares ? String(hermandad.titulares).split(',').map((t: string) => t.trim()) : [];
 
+  const [procesonesTab, setProcesonesTab] = useState<'futuras' | 'pasadas'>('futuras');
+
+  const today = new Date().toISOString().split('T')[0];
   const procesiones: any[] = hermandad.procesiones || [];
+  const procesionsFuturas = [...procesiones]
+    .filter(p => (p.fecha || '') >= today)
+    .sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+  const procesionsPasadas = [...procesiones]
+    .filter(p => (p.fecha || '') < today)
+    .sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
 
   return (
     <div className="min-h-screen bg-white">
       {/* PORTADA */}
-      <div className="relative w-full h-56 md:h-80 overflow-hidden bg-cofrade-main">
+      <div className="relative w-full h-36 md:h-52 overflow-hidden bg-cofrade-main">
         <img src="https://images.unsplash.com/photo-1559564484-e48b3e040ff4?q=80&w=1600" alt="Portada"
           className="w-full h-full object-cover opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-t from-cofrade-main/80 via-cofrade-main/20 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-cofrade-main/80 via-cofrade-main/20 to-transparent" />
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* CABECERA */}
-        <div className="relative -mt-16 md:-mt-24 mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div className="w-28 h-28 md:w-36 md:h-36 rounded-3xl border-4 border-white bg-white shadow-xl overflow-hidden flex items-center justify-center">
+        <div className="relative -mt-12 md:-mt-16 mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl border-4 border-white bg-white shadow-xl overflow-hidden flex items-center justify-center">
             {resolveImg(hermandad.imagenEscudo)
-              ? <img src={resolveImg(hermandad.imagenEscudo)} alt="Escudo" className="w-full h-full object-contain p-2" />
+              ? <img src={resolveImg(hermandad.imagenEscudo)} alt="Escudo" className="w-full h-full object-cover" />
               : <Church size={48} className="text-cofrade-main/30" />}
           </div>
-          <div className="flex gap-3 md:pt-28 pb-1">
+          <div className="flex gap-3 md:pt-20 pb-1">
             {canEdit ? (
               <button onClick={() => setEditOpen(true)}
                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-900 rounded-full font-bold text-sm hover:bg-gray-50 transition-all shadow-sm">
@@ -534,10 +548,10 @@ export default function HermandadProfile({ hermandad }: { hermandad: any }) {
         )}
 
         {/* TABS */}
-        <div className="border-b border-gray-200 flex gap-8 mb-8">
+        <div className="border-b border-gray-200 flex gap-6 sm:gap-8 mb-8 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           {TABS.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`pb-3 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${
+              className={`pb-3 text-xs font-black uppercase tracking-widest transition-all border-b-2 whitespace-nowrap shrink-0 ${
                 activeTab === tab.key ? 'border-cofrade-main text-cofrade-main' : 'border-transparent text-gray-400 hover:text-gray-600'
               }`}>
               {tab.key === 'procesiones' ? `Procesiones (${procesiones.length})` : tab.label}
@@ -581,13 +595,51 @@ export default function HermandadProfile({ hermandad }: { hermandad: any }) {
                 <p className="font-black uppercase tracking-widest text-xs">Sin procesiones registradas</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {procesiones.map((p: any) =>
-                  canEdit
-                    ? <ProcesonExpandible key={p.id} procesion={p} />
-                    : <ProcesonCard key={p.id} procesion={p} />
-                )}
-              </div>
+              <>
+                {/* Sub-pestañas futuras / pasadas */}
+                <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1">
+                  <button
+                    onClick={() => setProcesonesTab('futuras')}
+                    className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${
+                      procesonesTab === 'futuras'
+                        ? 'bg-white text-cofrade-main shadow-sm'
+                        : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    Próximas · {procesionsFuturas.length}
+                  </button>
+                  <button
+                    onClick={() => setProcesonesTab('pasadas')}
+                    className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${
+                      procesonesTab === 'pasadas'
+                        ? 'bg-white text-gray-600 shadow-sm'
+                        : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    Pasadas · {procesionsPasadas.length}
+                  </button>
+                </div>
+
+                {(() => {
+                  const lista = procesonesTab === 'futuras' ? procesionsFuturas : procesionsPasadas;
+                  return lista.length === 0 ? (
+                    <div className="flex flex-col items-center py-16 text-gray-400">
+                      <Church size={36} className="mb-3 opacity-20" />
+                      <p className="font-black uppercase tracking-widest text-xs">
+                        {procesonesTab === 'futuras' ? 'No hay procesiones próximas' : 'No hay procesiones pasadas'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {lista.map((p: any) =>
+                        canEdit
+                          ? <ProcesonExpandible key={p.id} procesion={p} />
+                          : <ProcesonCard key={p.id} procesion={p} />
+                      )}
+                    </div>
+                  );
+                })()}
+              </>
             )
           )}
 

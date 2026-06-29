@@ -155,11 +155,11 @@ export default async function ProcesionPage({
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <div className="relative h-64 md:h-80 overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1585339195735-a8e6f1cb9e67?auto=format&fit=crop&w=1600&q=80"
+          src="https://images.unsplash.com/photo-1559564484-e48b3e040ff4?auto=format&fit=crop&w=1600&q=80"
           alt="Procesión"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-cofrade-main/80" />
+        <div className="absolute inset-0 bg-linear-to-t from-cofrade-main via-cofrade-main/70 to-cofrade-main/40" />
 
         <div className="relative z-10 flex flex-col justify-end h-full max-w-4xl mx-auto px-4 pb-8">
           {procesion.hermandad && (

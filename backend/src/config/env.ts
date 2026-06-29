@@ -36,5 +36,8 @@ export function getCorsOrigin(
     const port = config.get<string>('FRONTEND_PORT');
     if (host && port) return serviceUrl(host, port);
 
-    return false;
+    console.warn(
+        '[CORS] No origin configured (FRONTEND_URL / CORS_ORIGINS / APP_HOST+FRONTEND_PORT). Allowing all origins.',
+    );
+    return true;
 }

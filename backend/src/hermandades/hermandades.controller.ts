@@ -56,6 +56,14 @@ export class HermandadesController {
         return this.hermandadesService.findAll();
     }
 
+    @ApiOperation({ summary: 'Obtener la hermandad del usuario autenticado' })
+    @ApiBearerAuth('access-token')
+    @Get('mi-hermandad')
+    @UseGuards(JwtAuthGuard)
+    findMia(@Req() req: Request) {
+        return this.hermandadesService.findByUsuario((req.user as any).id);
+    }
+
     @ApiOperation({ summary: 'Obtener una hermandad por ID' })
     @ApiResponse({ status: 200, description: 'Datos de la hermandad' })
     @ApiResponse({ status: 404, description: 'Hermandad no encontrada' })

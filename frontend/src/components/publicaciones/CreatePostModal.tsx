@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Loader2, ImageIcon, Route, Link as LinkIcon } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, Loader2, ImageIcon, Route, Link as LinkIcon, Upload, Trash2 } from 'lucide-react';
 import { API } from '@/lib/api';
 
 interface CreatePostModalProps {
@@ -27,10 +27,12 @@ Bandas que acompañan:
 export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadId, bandaId }: CreatePostModalProps) {
   const [tipo, setTipo] = useState<'general' | 'itinerario' | 'enlace_social'>('general');
   const [contenido, setContenido] = useState('');
-  const [imagenUrl, setImagenUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [urlExterna, setUrlExterna] = useState('');
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -46,13 +48,56 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
     if (nuevoTipo !== 'enlace_social') setUrlExterna('');
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setImageFile(f);
+    setImagePreview(URL.createObjectURL(f));
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleClose = () => {
+    clearImage();
+    setContenido('');
+    setUrlExterna('');
+    setTipo('general');
+    setError('');
+    onClose();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!contenido.trim()) return;
+    if (!contenido.trim() && tipo !== 'enlace_social') return;
     setCargando(true);
     setError('');
     try {
       const token = localStorage.getItem('token');
+
+      // Upload image first if file selected
+      let imagenUrl: string | undefined;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append('file', imageFile);
+        if (hermandadId) fd.append('hermandadId', String(hermandadId));
+        if (bandaId) fd.append('bandaId', String(bandaId));
+        const uploadRes = await fetch(`${API}/media/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json().catch(() => ({}));
+          throw new Error((err as any).message ?? 'Error al subir la imagen');
+        }
+        const uploadData = await uploadRes.json();
+        imagenUrl = uploadData.url;
+      }
+
       const res = await fetch(`${API}/publicaciones`, {
         method: 'POST',
         headers: {
@@ -60,8 +105,8 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          contenido: contenido.trim(),
-          imagenUrl: imagenUrl.trim() || undefined,
+          contenido: contenido.trim() || undefined,
+          imagenUrl,
           urlExterna: urlExterna.trim() || undefined,
           tipo,
           hermandadId: hermandadId || undefined,
@@ -74,11 +119,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
       }
       const post = await res.json();
       onCreated(post);
-      setContenido('');
-      setImagenUrl('');
-      setUrlExterna('');
-      setTipo('general');
-      onClose();
+      handleClose();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -87,12 +128,12 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-9999 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b">
           <h2 className="text-lg font-black">Nueva publicación</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+          <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full">
             <X size={18} />
           </button>
         </div>
@@ -170,21 +211,42 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
             required={tipo !== 'enlace_social'}
           />
 
-          {/* URL imagen (opcional) */}
-          <div className="flex items-center gap-2">
-            <ImageIcon size={16} className="text-gray-400 shrink-0" />
+          {/* Adjuntar imagen */}
+          <div>
             <input
-              type="url"
-              value={imagenUrl}
-              onChange={e => setImagenUrl(e.target.value)}
-              placeholder="URL de imagen (opcional)"
-              className="flex-1 p-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cofrade-main/20"
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleFileSelect}
             />
+            {imagePreview ? (
+              <div className="relative rounded-xl overflow-hidden border border-gray-100">
+                <img src={imagePreview} alt="preview" className="w-full max-h-48 object-cover" />
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  className="absolute top-2 right-2 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                >
+                  <Trash2 size={13} className="text-white" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center gap-2 p-3 border border-dashed border-gray-200 rounded-xl text-sm text-gray-400 font-semibold hover:border-cofrade-main/40 hover:text-cofrade-main/60 transition-colors"
+              >
+                <ImageIcon size={16} />
+                Adjuntar foto
+                <Upload size={14} className="ml-auto" />
+              </button>
+            )}
           </div>
 
           {/* Botones */}
           <div className="flex justify-end gap-3 pt-1">
-            <button type="button" onClick={onClose} className="px-5 py-2 font-bold text-gray-500 text-sm">
+            <button type="button" onClick={handleClose} className="px-5 py-2 font-bold text-gray-500 text-sm">
               Cancelar
             </button>
             <button

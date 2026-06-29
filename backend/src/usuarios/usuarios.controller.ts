@@ -9,12 +9,16 @@ import {
     UseGuards,
     ParseIntPipe,
     Req,
+    UseInterceptors,
+    UploadedFile,
+    BadRequestException,
 } from '@nestjs/common';
 import {
     ApiTags,
     ApiOperation,
     ApiResponse,
     ApiBearerAuth,
+    ApiConsumes,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { UsuariosService } from './usuarios.service';
@@ -25,12 +29,18 @@ import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
 import { RolUsuario } from './entities/usuario.entity';
 import { NotBlockedGuard } from '@backend/auth/guards/not-blocked.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { ArchivosService } from '@backend/archivos/archivos.service';
 
 @ApiTags('usuarios')
 @Controller('usuarios')
 @UseGuards(NotBlockedGuard)
 export class UsuariosController {
-    constructor(private readonly usuariosService: UsuariosService) {}
+    constructor(
+        private readonly usuariosService: UsuariosService,
+        private readonly archivosService: ArchivosService,
+    ) {}
 
     @ApiOperation({ summary: 'Registrar un nuevo usuario' })
     @ApiResponse({ status: 201, description: 'Usuario creado correctamente' })
@@ -60,6 +70,36 @@ export class UsuariosController {
     @UseGuards(JwtAuthGuard)
     obtenerPerfil(@Req() req: Request) {
         return this.usuariosService.getPerfil(req.user!.id);
+    }
+
+    @ApiOperation({ summary: 'Subir o actualizar el avatar del usuario autenticado' })
+    @ApiBearerAuth('access-token')
+    @ApiConsumes('multipart/form-data')
+    @ApiResponse({ status: 201, description: 'Avatar actualizado' })
+    @Post('perfil/avatar')
+    @UseGuards(JwtAuthGuard)
+    @UseInterceptors(
+        FileInterceptor('file', {
+            storage: memoryStorage(),
+            fileFilter: (_req, file, cb) => {
+                if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+                    return cb(new BadRequestException('Solo se permiten imágenes'), false);
+                }
+                cb(null, true);
+            },
+        }),
+    )
+    async uploadAvatar(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+        if (!file) throw new BadRequestException('No se ha subido ningún archivo');
+        const archivo = await this.archivosService.store({
+            buffer: file.buffer,
+            mimeType: file.mimetype,
+            originalName: file.originalname,
+        });
+        return this.usuariosService.updateAvatar(
+            req.user!.id,
+            this.archivosService.publicPath(archivo.id),
+        );
     }
 
     @ApiOperation({ summary: 'Obtener un usuario por ID' })

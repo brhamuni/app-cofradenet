@@ -72,6 +72,14 @@ export class BandasController {
         return this.bandasService.findAllByCiudad(id);
     }
 
+    @ApiOperation({ summary: 'Obtener la banda del usuario autenticado' })
+    @ApiBearerAuth('access-token')
+    @Get('mi-banda')
+    @UseGuards(JwtAuthGuard)
+    findMia(@Req() req: Request) {
+        return this.bandasService.findByUsuario((req.user as any).id);
+    }
+
     @ApiOperation({ summary: 'Obtener una banda por ID' })
     @ApiResponse({ status: 200, description: 'Datos de la banda' })
     @ApiResponse({ status: 404, description: 'Banda no encontrada' })
@@ -170,6 +178,37 @@ export class BandasController {
         @Req() req: Request,
     ) {
         return this.bandasService.eliminarEvento(id, eventoId, req.user!);
+    }
+
+    @ApiOperation({ summary: 'Subir el logo de una banda' })
+    @ApiBearerAuth('access-token')
+    @ApiConsumes('multipart/form-data')
+    @ApiResponse({ status: 201, description: 'Logo actualizado correctamente' })
+    @Post(':id/logo')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
+    @UseInterceptors(
+        FileInterceptor('file', {
+            storage: memoryStorage(),
+            fileFilter: (_req, file, cb) => {
+                if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+                    return cb(new BadRequestException('Solo se permiten imágenes'), false);
+                }
+                cb(null, true);
+            },
+        }),
+    )
+    async uploadLogo(
+        @Param('id', ParseIntPipe) id: number,
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        if (!file) throw new BadRequestException('No se ha subido ningún archivo');
+        const archivo = await this.archivosService.store({
+            buffer: file.buffer,
+            mimeType: file.mimetype,
+            originalName: file.originalname,
+        });
+        return this.bandasService.updateLogo(id, this.archivosService.publicPath(archivo.id));
     }
 
     @ApiOperation({

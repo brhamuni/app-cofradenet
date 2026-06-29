@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Newspaper, ChevronDown } from 'lucide-react';
+import { Newspaper, ChevronDown, Church, Music, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
 import PostCard from '@/components/publicaciones/PostCard';
 import api from '@/app/api/axios';
@@ -29,7 +29,7 @@ function useFeed(tab: Tab) {
       setTotal(data.total ?? 0);
       setPage(p);
     } catch {
-      // silencioso — JwtAuthGuard redirige si no hay token
+      // silencioso
     } finally {
       p === 1 ? setCargando(false) : setCargandoMas(false);
     }
@@ -75,91 +75,82 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto">
-
-        {/* Header + pestañas */}
-        <div className="bg-white border-b border-gray-100">
-          <div className="flex items-center gap-3 px-4 pt-5 pb-0">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-2xl mx-auto px-4 pt-5 pb-0">
+          <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 rounded-xl bg-cofrade-main flex items-center justify-center shrink-0">
               <Newspaper size={15} className="text-white" />
             </div>
-            <h1 className="text-xl font-black text-gray-900">Feed</h1>
+            <h1 className="text-xl font-black text-gray-900">Feed cofrade</h1>
           </div>
 
           {/* Pestañas */}
-          <div className="flex mt-1">
-            <TabButton
-              label="Para ti"
-              active={tab === 'general'}
-              onClick={() => handleTabChange('general')}
-            />
-            <TabButton
-              label="Siguiendo"
-              active={tab === 'siguiendo'}
-              onClick={() => handleTabChange('siguiendo')}
-              badge={!isLoggedIn}
-            />
+          <div className="flex">
+            <TabButton label="Para ti" icon={<Sparkles size={13} />} active={tab === 'general'} onClick={() => handleTabChange('general')} />
+            <TabButton label="Siguiendo" icon={<Users size={13} />} active={tab === 'siguiendo'} onClick={() => handleTabChange('siguiendo')} badge={!isLoggedIn} />
           </div>
         </div>
+      </div>
 
-        {/* Contenido */}
-        <div className="px-4 py-4">
-          {active.cargando ? (
-            <Skeleton />
-          ) : active.posts.length === 0 ? (
-            <EmptyState tab={tab} isLoggedIn={isLoggedIn} />
-          ) : (
-            <>
-              <div className="space-y-4">
-                {active.posts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    canDelete={false}
-                    onDeleted={active.handleDeleted}
-                  />
-                ))}
+      {/* Contenido */}
+      <div className="max-w-2xl mx-auto px-4 py-5">
+        {active.cargando ? (
+          <Skeleton />
+        ) : active.posts.length === 0 ? (
+          <EmptyState tab={tab} isLoggedIn={isLoggedIn} />
+        ) : (
+          <>
+            <div className="space-y-4">
+              {active.posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  canDelete={false}
+                  onDeleted={active.handleDeleted}
+                />
+              ))}
+            </div>
+
+            {active.hayMas && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={active.cargarMas}
+                  disabled={active.cargandoMas}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-black rounded-xl hover:border-cofrade-main hover:text-cofrade-main transition-colors text-sm shadow-sm disabled:opacity-50"
+                >
+                  {active.cargandoMas ? (
+                    <div className="w-4 h-4 border-2 border-cofrade-main border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <ChevronDown size={16} />
+                  )}
+                  Cargar más
+                </button>
               </div>
+            )}
 
-              {active.hayMas && (
-                <div className="flex justify-center mt-6">
-                  <button
-                    onClick={active.cargarMas}
-                    disabled={active.cargandoMas}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-black rounded-xl hover:border-cofrade-main hover:text-cofrade-main transition-colors text-sm shadow-sm disabled:opacity-50"
-                  >
-                    {active.cargandoMas ? (
-                      <div className="w-4 h-4 border-2 border-cofrade-main border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <ChevronDown size={16} />
-                    )}
-                    Cargar más
-                  </button>
-                </div>
-              )}
-
-              <p className="text-center text-xs text-gray-400 font-semibold mt-4">
-                {active.posts.length} de {active.total} publicaciones
-              </p>
-            </>
-          )}
-        </div>
+            <p className="text-center text-xs text-gray-400 font-semibold mt-4">
+              {active.posts.length} de {active.total} publicaciones
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-function TabButton({ label, active, onClick, badge }: { label: string; active: boolean; onClick: () => void; badge?: boolean }) {
+function TabButton({ label, icon, active, onClick, badge }: { label: string; icon: React.ReactNode; active: boolean; onClick: () => void; badge?: boolean }) {
   return (
     <button
       onClick={onClick}
-      className={`relative flex-1 py-3.5 text-sm font-black transition-colors ${
+      className={`relative flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm font-black transition-colors ${
         active ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
       }`}
     >
+      {icon}
       {label}
       {badge && (
-        <span className="ml-1.5 text-[9px] font-black text-cofrade-main bg-cofrade-main/10 px-1.5 py-0.5 rounded-full uppercase tracking-wide">
+        <span className="ml-1 text-[9px] font-black text-cofrade-main bg-cofrade-main/10 px-1.5 py-0.5 rounded-full uppercase tracking-wide">
           Login
         </span>
       )}
@@ -174,17 +165,21 @@ function Skeleton() {
   return (
     <div className="space-y-4">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm animate-pulse">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-gray-200" />
-            <div className="space-y-1.5">
-              <div className="h-3 w-32 bg-gray-200 rounded-full" />
-              <div className="h-2 w-20 bg-gray-100 rounded-full" />
+        <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm animate-pulse">
+          <div className="h-0.5 bg-gray-100" />
+          <div className="h-40 bg-gray-100" />
+          <div className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-gray-200" />
+              <div className="space-y-1.5">
+                <div className="h-3 w-32 bg-gray-200 rounded-full" />
+                <div className="h-2 w-20 bg-gray-100 rounded-full" />
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <div className="h-3 bg-gray-100 rounded-full" />
-            <div className="h-3 bg-gray-100 rounded-full w-4/5" />
+            <div className="space-y-2">
+              <div className="h-3 bg-gray-100 rounded-full" />
+              <div className="h-3 bg-gray-100 rounded-full w-4/5" />
+            </div>
           </div>
         </div>
       ))}
@@ -196,29 +191,37 @@ function EmptyState({ tab, isLoggedIn }: { tab: Tab; isLoggedIn: boolean }) {
   if (tab === 'siguiendo') {
     return (
       <div className="flex flex-col items-center py-20 text-center">
-        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-          <Newspaper size={36} className="text-gray-300" />
+        <div className="w-20 h-20 rounded-2xl bg-cofrade-main/10 flex items-center justify-center mb-5">
+          <Users size={36} className="text-cofrade-main/40" />
         </div>
-        <h2 className="text-lg font-black text-gray-700 mb-1">Tu feed está vacío</h2>
-        <p className="text-sm text-gray-400 font-semibold mb-6">
+        <h2 className="text-lg font-black text-gray-800 mb-2">Tu feed está vacío</h2>
+        <p className="text-sm text-gray-400 font-semibold mb-6 max-w-xs">
           Sigue hermandades y bandas para ver sus publicaciones aquí
         </p>
-        <Link
-          href="/"
-          className="px-5 py-2.5 bg-cofrade-main text-white font-black rounded-xl hover:opacity-90 transition-opacity text-sm"
-        >
-          Explorar hermandades
-        </Link>
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          <Link
+            href="/"
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-cofrade-main text-white font-black rounded-xl hover:opacity-90 transition-opacity text-sm"
+          >
+            <Church size={16} /> Explorar hermandades
+          </Link>
+          <Link
+            href="/explorar"
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-gray-100 text-gray-700 font-black rounded-xl hover:bg-gray-200 transition-colors text-sm"
+          >
+            <Music size={16} /> Ver bandas
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col items-center py-20 text-center">
-      <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-        <Newspaper size={36} className="text-gray-300" />
+      <div className="w-20 h-20 rounded-2xl bg-cofrade-main/10 flex items-center justify-center mb-5">
+        <Newspaper size={36} className="text-cofrade-main/40" />
       </div>
-      <h2 className="text-lg font-black text-gray-700 mb-1">Aún no hay publicaciones</h2>
+      <h2 className="text-lg font-black text-gray-800 mb-2">Aún no hay publicaciones</h2>
       <p className="text-sm text-gray-400 font-semibold">
         Las hermandades y bandas irán publicando novedades aquí
       </p>

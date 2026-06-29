@@ -57,6 +57,21 @@ export class BandasService {
         return banda;
     }
 
+    async findByUsuario(usuarioId: number) {
+        const banda = await this.bandaRepo.findOne({
+            where: { usuarioId },
+            relations: ['ciudad', 'repertorio', 'eventos'],
+        });
+        if (!banda) throw new NotFoundException('No tienes ninguna banda registrada');
+        return banda;
+    }
+
+    async updateLogo(id: number, imagenLogo: string) {
+        const banda = await this.bandaRepo.findOneByOrFail({ id });
+        banda.imagenLogo = imagenLogo;
+        return await this.bandaRepo.save(banda);
+    }
+
     async update(id: number, updateBandaDto: UpdateBandaDto, user: RequestUser) {
         const banda = await this.bandaRepo.findOne({
             where: { id },

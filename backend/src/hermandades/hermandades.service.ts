@@ -53,6 +53,15 @@ export class HermandadesService {
         return hermandad;
     }
 
+    async findByUsuario(usuarioId: number) {
+        const hermandad = await this.hermandadRepo.findOne({
+            where: { usuarioId },
+            relations: ['ciudad', 'procesiones'],
+        });
+        if (!hermandad) throw new NotFoundException('No tienes ninguna hermandad registrada');
+        return hermandad;
+    }
+
     async updatePerfil(
         id: number,
         updateDto: UpdateHermandadDto,

@@ -37,7 +37,7 @@ export default function UserDropdown({ onLogout, isAdmin }: { onLogout: () => vo
   const close = () => setIsDropdownOpen(false);
 
   return (
-    <div className="hidden md:flex items-center gap-3">
+    <div className="flex items-center gap-3">
 
       {/* Botón Admin visible en el header */}
       {isAdmin && (

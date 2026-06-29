@@ -26,19 +26,19 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
       <div className="relative flex flex-col gap-2">
         
         {/* BARRA INTEGRADA */}
-        <div className="group relative flex items-center bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] h-[72px] p-2 transition-all focus-within:ring-4 focus-within:ring-cofrade-gold/10">
-          
+        <div className="group relative flex items-center bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] h-14.5 md:h-18 p-1.5 md:p-2 transition-all focus-within:ring-4 focus-within:ring-cofrade-gold/10">
+
           {/* SELECTOR PERSONALIZADO */}
           <div className="relative h-full z-[110]">
             <button
               onClick={() => setMenuAbierto(!menuAbierto)}
-              className="flex items-center gap-3 h-full px-6 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-900 transition-colors border border-gray-100"
+              className="flex items-center gap-2 h-full px-3 md:px-6 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-900 transition-colors border border-gray-100"
             >
-              <Filter size={16} className="text-cofrade-main" />
-              <span className="text-[11px] font-black uppercase tracking-widest min-w-[70px] text-left">
+              <Filter size={15} className="text-cofrade-main shrink-0" />
+              <span className="hidden sm:block text-[11px] font-black uppercase tracking-widest min-w-17.5 text-left">
                 {filtro}
               </span>
-              <ChevronDown size={14} className={`transition-transform duration-300 ${menuAbierto ? 'rotate-180' : ''}`} />
+              <ChevronDown size={13} className={`transition-transform duration-300 ${menuAbierto ? 'rotate-180' : ''}`} />
             </button>
 
             {/* MENÚ DESPLEGABLE DE FILTROS */}

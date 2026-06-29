@@ -6,9 +6,10 @@ import { Usuario } from './entities/usuario.entity';
 import { Banda } from '@backend/bandas/entities/banda.entity';
 import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
 import { Ciudad } from '@backend/ciudades/entities/ciudad.entity';
+import { ArchivosModule } from '@backend/archivos/archivos.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Usuario, Banda, Hermandad, Ciudad])],
+    imports: [TypeOrmModule.forFeature([Usuario, Banda, Hermandad, Ciudad]), ArchivosModule],
     controllers: [UsuariosController],
     providers: [UsuariosService],
 })

@@ -413,7 +413,7 @@ export default function AdminPage() {
                 Hermandades <span className="text-gray-400">({hermandades.filter(h => !h.verificada).length} pendientes)</span>
               </h3>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {hermandades.map(h => (
+                {hermandades.filter(h => !h.verificada).map(h => (
                   <div key={h.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-start gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center shrink-0">
                       <Building2 size={22} className="text-purple-500" />
@@ -435,7 +435,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                 ))}
-                {hermandades.length === 0 && <p className="text-gray-400 text-sm font-bold">Sin hermandades</p>}
+                {hermandades.filter(h => !h.verificada).length === 0 && <p className="text-gray-400 text-sm font-bold">Sin pendientes</p>}
               </div>
             </div>
 
@@ -445,7 +445,7 @@ export default function AdminPage() {
                 Bandas <span className="text-gray-400">({bandas.filter(b => !b.verificada).length} pendientes)</span>
               </h3>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {bandas.map(b => (
+                {bandas.filter(b => !b.verificada).map(b => (
                   <div key={b.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-start gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
                       <Music size={22} className="text-blue-500" />
@@ -463,7 +463,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                 ))}
-                {bandas.length === 0 && <p className="text-gray-400 text-sm font-bold">Sin bandas</p>}
+                {bandas.filter(b => !b.verificada).length === 0 && <p className="text-gray-400 text-sm font-bold">Sin pendientes</p>}
               </div>
             </div>
           </div>

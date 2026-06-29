@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import api from '@/app/api/axios';
+import ImageUpload from '@/components/ui/ImageUpload';
+import { resolveImg } from '@/lib/api';
 
 interface EditBandaModalProps {
   banda: any;
@@ -97,7 +99,19 @@ export default function EditBandaModal({ banda, isOpen, onClose }: EditBandaModa
               {field('Localidad', 'localidad')}
               {field('Nº componentes', 'numeroComponentes', 'number')}
             </div>
-            {field('URL del logo', 'imagenLogo')}
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Logo</label>
+              <div className="flex items-center gap-4">
+                <ImageUpload
+                  currentImage={resolveImg(form.imagenLogo) || undefined}
+                  uploadUrl={`/bandas/${banda.id}/logo`}
+                  onSuccess={(data) => setForm(f => ({ ...f, imagenLogo: data.imagenLogo ?? f.imagenLogo }))}
+                  shape="square"
+                  size={88}
+                />
+                <p className="text-xs text-gray-400 leading-relaxed">Haz clic en la imagen<br/>para subir un nuevo logo</p>
+              </div>
+            </div>
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Historia</label>
               <textarea
