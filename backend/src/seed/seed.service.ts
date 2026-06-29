@@ -195,10 +195,24 @@ export class SeedService implements OnModuleInit {
     }
 
     private async seedHermandades() {
+        const filePath = path.join(__dirname, 'data', 'hermandades.json');
+        const hermandades: HermandadSeed[] = JSON.parse(
+            fs.readFileSync(filePath, 'utf-8'),
+        );
+
         const count = await this.hermandadRepository.count();
-        if (count > 0) {
+        if (count === hermandades.length) {
             console.log(`✅ Hermandades: ${count} registros. Omitiendo siembra.`);
             return;
+        }
+        if (count > 0) {
+            console.log(
+                `⚠️ Datos parciales (${count}/${hermandades.length}). Limpiando para resembrar...`,
+            );
+            await this.participacionRepository.clear();
+            await this.pasoRepository.clear();
+            await this.procesionRepository.clear();
+            await this.hermandadRepository.clear();
         }
 
         const andujar = await this.ciudadRepository.findOne({
@@ -215,11 +229,6 @@ export class SeedService implements OnModuleInit {
         for (const b of todasBandas) {
             bandaMap.set(b.nombre, b);
         }
-
-        const filePath = path.join(__dirname, 'data', 'hermandades.json');
-        const hermandades: HermandadSeed[] = JSON.parse(
-            fs.readFileSync(filePath, 'utf-8'),
-        );
 
         console.log('🌱 Sembrando hermandades, procesiones y pasos...');
 
