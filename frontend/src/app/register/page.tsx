@@ -92,7 +92,7 @@ export default function RegisterPage() {
       </div>
 
       {/* LADO DERECHO: FORMULARIO */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-16 bg-cofrade-bg lg:bg-white overflow-y-auto max-h-screen">
+      <div className="w-full lg:w-1/2 flex items-start lg:items-center justify-center px-8 pt-6 pb-8 md:p-16 bg-cofrade-bg lg:bg-white overflow-y-auto max-h-screen">
         <div className="w-full max-w-md space-y-8 py-8">
           
           <div className="text-center lg:text-left">

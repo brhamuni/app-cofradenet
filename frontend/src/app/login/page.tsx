@@ -62,7 +62,7 @@ export default function LoginPage() {
       </div>
 
       {/* LADO DERECHO: FORMULARIO */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-16 bg-cofrade-bg lg:bg-white">
+      <div className="w-full lg:w-1/2 flex items-start lg:items-center justify-center px-8 pt-6 pb-8 md:p-16 bg-cofrade-bg lg:bg-white">
         <div className="w-full max-w-sm space-y-8">
           <div className="text-center lg:text-left">
             <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Iniciar Sesión</h2>
