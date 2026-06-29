@@ -1,0 +1,400 @@
+[
+  {
+    "nombre": "Grupo Parroquial Ntro. Padre Jesús de la Salud y María Santísima de los Dolores - La Ropera",
+    "nombrePopular": "La Ropera",
+    "titulares": ["Ntro. Padre Jesús de la Salud", "María Santísima de los Dolores"],
+    "añoFundacion": 2000,
+    "templo": "Iglesia Parroquial de San Isidro Labrador de La Ropera",
+    "direccion": null,
+    "diaSalida": "Viernes de Dolores",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Procesión Viernes de Dolores",
+        "diaOffset": -8,
+        "diaSemana": "Viernes de Dolores",
+        "horaSalida": "20:30:00",
+        "horaEntrada": "23:00:00",
+        "pasos": [
+          { "nombre": "Ntro. Padre Jesús de la Salud", "tipo": "Cristo", "orden": 1 },
+          { "nombre": "Nuestra Señora de los Dolores con San Juan Evangelista", "tipo": "Virgen", "orden": 2 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Banda de CC. y TT. «Dolores del Rosario»", "ubicacion": "Tras paso de Cristo" },
+          { "bandaNombre": "Banda de Música «Maestro Flores»", "ubicacion": "Tras paso de Virgen" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Cofradía de los Dolores del Carmen y Venerable e Ilustre Hermandad de Nuestro Padre Jesús de la Paciencia, Nuestro Señor de la Paz en su Entrada Triunfal en Jerusalén, María Santísima del Rosario en sus Misterios Dolorosos y Nuestra Señora del Carmen",
+    "nombrePopular": "La Paciencia",
+    "titulares": [
+      "Nuestro Señor de la Paz en su Entrada Triunfal en Jerusalén",
+      "Nuestro Padre Jesús de la Paciencia",
+      "María Santísima del Rosario en sus Misterios Dolorosos",
+      "Nuestra Señora del Carmen"
+    ],
+    "añoFundacion": 1718,
+    "templo": "Parroquia de Santa María la Mayor",
+    "direccion": null,
+    "diaSalida": "Domingo de Ramos y Miércoles Santo",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "La Borriquita - Domingo de Ramos",
+        "diaOffset": -7,
+        "diaSemana": "Domingo de Ramos",
+        "horaSalida": "11:15:00",
+        "horaEntrada": "14:45:00",
+        "pasos": [
+          { "nombre": "Nuestro Señor de la Paz en su Entrada Triunfal en Jerusalén", "tipo": "Misterio", "orden": 1 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Banda de CC. y TT. «Dolores del Rosario»", "ubicacion": "Tras paso de Misterio" }
+        ]
+      },
+      {
+        "nombre": "Procesión de la Paciencia - Miércoles Santo",
+        "diaOffset": -4,
+        "diaSemana": "Miércoles Santo",
+        "horaSalida": "21:15:00",
+        "horaEntrada": "00:45:00",
+        "pasos": [
+          { "nombre": "Nuestro Padre Jesús de la Paciencia", "tipo": "Misterio", "orden": 1 },
+          { "nombre": "María Santísima del Rosario en sus Misterios Dolorosos", "tipo": "Virgen", "orden": 2 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Agrupación Musical «La Unión»", "ubicacion": "Tras paso de Cristo" },
+          { "bandaNombre": "Banda Municipal de Música «Santa Cecilia»", "ubicacion": "Tras paso de Virgen" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Cofradía de la Santa Vera+Cruz y Muy Antigua, Pontificia, Ilustre y Venerable Hermandad de Ntro. Padre Jesús Atado a la Columna, Ntro. Padre Jesús Nazareno, María Santísima de los Dolores y San Juan Evangelista",
+    "nombrePopular": "La Vera+Cruz",
+    "titulares": [
+      "Ntro. Padre Jesús Nazareno",
+      "Ntro. Padre Jesús Atado a la Columna",
+      "María Santísima de los Dolores",
+      "San Juan Evangelista"
+    ],
+    "añoFundacion": 1427,
+    "templo": "Parroquia de San Bartolomé Apóstol",
+    "direccion": null,
+    "diaSalida": "Domingo de Ramos",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Procesión Domingo de Ramos - La Vera+Cruz",
+        "diaOffset": -7,
+        "diaSemana": "Domingo de Ramos",
+        "horaSalida": "19:30:00",
+        "horaEntrada": "22:30:00",
+        "pasos": [
+          { "nombre": "Ntro. Padre Jesús Nazareno", "tipo": "Cristo", "orden": 1 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Capilla Musical «Santo Reino»", "ubicacion": "Acompañando a Jesús Nazareno" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Venerables e Ilustres Cofradías del Señor Jesús Cautivo de Sierra Morena",
+    "nombrePopular": "Jesús Cautivo",
+    "titulares": ["Señor Jesús Cautivo de Sierra Morena"],
+    "añoFundacion": null,
+    "templo": "Basílica de Nuestra Señora de la Cabeza",
+    "direccion": null,
+    "diaSalida": "Martes Santo",
+    "descripcion": "Vía Crucis por las calzadas del Santuario de Nuestra Señora de la Cabeza",
+    "procesiones": [
+      {
+        "nombre": "Vía Crucis Martes Santo - Jesús Cautivo",
+        "diaOffset": -5,
+        "diaSemana": "Martes Santo",
+        "horaSalida": "17:00:00",
+        "horaEntrada": null,
+        "pasos": [
+          { "nombre": "Señor Jesús Cautivo de Sierra Morena", "tipo": "Cristo", "orden": 1 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Agrupación Musical «Rescatado»", "ubicacion": "Acompañamiento" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Cofradía de Ntra. Sra. de la Esperanza, Stmo. Cristo de la Providencia y Ntro. Padre Jesús Caído",
+    "nombrePopular": "La Esperanza",
+    "titulares": [
+      "Nuestra Señora de la Esperanza",
+      "Santísimo Cristo de la Providencia",
+      "Nuestro Padre Jesús Caído"
+    ],
+    "añoFundacion": 1946,
+    "templo": "Parroquia de Santa María La Mayor",
+    "direccion": null,
+    "diaSalida": "Jueves Santo",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Vía Crucis Martes Santo - Cristo de la Providencia",
+        "diaOffset": -5,
+        "diaSemana": "Martes Santo",
+        "horaSalida": "21:15:00",
+        "horaEntrada": "22:55:00",
+        "pasos": [
+          { "nombre": "Santísimo Cristo de la Providencia", "tipo": "Cristo", "orden": 1 }
+        ],
+        "bandas": []
+      },
+      {
+        "nombre": "Procesión Jueves Santo - La Esperanza",
+        "diaOffset": -3,
+        "diaSemana": "Jueves Santo",
+        "horaSalida": "21:30:00",
+        "horaEntrada": "01:00:00",
+        "pasos": [
+          { "nombre": "Nuestro Padre Jesús Caído", "tipo": "Misterio", "orden": 1 },
+          { "nombre": "Nuestra Señora de la Esperanza", "tipo": "Virgen", "orden": 2 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Banda de CC. y TT. «La Fusión»", "ubicacion": "Tras Ntro. Padre Jesús Caído" },
+          { "bandaNombre": "Banda Municipal de Música de Villanueva de Córdoba", "ubicacion": "Tras Ntra. Sra. de la Esperanza" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Archicofradía de Nuestro Padre Jesús en su Agonía del Huerto y Nuestra Señora de los Dolores",
+    "nombrePopular": "El Huerto",
+    "titulares": ["Jesús orando en el Huerto de Getsemaní", "Nuestra Señora de los Dolores"],
+    "añoFundacion": 1948,
+    "templo": "Iglesia Parroquial Divina Pastora",
+    "direccion": null,
+    "diaSalida": "Miércoles Santo",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Procesión Miércoles Santo - El Huerto",
+        "diaOffset": -4,
+        "diaSemana": "Miércoles Santo",
+        "horaSalida": "20:15:00",
+        "horaEntrada": "00:00:00",
+        "pasos": [
+          { "nombre": "Jesús orando en el Huerto de Getsemaní", "tipo": "Misterio", "orden": 1 },
+          { "nombre": "Nuestra Señora de los Dolores", "tipo": "Virgen", "orden": 2 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Agrupación Musical «Nuestro Padre Jesús de la Fe en su Sagrada Cena»", "ubicacion": "Tras paso de Misterio" },
+          { "bandaNombre": "Banda de Música «Nuestra Señora de la Amargura» (Soc. Filarmónica)", "ubicacion": "Tras paso de Virgen" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Hermandad y Cofradía de Nazarenos de Nuestro Padre Jesús de la Sentencia y María Santísima del Buen Remedio",
+    "nombrePopular": "El Buen Remedio",
+    "titulares": ["Nuestro Señor de la Sentencia", "María Santísima del Buen Remedio"],
+    "añoFundacion": 1983,
+    "templo": "Capilla del Antiguo Hospital Municipal",
+    "direccion": "C/ Sor Isabel (Cuna)",
+    "diaSalida": "Jueves Santo",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Procesión Jueves Santo - El Buen Remedio",
+        "diaOffset": -3,
+        "diaSemana": "Jueves Santo",
+        "horaSalida": "18:00:00",
+        "horaEntrada": "22:00:00",
+        "pasos": [
+          { "nombre": "Nuestro Señor de la Sentencia", "tipo": "Misterio", "orden": 1 },
+          { "nombre": "María Santísima del Buen Remedio", "tipo": "Virgen", "orden": 2 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Banda de CC. y TT. «Mª Stma. de la Victoria - Realejo»", "ubicacion": "Tras paso de Misterio" },
+          { "bandaNombre": "Banda de Música «La Estrella»", "ubicacion": "Tras paso de Virgen" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Hermandad y Cofradía de Nazarenos de Ntro. Padre Jesús del Gran Poder y María Santísima del Socorro",
+    "nombrePopular": "El Gran Poder",
+    "titulares": ["Ntro. Padre Jesús del Gran Poder", "María Santísima del Socorro"],
+    "añoFundacion": null,
+    "templo": "Parroquia de San Miguel Arcángel",
+    "direccion": null,
+    "diaSalida": "Jueves Santo",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Procesión Jueves Santo - El Gran Poder",
+        "diaOffset": -3,
+        "diaSemana": "Jueves Santo",
+        "horaSalida": "21:10:00",
+        "horaEntrada": "01:25:00",
+        "pasos": [
+          { "nombre": "Ntro. Padre Jesús del Gran Poder", "tipo": "Misterio", "orden": 1 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Agrupación Musical «María Stma. de la Cabeza»", "ubicacion": "Acompañamiento" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Cofradía de Nuestro Padre Jesús Nazareno «Señor de los Señores»",
+    "nombrePopular": "El Nazareno",
+    "titulares": ["Ntro. Padre Jesús Nazareno «Señor de los Señores»"],
+    "añoFundacion": null,
+    "templo": "Parroquia de San Miguel Arcángel",
+    "direccion": null,
+    "diaSalida": "Viernes Santo",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Procesión Viernes Santo - Señor de los Señores",
+        "diaOffset": -2,
+        "diaSemana": "Viernes Santo",
+        "horaSalida": "10:45:00",
+        "horaEntrada": "14:45:00",
+        "pasos": [
+          { "nombre": "Ntro. Padre Jesús Nazareno con Simón de Cirene", "tipo": "Cristo", "orden": 1 }
+        ],
+        "bandas": [
+          { "bandaNombre": "A.M. María Stma. de los Dolores «El Rescate»", "ubicacion": "Acompañamiento" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Antigua, Venerable y Hospitalaria Hermandad y Cofradía de Nazarenos de Nuestra Señora de las Angustias, Santísimo Cristo de la Caridad y Triunfo del Santo Lignum Crucis",
+    "nombrePopular": "Las Angustias",
+    "titulares": ["Nuestra Señora de las Angustias", "Santísimo Cristo de la Caridad"],
+    "añoFundacion": 1737,
+    "templo": "Capilla de San Juan de Dios",
+    "direccion": null,
+    "diaSalida": "Viernes Santo",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Procesión Viernes Santo - Las Angustias",
+        "diaOffset": -2,
+        "diaSemana": "Viernes Santo",
+        "horaSalida": "18:00:00",
+        "horaEntrada": "22:30:00",
+        "pasos": [
+          { "nombre": "Nuestra Señora de las Angustias con Stmo. Cristo de la Caridad Yacente", "tipo": "Misterio", "orden": 1 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Banda de Música «Felipe Moreno»", "ubicacion": "Acompañamiento" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Hermandad del Santísimo Cristo de la Expiración, Santa María Magdalena y Nuestra Señora de la Amargura. Cofradía de los Estudiantes",
+    "nombrePopular": "Los Estudiantes",
+    "titulares": ["Santísimo Cristo de la Expiración", "Santa María Magdalena", "Nuestra Señora de la Amargura"],
+    "añoFundacion": 1947,
+    "templo": "Parroquia de San Bartolomé",
+    "direccion": "Capilla El Salvador",
+    "diaSalida": "Viernes Santo",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Procesión Viernes Santo - Los Estudiantes",
+        "diaOffset": -2,
+        "diaSemana": "Viernes Santo",
+        "horaSalida": "19:45:00",
+        "horaEntrada": "00:45:00",
+        "pasos": [
+          { "nombre": "Santísimo Cristo de la Expiración", "tipo": "Cristo", "orden": 1 },
+          { "nombre": "Nuestra Señora de la Amargura", "tipo": "Virgen", "orden": 2 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Banda de CC. y TT. «Monte Calvario»", "ubicacion": "Tras paso de Cristo" },
+          { "bandaNombre": "Agrupación Musical «Amigos de la Música»", "ubicacion": "Tras paso de Virgen" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Venerable Hermandad del Santo Sepulcro",
+    "nombrePopular": "El Santo Sepulcro",
+    "titulares": ["Santo Sepulcro"],
+    "añoFundacion": 1684,
+    "templo": "Parroquia de San Bartolomé",
+    "direccion": "Corredera de San Bartolomé nº 28",
+    "diaSalida": "Viernes Santo",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Procesión Viernes Santo - Santo Sepulcro",
+        "diaOffset": -2,
+        "diaSemana": "Viernes Santo",
+        "horaSalida": "21:00:00",
+        "horaEntrada": "00:30:00",
+        "pasos": [
+          { "nombre": "Santo Sepulcro - Cristo Yacente", "tipo": "Cristo Yacente", "orden": 1 }
+        ],
+        "bandas": []
+      }
+    ]
+  },
+  {
+    "nombre": "Cofradía de la Soledad y Entierro de Cristo y Muy Antigua, Ilustre, Mínima y Venerable Hermandad de la Santa Cruz en el Monte Calvario, Ánimas Benditas del Purgatorio, Transfixión y Soledad de María Santísima de la Victoria y San Francisco de Paula",
+    "nombrePopular": "La Soledad",
+    "titulares": ["María Santísima de la Victoria en su Soledad"],
+    "añoFundacion": 1554,
+    "templo": "Iglesia Parroquial de San Bartolomé Apóstol",
+    "direccion": null,
+    "diaSalida": "Viernes Santo",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Procesión Viernes Santo - La Soledad",
+        "diaOffset": -2,
+        "diaSemana": "Viernes Santo",
+        "horaSalida": "21:30:00",
+        "horaEntrada": "01:15:00",
+        "pasos": [
+          { "nombre": "María Santísima de la Victoria en su Soledad", "tipo": "Virgen", "orden": 1 }
+        ],
+        "bandas": [
+          { "bandaNombre": "Capilla Musical «Santo Reino»", "ubicacion": "Acompañamiento" }
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Cofradía de Cristo Resucitado",
+    "nombrePopular": "Cristo Resucitado",
+    "titulares": ["Cristo Resucitado"],
+    "añoFundacion": 2004,
+    "templo": "Parroquia de San Eufrasio",
+    "direccion": null,
+    "diaSalida": "Domingo de Resurrección",
+    "descripcion": null,
+    "procesiones": [
+      {
+        "nombre": "Procesión Domingo de Resurrección - Cristo Resucitado",
+        "diaOffset": 0,
+        "diaSemana": "Domingo de Resurrección",
+        "horaSalida": "09:00:00",
+        "horaEntrada": "14:00:00",
+        "pasos": [
+          { "nombre": "Cristo Resucitado", "tipo": "Cristo", "orden": 1 }
+        ],
+        "bandas": [
+          { "bandaNombre": "A.M. María Stma. de los Dolores «El Rescate»", "ubicacion": "Acompañamiento" }
+        ]
+      }
+    ]
+  }
+]
