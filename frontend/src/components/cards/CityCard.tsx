@@ -1,15 +1,16 @@
 import Link from 'next/link';
 
 interface CityCardProps {
+  id: number;
   nombre: string;
   imagen: string;
   region?: string;
 }
 
-export default function CityCard({ nombre, imagen, region = "Andalucía" }: CityCardProps) {
+export default function CityCard({ id, nombre, imagen, region = "Andalucía" }: CityCardProps) {
   return (
-    <Link 
-      href={`/ciudad/${nombre.toLowerCase()}`}
+    <Link
+      href={`/ciudad/${id}`}
       className="group relative h-[400px] rounded-[3rem] overflow-hidden cursor-pointer shadow-xl block"
     >
       {/* Imagen con zoom suave */}
