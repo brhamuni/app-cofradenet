@@ -268,6 +268,15 @@ export class ProcesionesService {
         return this.pasoRepo.remove(paso);
     }
 
+    async getPuntosItinerario(procesionId: number) {
+        const procesion = await this.procesionRepo.findOne({
+            where: { id: procesionId },
+            relations: ['itinerario'],
+        });
+        if (!procesion) throw new NotFoundException('Procesión no encontrada');
+        return procesion.itinerario.sort((a, b) => a.orden - b.orden);
+    }
+
     async findOneByProcesion(id: number, anio: number) {
         return await this.procesionRepo
             .findOne({

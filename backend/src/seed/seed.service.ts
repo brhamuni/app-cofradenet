@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -8,6 +8,7 @@ import { Ciudad } from '../ciudades/entities/ciudad.entity';
 import { RolUsuario, Usuario } from '../usuarios/entities/usuario.entity';
 import { Hermandad } from '../hermandades/entities/hermandad.entity';
 import { Procesion } from '../procesiones/entities/procesion.entity';
+import { PuntoItinerario } from '../procesiones/entities/punto-itinerario.entity';
 import { Paso } from '../procesiones/entities/paso.entity';
 import { Banda } from '../bandas/entities/banda.entity';
 import { Participacion } from '../participaciones/entities/participacion.entity';
@@ -56,6 +57,18 @@ interface BandaSeed {
     historia?: string;
 }
 
+interface PuntoSeed {
+    orden: number;
+    nombreLugar: string;
+    latitud: number;
+    longitud: number;
+}
+
+interface ItinerarioSeed {
+    procesionNombre: string;
+    puntos: PuntoSeed[];
+}
+
 @Injectable()
 export class SeedService implements OnModuleInit {
     constructor(
@@ -67,6 +80,8 @@ export class SeedService implements OnModuleInit {
         private readonly hermandadRepository: Repository<Hermandad>,
         @InjectRepository(Procesion)
         private readonly procesionRepository: Repository<Procesion>,
+        @InjectRepository(PuntoItinerario)
+        private readonly puntoItinerarioRepository: Repository<PuntoItinerario>,
         @InjectRepository(Paso)
         private readonly pasoRepository: Repository<Paso>,
         @InjectRepository(Banda)
@@ -90,6 +105,7 @@ export class SeedService implements OnModuleInit {
         await this.seedAdmin();
         await this.seedBandas();
         await this.seedHermandades();
+        await this.seedItinerarios();
         console.log('🎉 Seed completado.');
     }
 
@@ -293,6 +309,47 @@ export class SeedService implements OnModuleInit {
         }
 
         console.log('✅ Todas las hermandades sembradas.');
+    }
+
+    private async seedItinerarios() {
+        const count = await this.puntoItinerarioRepository.count();
+        if (count > 0) {
+            console.log(`✅ Puntos de itinerario: ${count} registros. Omitiendo siembra.`);
+            return;
+        }
+
+        const filePath = path.join(__dirname, 'data', 'itinerarios.json');
+        const datos: ItinerarioSeed[] = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+
+        console.log('🌱 Sembrando puntos de itinerario...');
+
+        for (const item of datos) {
+            const procesiones = await this.procesionRepository.find({
+                where: { nombre: Like(`%${item.procesionNombre}%`) },
+            });
+
+            if (procesiones.length === 0) {
+                console.warn(`⚠️  Procesión no encontrada para: ${item.procesionNombre}`);
+                continue;
+            }
+
+            for (const procesion of procesiones) {
+                const puntos = item.puntos.map((p) =>
+                    this.puntoItinerarioRepository.create({
+                        orden: p.orden,
+                        nombreLugar: p.nombreLugar,
+                        latitud: p.latitud,
+                        longitud: p.longitud,
+                        procesion,
+                    }),
+                );
+                await this.puntoItinerarioRepository.save(puntos);
+            }
+
+            console.log(`✅ Itinerario: ${item.procesionNombre} (${procesiones.length} procesiones × ${item.puntos.length} puntos)`);
+        }
+
+        console.log('✅ Puntos de itinerario sembrados.');
     }
 
     /** Gregorian Easter algorithm (Meeus/Jones/Butcher) */

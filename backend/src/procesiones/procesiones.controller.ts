@@ -101,6 +101,13 @@ export class ProcesionesController {
         return this.procesionesService.buscarPorHermandad(id);
     }
 
+    @ApiOperation({ summary: 'Obtener los puntos GPS del itinerario de una procesión' })
+    @ApiResponse({ status: 200, description: 'Lista de puntos ordenados del itinerario' })
+    @Get(':id/puntos')
+    getPuntosItinerario(@Param('id', ParseIntPipe) id: number) {
+        return this.procesionesService.getPuntosItinerario(id);
+    }
+
     @ApiOperation({ summary: 'Obtener una procesión por ID' })
     @ApiResponse({ status: 200, description: 'Datos de la procesión' })
     @ApiResponse({ status: 404, description: 'Procesión no encontrada' })
