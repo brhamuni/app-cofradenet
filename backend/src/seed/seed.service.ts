@@ -76,14 +76,21 @@ export class SeedService implements OnModuleInit {
     ) {}
 
     async onModuleInit() {
-        await this.runSeed();
+        try {
+            await this.runSeed();
+        } catch (err) {
+            console.error('❌ Seed falló:', err);
+            throw err;
+        }
     }
 
     async runSeed() {
+        console.log('🚀 Iniciando seed...');
         await this.seedCiudades();
         await this.seedAdmin();
         await this.seedBandas();
         await this.seedHermandades();
+        console.log('🎉 Seed completado.');
     }
 
     private async seedCiudades() {
@@ -198,10 +205,9 @@ export class SeedService implements OnModuleInit {
             where: { nombre: 'Andújar' },
         });
         if (!andujar) {
-            console.warn(
-                '⚠️ Ciudad Andújar no encontrada. Ejecutar seedCiudades primero.',
+            throw new Error(
+                '❌ Ciudad Andújar no encontrada en BD. seedCiudades debe ejecutarse primero.',
             );
-            return;
         }
 
         const admin = await this.usuarioRepository.findOne({
