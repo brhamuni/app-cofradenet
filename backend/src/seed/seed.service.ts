@@ -189,7 +189,7 @@ export class SeedService implements OnModuleInit {
                 historia: b.historia ?? null,
                 ciudadId: ciudad?.id ?? null,
                 verificada: true,
-            });
+            } as Banda);
         }
         console.log(`✅ ${bandas.length} bandas creadas.`);
     }
@@ -228,21 +228,19 @@ export class SeedService implements OnModuleInit {
         console.log('🌱 Sembrando hermandades, procesiones y pasos...');
 
         for (const hdData of hermandades) {
-            const hermandad = await this.hermandadRepository.save(
-                this.hermandadRepository.create({
-                    nombre: hdData.nombre,
-                    nombrePopular: hdData.nombrePopular,
-                    titulares: hdData.titulares,
-                    añoFundacion: hdData.añoFundacion,
-                    templo: hdData.templo,
-                    direccion: hdData.direccion,
-                    diaSalida: hdData.diaSalida,
-                    descripcion: hdData.descripcion,
-                    ciudadId: andujar.id,
-                    usuarioId: admin?.id ?? null,
-                    verificada: true,
-                }),
-            );
+            const hermandad = await this.hermandadRepository.save({
+                nombre: hdData.nombre,
+                nombrePopular: hdData.nombrePopular,
+                titulares: hdData.titulares,
+                añoFundacion: hdData.añoFundacion,
+                templo: hdData.templo,
+                direccion: hdData.direccion,
+                diaSalida: hdData.diaSalida,
+                descripcion: hdData.descripcion,
+                ciudadId: andujar.id,
+                usuarioId: admin?.id ?? null,
+                verificada: true,
+            } as Hermandad);
 
             for (const year of [2026, 2027]) {
                 const easter = this.getEasterDate(year);
@@ -251,16 +249,14 @@ export class SeedService implements OnModuleInit {
                     const fechaDate = this.addDays(easter, proc.diaOffset);
                     const fecha = this.dateToString(fechaDate);
 
-                    const procesion = await this.procesionRepository.save(
-                        this.procesionRepository.create({
-                            nombre: `${proc.nombre} ${year}`,
-                            diaSemana: proc.diaSemana,
-                            fecha,
-                            horaSalida: proc.horaSalida,
-                            horaEntrada: proc.horaEntrada,
-                            hermandad,
-                        }),
-                    );
+                    const procesion = await this.procesionRepository.save({
+                        nombre: `${proc.nombre} ${year}`,
+                        diaSemana: proc.diaSemana,
+                        fecha,
+                        horaSalida: proc.horaSalida,
+                        horaEntrada: proc.horaEntrada,
+                        hermandad,
+                    } as Procesion);
 
                     for (const paso of proc.pasos) {
                         await this.pasoRepository.save({
