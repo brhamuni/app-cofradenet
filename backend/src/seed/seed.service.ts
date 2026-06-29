@@ -210,10 +210,6 @@ export class SeedService implements OnModuleInit {
             );
         }
 
-        const admin = await this.usuarioRepository.findOne({
-            where: { email: 'admin@test.com' },
-        });
-
         const todasBandas = await this.bandaRepository.find();
         const bandaMap = new Map<string, Banda>();
         for (const b of todasBandas) {
@@ -238,7 +234,7 @@ export class SeedService implements OnModuleInit {
                 diaSalida: hdData.diaSalida,
                 descripcion: hdData.descripcion,
                 ciudadId: andujar.id,
-                usuarioId: admin?.id ?? null,
+                usuarioId: null,
                 verificada: true,
             } as Hermandad);
 
