@@ -1,3 +1,10 @@
+/**
+ * @file bandas.service.ts
+ * @brief Servicio de gestión de bandas musicales de CofradeNet.
+ * @details Gestiona el ciclo CRUD de bandas, sus eventos propios, la agenda anual
+ *          combinada con procesiones, los enlaces externos y la verificación administrativa.
+ */
+
 import {
     ForbiddenException,
     Injectable,
@@ -32,15 +39,33 @@ export class BandasService {
         private readonly enlaceRepo: Repository<EnlaceExterno>,
     ) {}
 
+    /**
+     * @brief Crea una nueva banda con los datos proporcionados.
+     *
+     * @param {CreateBandaDto} createBandaDto - DTO con los datos de la nueva banda.
+     * @returns {Promise<Banda>} Entidad de la banda recién creada.
+     */
     async create(createBandaDto: CreateBandaDto) {
         const nuevaBanda = this.bandaRepo.create(createBandaDto);
         return await this.bandaRepo.save(nuevaBanda);
     }
 
+    /**
+     * @brief Devuelve todas las bandas con sus relaciones de usuario propietario y ciudad.
+     *
+     * @returns {Promise<Banda[]>} Lista completa de bandas con `usuario` y `ciudad`.
+     */
     findAll() {
         return this.bandaRepo.find({ relations: ['usuario', 'ciudad'] });
     }
 
+    /**
+     * @brief Obtiene todas las bandas pertenecientes a una ciudad concreta.
+     *
+     * @param {number} ciudadId - Identificador de la ciudad.
+     * @returns {Promise<Banda[]>} Lista de bandas de esa ciudad con campos básicos:
+     *          `id`, `nombre`, `estiloMusical` e `imagenLogo`.
+     */
     async findAllByCiudad(ciudadId: number) {
         return await this.bandaRepo.find({
             where: { ciudadId },
@@ -48,6 +73,14 @@ export class BandasService {
         });
     }
 
+    /**
+     * @brief Busca una banda por su identificador con ciudad, repertorio y eventos.
+     *
+     * @param {number} id - Identificador de la banda.
+     * @returns {Promise<Banda>} Banda con relaciones `ciudad`, `repertorio` y `eventos`.
+     *
+     * @throws {NotFoundException} Si la banda no existe.
+     */
     async findOne(id: number) {
         const banda = await this.bandaRepo.findOne({
             where: { id },
@@ -57,21 +90,27 @@ export class BandasService {
         return banda;
     }
 
-    async findByUsuario(usuarioId: number) {
-        const banda = await this.bandaRepo.findOne({
-            where: { usuarioId },
-            relations: ['ciudad', 'repertorio', 'eventos'],
-        });
-        if (!banda) throw new NotFoundException('No tienes ninguna banda registrada');
-        return banda;
-    }
-
-    async updateLogo(id: number, imagenLogo: string) {
-        const banda = await this.bandaRepo.findOneByOrFail({ id });
-        banda.imagenLogo = imagenLogo;
-        return await this.bandaRepo.save(banda);
-    }
-
+    /**
+     * @brief Actualiza los datos de una banda con control de permisos y actualización de repertorio.
+     *
+     * @details
+     * Antes de aplicar cambios, verifica que el usuario tenga permisos:
+     * solo el administrador (`rol === 'admin'`) o el propietario (`usuarioId === user.id`)
+     * pueden editar la banda. Si se incluye `repertorioIds` en el DTO, realiza una
+     * búsqueda de las marchas por sus IDs con el operador `In` de TypeORM y las asigna
+     * directamente como relación, reemplazando el repertorio anterior completo.
+     *
+     * @pre   La banda debe existir y el usuario debe ser admin o su propietario.
+     * @post  Los datos básicos y, si aplica, el repertorio quedan actualizados en BD.
+     *
+     * @param {number} id                  - Identificador de la banda a actualizar.
+     * @param {UpdateBandaDto} updateBandaDto - DTO con los campos a actualizar.
+     * @param {RequestUser} user           - Usuario autenticado que realiza la operación.
+     * @returns {Promise<Banda>} Banda con los datos actualizados.
+     *
+     * @throws {NotFoundException}  Si la banda no existe.
+     * @throws {ForbiddenException} Si el usuario no tiene permisos de edición.
+     */
     async update(id: number, updateBandaDto: UpdateBandaDto, user: RequestUser) {
         const banda = await this.bandaRepo.findOne({
             where: { id },
@@ -89,10 +128,8 @@ export class BandasService {
 
         const { repertorioIds, ...datosRestantes } = updateBandaDto;
 
-        // Actualizamos los datos básicos
         Object.assign(banda, datosRestantes);
 
-        // Si nos pasan IDs de marchas, buscamos las entidades y las vinculamos
         if (repertorioIds) {
             const marchas = await this.marchaRepo.findBy({
                 id: In(repertorioIds),
@@ -103,10 +140,25 @@ export class BandasService {
         return await this.bandaRepo.save(banda);
     }
 
+    /**
+     * @brief Elimina una banda por su identificador (pendiente de implementación).
+     *
+     * @param {number} id - Identificador de la banda a eliminar.
+     * @returns {string} Mensaje provisional indicando la acción pendiente.
+     */
     remove(id: number) {
         return `This action removes a #${id} banda`;
     }
 
+    /**
+     * @brief Crea un nuevo evento propio para una banda.
+     *
+     * @param {number} bandaId               - Identificador de la banda organizadora.
+     * @param {CreateEventoDto} createEventoDto - DTO con los datos del evento.
+     * @returns {Promise<Evento>} Evento recién creado vinculado a la banda.
+     *
+     * @throws {NotFoundException} Si la banda no existe.
+     */
     async crearEvento(bandaId: number, createEventoDto: CreateEventoDto) {
         const banda = await this.bandaRepo.findOneBy({ id: bandaId });
         if (!banda) throw new NotFoundException('Banda no encontrada');
@@ -117,6 +169,12 @@ export class BandasService {
         return await this.eventoRepo.save(nuevoEvento);
     }
 
+    /**
+     * @brief Obtiene todos los eventos de una banda ordenados cronológicamente.
+     *
+     * @param {number} bandaId - Identificador de la banda.
+     * @returns {Promise<Evento[]>} Lista de eventos ordenados por `fechaHora` ascendente.
+     */
     async obtenerEventos(bandaId: number) {
         return await this.eventoRepo.find({
             where: { banda: { id: bandaId } },
@@ -163,7 +221,6 @@ export class BandasService {
      *       entidad `Evento` no especifica tipo, para mantener la homogeneidad del array.
      *
      * @see BandasController.agenda
-     * @see findAgenda (openapi: GET /bandas/{id}/agenda/{anio})
      */
     async findAgenda(bandaId: number, anio: number): Promise<any[]> {
         // 1. Buscamos las procesiones (Participaciones)
@@ -173,10 +230,8 @@ export class BandasService {
         });
 
         // 2. Buscamos los eventos de la banda
-        // Usamos el Repositorio de Eventos (necesitarás inyectarlo en el constructor)
         const eventos = await this.eventoRepo.find({
             where: { bandaId },
-            // Filtramos por año de forma sencilla (o usando TypeORM operators)
         });
 
         // Filtramos los eventos por año manualmente para no complicar el QueryBuilder
@@ -208,6 +263,25 @@ export class BandasService {
         );
     }
 
+    /**
+     * @brief Actualiza un evento de una banda con control de permisos.
+     *
+     * @details
+     * Verifica que el evento pertenezca a la banda indicada (`bandaId`). Si el usuario
+     * no es administrador, comprueba adicionalmente que sea el propietario de la banda.
+     *
+     * @pre   El evento debe existir y pertenecer a la banda indicada.
+     * @post  Los campos del evento quedan actualizados con los valores del DTO.
+     *
+     * @param {number} bandaId         - Identificador de la banda propietaria del evento.
+     * @param {number} eventoId        - Identificador del evento a actualizar.
+     * @param {UpdateEventoDto} dto    - DTO con los campos a actualizar.
+     * @param {RequestUser} user       - Usuario autenticado que realiza la operación.
+     * @returns {Promise<Evento>} Evento actualizado.
+     *
+     * @throws {NotFoundException}  Si el evento no existe o no pertenece a la banda.
+     * @throws {ForbiddenException} Si el usuario no tiene permisos de edición.
+     */
     async actualizarEvento(
         bandaId: number,
         eventoId: number,
@@ -230,6 +304,21 @@ export class BandasService {
         return this.eventoRepo.save(evento);
     }
 
+    /**
+     * @brief Elimina un evento de una banda con control de permisos.
+     *
+     * @details
+     * Verifica que el evento pertenezca a la banda indicada. Si el usuario
+     * no es administrador, comprueba que sea el propietario de la banda antes de eliminar.
+     *
+     * @param {number} bandaId   - Identificador de la banda propietaria del evento.
+     * @param {number} eventoId  - Identificador del evento a eliminar.
+     * @param {RequestUser} user - Usuario autenticado que realiza la operación.
+     * @returns {Promise<Evento>} Evento eliminado.
+     *
+     * @throws {NotFoundException}  Si el evento no existe o no pertenece a la banda.
+     * @throws {ForbiddenException} Si el usuario no tiene permisos de eliminación.
+     */
     async eliminarEvento(bandaId: number, eventoId: number, user: RequestUser) {
         const evento = await this.eventoRepo.findOne({
             where: { id: eventoId, bandaId },
@@ -246,6 +335,15 @@ export class BandasService {
         return this.eventoRepo.remove(evento);
     }
 
+    /**
+     * @brief Establece el estado de verificación de una banda.
+     *
+     * @param {number} id      - Identificador de la banda.
+     * @param {boolean} estado - `true` para verificar, `false` para revocar.
+     * @returns {Promise<Banda>} Banda con el estado de verificación actualizado.
+     *
+     * @throws {NotFoundException} Si la banda no existe.
+     */
     async verificar(id: number, estado: boolean) {
         const banda = await this.bandaRepo.findOneBy({ id });
         if (!banda) throw new NotFoundException('Banda no encontrada');
@@ -253,6 +351,12 @@ export class BandasService {
         return await this.bandaRepo.save(banda);
     }
 
+    /**
+     * @brief Obtiene todos los enlaces externos de una banda ordenados por fecha de creación.
+     *
+     * @param {number} bandaId - Identificador de la banda.
+     * @returns {Promise<EnlaceExterno[]>} Lista de enlaces ordenados ascendentemente por `createdAt`.
+     */
     async getEnlaces(bandaId: number): Promise<EnlaceExterno[]> {
         return this.enlaceRepo.find({
             where: { bandaId },
@@ -260,6 +364,15 @@ export class BandasService {
         });
     }
 
+    /**
+     * @brief Añade un nuevo enlace externo al perfil de una banda.
+     *
+     * @param {number} bandaId         - Identificador de la banda.
+     * @param {CreateEnlaceDto} dto    - DTO con la URL y el tipo de enlace.
+     * @returns {Promise<EnlaceExterno>} Entidad del enlace recién creado.
+     *
+     * @throws {NotFoundException} Si la banda no existe.
+     */
     async addEnlace(
         bandaId: number,
         dto: CreateEnlaceDto,
@@ -270,6 +383,21 @@ export class BandasService {
         return this.enlaceRepo.save(enlace);
     }
 
+    /**
+     * @brief Elimina un enlace externo con verificación de propiedad o rol administrador.
+     *
+     * @details
+     * Carga el enlace con su relación `banda` para poder comprobar si el usuario
+     * autenticado es el propietario de la banda (`banda.usuarioId === user.id`).
+     * Tanto el propietario como un administrador pueden eliminar cualquier enlace.
+     *
+     * @param {number} enlaceId  - Identificador del enlace a eliminar.
+     * @param {RequestUser} user - Usuario autenticado que realiza la operación.
+     * @returns {Promise<void>}
+     *
+     * @throws {NotFoundException}  Si el enlace no existe.
+     * @throws {ForbiddenException} Si el usuario no es propietario ni administrador.
+     */
     async removeEnlace(enlaceId: number, user: RequestUser): Promise<void> {
         const enlace = await this.enlaceRepo.findOne({
             where: { id: enlaceId },

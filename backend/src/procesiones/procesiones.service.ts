@@ -1,3 +1,11 @@
+/**
+ * @file procesiones.service.ts
+ * @brief Servicio de gestión de procesiones de CofradeNet.
+ * @details Cubre el ciclo CRUD de procesiones, la asignación de bandas, la gestión
+ *          de participaciones e itinerarios anuales, los pasos, y búsquedas avanzadas
+ *          con filtros combinados e insensibles a acentos.
+ */
+
 import {
     ForbiddenException,
     Injectable,
@@ -32,6 +40,27 @@ export class ProcesionesService {
         private readonly pasoRepo: Repository<Paso>,
     ) {}
 
+    /**
+     * @brief Crea una nueva procesión con verificación de permisos para usuarios tipo hermandad.
+     *
+     * @details
+     * Si el usuario autenticado tiene rol `HERMANDAD`, se verifica que la hermandad
+     * indicada en el DTO sea efectivamente la suya (comprobando que `hermandadPropia.id`
+     * coincida con `hermandadId`). Los administradores pueden crear procesiones para
+     * cualquier hermandad sin restricción. La hermandad se asocia por referencia de ID
+     * para evitar cargar la entidad completa innecesariamente.
+     *
+     * @pre   La hermandad referenciada debe existir si el rol es `HERMANDAD`.
+     * @post  Se crea un registro en `procesiones` vinculado a la hermandad indicada.
+     *
+     * @param {CreateProcesionDto} createProcesionDto - DTO con los datos de la procesión,
+     *        incluyendo `hermandadId` obligatorio.
+     * @param {any} req - Objeto del usuario autenticado con al menos `id` y `rol`.
+     * @returns {Promise<Procesion>} Entidad de la procesión recién creada.
+     *
+     * @throws {ForbiddenException} Si el usuario tipo `HERMANDAD` intenta crear una
+     *         procesión para una hermandad que no le pertenece.
+     */
     async create(createProcesionDto: CreateProcesionDto, req: any) {
         const { hermandadId, ...datosProcesion } = createProcesionDto;
 
@@ -55,6 +84,12 @@ export class ProcesionesService {
         return await this.procesionRepo.save(nuevaProcesion);
     }
 
+    /**
+     * @brief Devuelve todas las procesiones con sus relaciones de hermandad e itinerario.
+     *
+     * @returns {Promise<Procesion[]>} Lista completa de procesiones ordenada por `fecha`
+     *          y `horaSalida` ascendente.
+     */
     findAll() {
         return this.procesionRepo.find({
             relations: ['hermandad', 'itinerario'],
@@ -62,6 +97,13 @@ export class ProcesionesService {
         });
     }
 
+    /**
+     * @brief Obtiene todas las procesiones de una hermandad concreta.
+     *
+     * @param {number} id - Identificador de la hermandad.
+     * @returns {Promise<Procesion[]>} Procesiones de la hermandad con itinerario,
+     *          ordenadas por `fecha` y `horaSalida` ascendente.
+     */
     async buscarPorHermandad(id: number) {
         return await this.procesionRepo.find({
             where: { hermandad: { id: id } },
@@ -70,6 +112,18 @@ export class ProcesionesService {
         });
     }
 
+    /**
+     * @brief Busca una procesión por su identificador e incluye el itinerario ordenado por posición.
+     *
+     * @details
+     * Tras la consulta, ordena el array `itinerario` por el campo `orden` en memoria,
+     * ya que TypeORM no permite ordenar relaciones anidadas directamente en `findOne`.
+     *
+     * @param {number} id - Identificador de la procesión.
+     * @returns {Promise<Procesion>} Procesión con `hermandad` e `itinerario` ordenado.
+     *
+     * @throws {NotFoundException} Si la procesión no existe.
+     */
     async findOne(id: number) {
         const procesion = await this.procesionRepo.findOne({
             where: { id },
@@ -83,6 +137,18 @@ export class ProcesionesService {
         return procesion;
     }
 
+    /**
+     * @brief Obtiene las próximas procesiones de una ciudad a partir de hoy.
+     *
+     * @details
+     * Filtra procesiones cuya `fecha` sea mayor o igual a la fecha actual (formato ISO
+     * `YYYY-MM-DD`) y cuya hermandad pertenezca a la ciudad indicada. Limita el resultado
+     * a las 10 próximas procesiones para uso en widgets o secciones de portada.
+     *
+     * @param {number} ciudadId - Identificador de la ciudad.
+     * @returns {Promise<Procesion[]>} Hasta 10 procesiones futuras de la ciudad,
+     *          ordenadas por `fecha` y `horaSalida` ascendente.
+     */
     async buscarPorCiudad(ciudadId: number) {
         const hoy = new Date().toISOString().split('T')[0];
 
@@ -97,10 +163,34 @@ export class ProcesionesService {
         });
     }
 
+    /**
+     * @brief Actualiza los datos de una procesión (pendiente de implementación).
+     *
+     * @param {number} id - Identificador de la procesión a actualizar.
+     * @param {UpdateProcesionDto} updateProcesionDto - DTO con los campos a actualizar.
+     * @returns {string} Mensaje provisional indicando la acción pendiente.
+     */
     update(id: number, updateProcesionDto: UpdateProcesionDto) {
         return `This action updates a #${id} procesione`;
     }
 
+    /**
+     * @brief Elimina una procesión con control de permisos por rol y propiedad de hermandad.
+     *
+     * @details
+     * Aplica dos niveles de autorización:
+     * 1. Si el usuario es `ADMIN` → elimina directamente sin más comprobaciones.
+     * 2. Si el usuario es propietario de la hermandad (`hermandad.usuario.id === user.id`)
+     *    → elimina y devuelve mensaje de éxito.
+     * 3. En cualquier otro caso → lanza `ForbiddenException`.
+     *
+     * @param {number} id   - Identificador de la procesión a eliminar.
+     * @param {any} user    - Objeto del usuario autenticado con `id` y `rol`.
+     * @returns {Promise<object>} Objeto con `message` confirmando la eliminación.
+     *
+     * @throws {NotFoundException}  Si la procesión no existe.
+     * @throws {ForbiddenException} Si el usuario no tiene permisos para borrar la procesión.
+     */
     async remove(id: number, user: any) {
         const procesion = await this.procesionRepo.findOne({
             where: { id },
@@ -127,6 +217,17 @@ export class ProcesionesService {
         return { message: 'Procesión eliminada correctamente' };
     }
 
+    /**
+     * @brief Asigna una banda a una procesión creando un registro de participación.
+     *
+     * @param {number} procesionId - Identificador de la procesión.
+     * @param {number} bandaId     - Identificador de la banda participante.
+     * @param {number} anio        - Año de la participación.
+     * @param {string} ubicacion   - Posición de la banda en la procesión (p.ej. "Detrás del paso").
+     * @returns {Promise<Participacion>} Registro de participación recién creado.
+     *
+     * @throws {NotFoundException} Si la procesión no existe.
+     */
     async asignarBanda(
         procesionId: number,
         bandaId: number,
@@ -153,8 +254,13 @@ export class ProcesionesService {
         return await this.participacionRepo.save(nuevaParticipacion);
     }
 
-    // --- Participaciones (HUR-07) ---
-
+    /**
+     * @brief Obtiene todas las participaciones de una procesión con los datos de cada banda.
+     *
+     * @param {number} procesionId - Identificador de la procesión.
+     * @returns {Promise<Participacion[]>} Participaciones ordenadas por `anio` descendente
+     *          con la relación `banda` incluida.
+     */
     async getParticipaciones(procesionId: number) {
         return this.participacionRepo.find({
             where: { procesionId },
@@ -163,6 +269,15 @@ export class ProcesionesService {
         });
     }
 
+    /**
+     * @brief Añade una nueva participación de banda a una procesión.
+     *
+     * @param {number} procesionId                               - Identificador de la procesión.
+     * @param {{ bandaId: number; anio: number; ubicacion?: string }} dto - Datos de la participación.
+     * @returns {Promise<Participacion>} Registro de participación recién creado.
+     *
+     * @throws {NotFoundException} Si la procesión no existe.
+     */
     async addParticipacion(
         procesionId: number,
         dto: { bandaId: number; anio: number; ubicacion?: string },
@@ -175,6 +290,13 @@ export class ProcesionesService {
         return this.participacionRepo.save(nueva);
     }
 
+    /**
+     * @brief Actualiza los datos de una participación existente.
+     *
+     * @param {number} pid - Identificador de la participación.
+     * @param {Partial<{ bandaId: number; anio: number; ubicacion: string }>} dto - Campos a actualizar.
+     * @returns {Promise<Participacion | null>} Participación actualizada con la relación `banda`.
+     */
     async updateParticipacion(
         pid: number,
         dto: Partial<{ bandaId: number; anio: number; ubicacion: string }>,
@@ -186,14 +308,26 @@ export class ProcesionesService {
         });
     }
 
+    /**
+     * @brief Elimina una participación por su identificador.
+     *
+     * @param {number} pid - Identificador de la participación a eliminar.
+     * @returns {Promise<Participacion>} Participación eliminada.
+     *
+     * @throws {NotFoundException} Si la participación no existe.
+     */
     async removeParticipacion(pid: number) {
         const p = await this.participacionRepo.findOneBy({ id: pid });
         if (!p) throw new NotFoundException('Participación no encontrada');
         return this.participacionRepo.remove(p);
     }
 
-    // --- Itinerario (HUAH-02) ---
-
+    /**
+     * @brief Obtiene todos los itinerarios de una procesión ordenados por año descendente.
+     *
+     * @param {number} procesionId - Identificador de la procesión.
+     * @returns {Promise<Itinerario[]>} Lista de itinerarios ordenados por `anio` descendente.
+     */
     async getItinerarios(procesionId: number) {
         return this.itinerarioRepo.find({
             where: { procesionId },
@@ -201,6 +335,16 @@ export class ProcesionesService {
         });
     }
 
+    /**
+     * @brief Crea un nuevo itinerario anual para una procesión.
+     *
+     * @param {number} procesionId - Identificador de la procesión.
+     * @param {{ anio: number; horarioSalida?: string; horarioEntrada?: string; recorrido?: string }} dto
+     *        - Datos del itinerario; `horarioSalida`, `horarioEntrada` y `recorrido` son opcionales.
+     * @returns {Promise<Itinerario>} Itinerario recién creado.
+     *
+     * @throws {NotFoundException} Si la procesión no existe.
+     */
     async createItinerario(
         procesionId: number,
         dto: {
@@ -218,6 +362,14 @@ export class ProcesionesService {
         return this.itinerarioRepo.save(nuevo);
     }
 
+    /**
+     * @brief Actualiza los datos de un itinerario existente.
+     *
+     * @param {number} itinerarioId - Identificador del itinerario.
+     * @param {{ horarioSalida?: string; horarioEntrada?: string; recorrido?: string }} dto
+     *        - Campos a actualizar (todos opcionales).
+     * @returns {Promise<Itinerario | null>} Itinerario actualizado o `null` si no existe.
+     */
     async updateItinerario(
         itinerarioId: number,
         dto: {
@@ -230,8 +382,16 @@ export class ProcesionesService {
         return this.itinerarioRepo.findOneBy({ id: itinerarioId });
     }
 
-    // --- Pasos (HUAH-02) ---
-
+    /**
+     * @brief Crea un nuevo paso para una procesión.
+     *
+     * @param {number} procesionId - Identificador de la procesión.
+     * @param {{ nombre: string; tipo?: string; orden?: number; descripcion?: string }} dto
+     *        - Datos del paso.
+     * @returns {Promise<Paso>} Paso recién creado.
+     *
+     * @throws {NotFoundException} Si la procesión no existe.
+     */
     async createPaso(
         procesionId: number,
         dto: {
@@ -249,6 +409,14 @@ export class ProcesionesService {
         return this.pasoRepo.save(nuevo);
     }
 
+    /**
+     * @brief Actualiza los datos de un paso existente.
+     *
+     * @param {number} pasoId - Identificador del paso.
+     * @param {Partial<{ nombre: string; tipo: string; orden: number; descripcion: string }>} dto
+     *        - Campos a actualizar (todos opcionales).
+     * @returns {Promise<Paso | null>} Paso actualizado o `null` si no existe.
+     */
     async updatePaso(
         pasoId: number,
         dto: Partial<{
@@ -262,21 +430,32 @@ export class ProcesionesService {
         return this.pasoRepo.findOneBy({ id: pasoId });
     }
 
+    /**
+     * @brief Elimina un paso por su identificador.
+     *
+     * @param {number} pasoId - Identificador del paso a eliminar.
+     * @returns {Promise<Paso>} Paso eliminado.
+     *
+     * @throws {NotFoundException} Si el paso no existe.
+     */
     async removePaso(pasoId: number) {
         const paso = await this.pasoRepo.findOneBy({ id: pasoId });
         if (!paso) throw new NotFoundException('Paso no encontrado');
         return this.pasoRepo.remove(paso);
     }
 
-    async getPuntosItinerario(procesionId: number) {
-        const procesion = await this.procesionRepo.findOne({
-            where: { id: procesionId },
-            relations: ['itinerario'],
-        });
-        if (!procesion) throw new NotFoundException('Procesión no encontrada');
-        return procesion.itinerario.sort((a, b) => a.orden - b.orden);
-    }
-
+    /**
+     * @brief Obtiene una procesión con sus participaciones filtradas por año.
+     *
+     * @details
+     * Carga la procesión con la relación `participaciones → banda` y filtra
+     * en memoria las participaciones que correspondan al año indicado.
+     * Si la procesión no existe, devuelve `null` sin lanzar excepción.
+     *
+     * @param {number} id   - Identificador de la procesión.
+     * @param {number} anio - Año por el que filtrar las participaciones.
+     * @returns {Promise<Procesion | null>} Procesión con participaciones del año, o `null`.
+     */
     async findOneByProcesion(id: number, anio: number) {
         return await this.procesionRepo
             .findOne({
@@ -322,11 +501,10 @@ export class ProcesionesService {
      * @complexity O(1) al trabajar con clave primaria; el coste real lo determinan los
      *             índices sobre `itinerarios.anio` y `participaciones.anio`.
      *
-     * @note El filtrado año en el JOIN (en vez de un WHERE posterior) evita que TypeORM
+     * @note El filtrado de año en el JOIN (en vez de un WHERE posterior) evita que TypeORM
      *       descarte la entidad raíz cuando no hay datos del año, manteniendo los metadatos
      *       básicos de la procesión accesibles al llamador.
      *
-     * @see buscarProcesiones
      * @see ProcesionesController.fichaAnual
      */
     async obtenerFichaPorAnio(procesionId: number, anio: number) {
@@ -400,7 +578,6 @@ export class ProcesionesService {
      *          si el front-end lo requiere.
      *
      * @see ProcesionesController.buscar
-     * @see https://typeorm.io/#/select-query-builder
      */
     async buscarProcesiones(
         ciudadNombre?: string,

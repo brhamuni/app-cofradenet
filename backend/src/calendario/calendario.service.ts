@@ -1,3 +1,11 @@
+/**
+ * @file calendario.service.ts
+ * @brief Servicio de calendario personalizado de eventos de CofradeNet.
+ * @details Agrega procesiones de hermandades seguidas y eventos de bandas seguidas
+ *          en una vista unificada de calendario. Soporta filtrado por tipo de evento
+ *          y por ciudad, agrupación por mes y consulta de detalle individual.
+ */
+
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -36,6 +44,28 @@ export class CalendarioService {
         private readonly eventoRepo: Repository<Evento>,
     ) {}
 
+    /**
+     * @brief Obtiene todos los eventos del calendario personalizado de un usuario.
+     *
+     * @details
+     * Construye el calendario en tres fases:
+     * 1. Recupera los seguimientos del usuario para extraer `hermandadIds` y `bandaIds`.
+     * 2. Si `tipo !== 'concierto'` y hay hermandades seguidas, consulta las procesiones
+     *    de esas hermandades con sus ciudades. Filtra opcionalmente por `ciudadId` en memoria.
+     * 3. Si `tipo !== 'procesion'` y hay bandas seguidas, consulta los eventos de esas bandas.
+     *    También filtra por `ciudadId` en memoria si se proporciona.
+     *
+     * El resultado se normaliza al tipo `EventoCalendario` para homogeneizar procesiones
+     * y conciertos en una sola lista, y se ordena cronológicamente.
+     *
+     * @pre   El usuario debe tener al menos un seguimiento para recibir eventos.
+     * @post  El array devuelto está ordenado por `fecha` ascendente.
+     *
+     * @param {number} userId              - Identificador del usuario autenticado.
+     * @param {TipoFiltro} [tipo='all']    - Filtro de tipo: `'all'`, `'procesion'` o `'concierto'`.
+     * @param {number} [ciudadId]          - Filtro opcional por ciudad (filtra en memoria).
+     * @returns {Promise<EventoCalendario[]>} Lista unificada de eventos del calendario.
+     */
     async getMisEventos(
         userId: number,
         tipo: TipoFiltro = 'all',
@@ -130,6 +160,19 @@ export class CalendarioService {
         return resultados;
     }
 
+    /**
+     * @brief Obtiene los eventos del calendario de un usuario agrupados por día para un mes concreto.
+     *
+     * @details
+     * Reutiliza `getMisEventos` con filtro `'all'` y filtra el resultado en memoria
+     * por año y mes. Luego agrupa los eventos por clave ISO de fecha (`YYYY-MM-DD`)
+     * en un `Record<string, EventoCalendario[]>`.
+     *
+     * @param {number} userId - Identificador del usuario.
+     * @param {number} anio   - Año del mes a consultar.
+     * @param {number} mes    - Mes a consultar (1-12).
+     * @returns {Promise<Record<string, EventoCalendario[]>>} Mapa de fecha ISO → eventos del día.
+     */
     async getMisEventosMes(
         userId: number,
         anio: number,
@@ -149,6 +192,19 @@ export class CalendarioService {
         return agrupados;
     }
 
+    /**
+     * @brief Obtiene el detalle de un evento individual del calendario por tipo e identificador.
+     *
+     * @details
+     * Dependiendo del `tipo`, consulta el repositorio correspondiente:
+     * - `'procesion'`: carga la procesión con `hermandad → ciudad`.
+     * - `'concierto'`: carga el evento con `banda → ciudad`.
+     * El resultado se normaliza al tipo `EventoCalendario` para coherencia con el resto de la API.
+     *
+     * @param {'procesion' | 'concierto'} tipo - Tipo del evento a consultar.
+     * @param {number} id                      - Identificador del evento.
+     * @returns {Promise<EventoCalendario | null>} Detalle del evento o `null` si no existe.
+     */
     async getEventoById(
         tipo: 'procesion' | 'concierto',
         id: number,

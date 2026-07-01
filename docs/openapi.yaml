@@ -1,0 +1,712 @@
+:
+                  type: string
+                  format: binary
+                hermandadId:
+                  type: integer
+                bandaId:
+                  type: integer
+                titulo:
+                  type: string
+                descripcion:
+                  type: string
+                anio:
+                  type: integer
+      responses:
+        '201':
+          description: Media subido correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaItem'
+        '401':
+          description: No autenticado
+
+  /media/enlace:
+    post:
+      tags: [media]
+      summary: Añadir enlace externo (YouTube, Spotify, etc.)
+      description: Registra un enlace externo como item multimedia sin subir archivo.
+      operationId: mediaAddEnlace
+      security:
+        - access-token: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                hermandadId:
+                  type: integer
+                bandaId:
+                  type: integer
+                titulo:
+                  type: string
+                descripcion:
+                  type: string
+                anio:
+                  type: integer
+      responses:
+        '201':
+          description: Enlace añadido correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaItem'
+        '401':
+          description: No autenticado
+
+  /media/hermandad/{id}:
+    get:
+      tags: [media]
+      summary: Obtener media de una hermandad
+      description: Devuelve todos los items multimedia asociados a una hermandad.
+      operationId: mediaFindByHermandad
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de media de la hermandad
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaItem'
+
+  /media/banda/{id}:
+    get:
+      tags: [media]
+      summary: Obtener media de una banda
+      description: Devuelve todos los items multimedia asociados a una banda.
+      operationId: mediaFindByBanda
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de media de la banda
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaItem'
+
+  /media:
+    get:
+      tags: [media]
+      summary: Obtener media público con filtros opcionales
+      description: Devuelve items multimedia públicos filtrando opcionalmente por hermandad, banda, ciudad o año.
+      operationId: mediaFindPublicos
+      parameters:
+        - name: hermandadId
+          in: query
+          schema:
+            type: integer
+        - name: bandaId
+          in: query
+          schema:
+            type: integer
+        - name: ciudadId
+          in: query
+          schema:
+            type: integer
+        - name: anio
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de media público
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaItem'
+
+  /media/{id}:
+    delete:
+      tags: [media]
+      summary: Eliminar un item de media
+      description: Elimina permanentemente un item multimedia. Requiere autenticación.
+      operationId: mediaRemove
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Media eliminado correctamente
+        '401':
+          description: No autenticado
+
+  /media/explorar:
+    get:
+      tags: [media]
+      summary: Explorar galería pública paginada
+      description: Devuelve una galería paginada de items multimedia públicos con filtro opcional por tipo.
+      operationId: mediaExplorar
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: tipo
+          in: query
+          schema:
+            type: string
+            enum: [foto, video, enlace]
+      responses:
+        '200':
+          description: Galería paginada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MediaItem'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+
+  /media/explorar/tendencias:
+    get:
+      tags: [media]
+      summary: Tendencias - media más reciente de los últimos 7 días
+      description: Devuelve los items multimedia más recientes de los últimos 7 días.
+      operationId: mediaTendencias
+      responses:
+        '200':
+          description: Items multimedia en tendencia
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaItem'
+
+  /media/explorar/reciente:
+    get:
+      tags: [media]
+      summary: Media más reciente (últimos 8 items)
+      description: Devuelve los 8 items multimedia más recientes de la plataforma.
+      operationId: mediaReciente
+      responses:
+        '200':
+          description: Últimos 8 items multimedia
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaItem'
+
+  /media/oembed:
+    get:
+      tags: [media]
+      summary: Proxy oEmbed para YouTube, Instagram o X
+      description: Obtiene los metadatos oEmbed de una URL externa compatible (YouTube, Instagram, X/Twitter).
+      operationId: mediaOembed
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+          description: URL del recurso externo
+      responses:
+        '200':
+          description: Datos oEmbed del recurso
+        '400':
+          description: Se requiere el parámetro url
+
+  /archivos/{id}:
+    get:
+      tags: [archivos]
+      summary: Descargar/visualizar un archivo subido
+      description: Sirve el contenido binario de un archivo almacenado en la plataforma. Devuelve el stream del archivo con el Content-Type adecuado.
+      operationId: archivosServe
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Identificador único del archivo
+      responses:
+        '200':
+          description: Contenido del archivo
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Archivo no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/usuarios:
+    get:
+      tags: [admin]
+      summary: Listar todos los usuarios con filtros opcionales
+      description: Devuelve la lista de usuarios con posibilidad de filtrar por rol, verificación y bloqueo. Solo administradores.
+      operationId: adminListarUsuarios
+      security:
+        - access-token: []
+      parameters:
+        - name: rol
+          in: query
+          schema:
+            type: string
+            enum: [admin, hermandad, banda, cofrade]
+        - name: verificado
+          in: query
+          schema:
+            type: string
+            enum: ['true', 'false']
+        - name: bloqueado
+          in: query
+          schema:
+            type: string
+            enum: ['true', 'false']
+      responses:
+        '200':
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Usuario'
+        '401':
+          description: No autenticado
+        '403':
+          description: Sin permisos de administrador
+
+  /admin/usuarios/{id}:
+    get:
+      tags: [admin]
+      summary: Obtener detalles de un usuario por ID
+      description: Devuelve los datos completos de un usuario. Solo administradores.
+      operationId: adminGetUsuario
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Datos completos del usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '404':
+          description: Usuario no encontrado
+    patch:
+      tags: [admin]
+      summary: Editar datos de un usuario
+      description: Modifica los datos de un usuario desde el panel de administración.
+      operationId: adminEditarUsuario
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                rol:
+                  type: string
+                  enum: [admin, hermandad, banda, cofrade]
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Usuario editado correctamente
+        '404':
+          description: Usuario no encontrado
+    delete:
+      tags: [admin]
+      summary: Eliminar un usuario permanentemente
+      description: Elimina un usuario de forma definitiva. Solo administradores.
+      operationId: adminEliminarUsuario
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuario eliminado correctamente
+        '404':
+          description: Usuario no encontrado
+
+  /admin/usuarios/{id}/verificar:
+    put:
+      tags: [admin]
+      summary: Verificar un usuario
+      description: Marca un usuario como verificado en la plataforma. Solo administradores.
+      operationId: adminVerificarUsuario
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuario verificado correctamente
+        '404':
+          description: Usuario no encontrado
+
+  /admin/usuarios/{id}/bloquear:
+    put:
+      tags: [admin]
+      summary: Bloquear un usuario
+      description: Bloquea el acceso de un usuario a la plataforma. Solo administradores.
+      operationId: adminBloquearUsuario
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuario bloqueado correctamente
+        '404':
+          description: Usuario no encontrado
+
+  /admin/usuarios/{id}/desbloquear:
+    put:
+      tags: [admin]
+      summary: Desbloquear un usuario
+      description: Restaura el acceso de un usuario bloqueado. Solo administradores.
+      operationId: adminDesbloquearUsuario
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuario desbloqueado correctamente
+        '404':
+          description: Usuario no encontrado
+
+  /admin/usuarios/{id}/rol:
+    put:
+      tags: [admin]
+      summary: Cambiar el rol de un usuario
+      description: Actualiza el rol de un usuario desde el panel de administración.
+      operationId: adminCambiarRol
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rol]
+              properties:
+                rol:
+                  type: string
+                  enum: [admin, hermandad, banda, cofrade]
+      responses:
+        '200':
+          description: Rol actualizado correctamente
+        '404':
+          description: Usuario no encontrado
+
+  /admin/hermandades:
+    get:
+      tags: [admin]
+      summary: Listar todas las hermandades
+      description: Devuelve la lista completa de hermandades para el panel de administración.
+      operationId: adminListarHermandades
+      security:
+        - access-token: []
+      responses:
+        '200':
+          description: Lista de hermandades
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hermandad'
+
+  /admin/hermandades/{id}/verificar:
+    put:
+      tags: [admin]
+      summary: Verificar una hermandad
+      description: Marca una hermandad como verificada. Solo administradores.
+      operationId: adminVerificarHermandad
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Hermandad verificada correctamente
+        '404':
+          description: Hermandad no encontrada
+
+  /admin/hermandades/{id}:
+    put:
+      tags: [admin]
+      summary: Editar datos de una hermandad
+      description: Modifica los datos de una hermandad desde el panel de administración.
+      operationId: adminEditarHermandad
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                nombrePopular:
+                  type: string
+                descripcion:
+                  type: string
+                ciudadId:
+                  type: integer
+                fundacion:
+                  type: integer
+                sede:
+                  type: string
+      responses:
+        '200':
+          description: Hermandad editada correctamente
+        '404':
+          description: Hermandad no encontrada
+    delete:
+      tags: [admin]
+      summary: Eliminar una hermandad permanentemente
+      description: Elimina definitivamente una hermandad. Solo administradores.
+      operationId: adminEliminarHermandad
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Hermandad eliminada correctamente
+        '404':
+          description: Hermandad no encontrada
+
+  /admin/bandas:
+    get:
+      tags: [admin]
+      summary: Listar todas las bandas
+      description: Devuelve la lista completa de bandas para el panel de administración.
+      operationId: adminListarBandas
+      security:
+        - access-token: []
+      responses:
+        '200':
+          description: Lista de bandas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Banda'
+
+  /admin/bandas/{id}/verificar:
+    put:
+      tags: [admin]
+      summary: Verificar una banda
+      description: Marca una banda como verificada. Solo administradores.
+      operationId: adminVerificarBanda
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Banda verificada correctamente
+        '404':
+          description: Banda no encontrada
+
+  /admin/publicaciones/{id}:
+    delete:
+      tags: [admin]
+      summary: Eliminar una publicación (moderación)
+      description: Elimina una publicación como acción de moderación. Solo administradores.
+      operationId: adminEliminarPublicacion
+      security:
+        - access-token: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Publicación eliminada correctamente
+        '404':
+          description: Publicación no encontrada
+
+  /admin/estadisticas:
+    get:
+      tags: [admin]
+      summary: Obtener estadísticas generales de la plataforma
+      description: Devuelve estadísticas globales de usuarios, hermandades, bandas y publicaciones.
+      operationId: adminGetEstadisticas
+      security:
+        - access-token: []
+      responses:
+        '200':
+          description: Estadísticas de la plataforma
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalUsuarios:
+                    type: integer
+                  totalHermandades:
+                    type: integer
+                  totalBandas:
+                    type: integer
+                  totalProcesiones:
+                    type: integer
+                  totalPublicaciones:
+                    type: integer
+
+  /admin/ciudades:
+    get:
+      tags: [admin]
+      summary: Listar ciudades con sus contadores de hermandades y procesiones
+      description: Devuelve una lista paginada de ciudades con el número de hermandades y procesiones asociadas.
+      operationId: adminGetCiudades
+      security:
+        - access-token: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: buscar
+          in: query
+          schema:
+            type: string
+          description: Término de búsqueda por nombre de ciudad
+      responses:
+        '200':
+          description: Lista paginada de ciudades con contadores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Ciudad'
+                        - type: object
+                          properties:
+                            totalHermandades:
+                              type: integer
+                            totalProcesiones:
+                              type: integer
+                  total:
+                    type: integer
+                  page:
+                    type: integer

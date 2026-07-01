@@ -25,6 +25,10 @@ import type { Request } from 'express';
 import { BandasService } from './bandas.service';
 import { CreateBandaDto } from './dto/create-banda.dto';
 import { UpdateBandaDto } from './dto/update-banda.dto';
+
+interface AuthRequest extends Request {
+    user: { id: number; username: string; rol: string };
+}
 import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
@@ -103,7 +107,7 @@ export class BandasController {
     update(
         @Param('id') id: string,
         @Body() updateBandaDto: UpdateBandaDto,
-        @Req() req: Request,
+        @Req() req: AuthRequest,
     ) {
         return this.bandasService.update(+id, updateBandaDto, req.user!);
     }
@@ -159,7 +163,7 @@ export class BandasController {
         @Param('id', ParseIntPipe) id: number,
         @Param('eventoId', ParseIntPipe) eventoId: number,
         @Body() dto: UpdateEventoDto,
-        @Req() req: Request,
+        @Req() req: AuthRequest,
     ) {
         return this.bandasService.actualizarEvento(id, eventoId, dto, req.user!);
     }
@@ -175,7 +179,7 @@ export class BandasController {
     eliminarEvento(
         @Param('id', ParseIntPipe) id: number,
         @Param('eventoId', ParseIntPipe) eventoId: number,
-        @Req() req: Request,
+        @Req() req: AuthRequest,
     ) {
         return this.bandasService.eliminarEvento(id, eventoId, req.user!);
     }
@@ -300,7 +304,7 @@ export class BandasController {
     @Delete(':id/galeria/:itemId')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(RolUsuario.ADMIN, RolUsuario.BANDA)
-    removeGaleria(@Param('itemId', ParseIntPipe) itemId: number, @Req() req: Request) {
+    removeGaleria(@Param('itemId', ParseIntPipe) itemId: number, @Req() req: AuthRequest) {
         return this.mediaService.remove(itemId, req.user!);
     }
 

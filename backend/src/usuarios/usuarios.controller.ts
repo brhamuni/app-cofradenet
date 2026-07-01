@@ -23,6 +23,10 @@ import {
 import type { Request } from 'express';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
+
+interface AuthRequest extends Request {
+    user: { id: number; username: string; rol: string };
+}
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 import { RolesGuard } from '@backend/auth/guards/roles.guard';
@@ -68,7 +72,7 @@ export class UsuariosController {
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @Get('perfil')
     @UseGuards(JwtAuthGuard)
-    obtenerPerfil(@Req() req: Request) {
+    obtenerPerfil(@Req() req: AuthRequest) {
         return this.usuariosService.getPerfil(req.user!.id);
     }
 
@@ -135,7 +139,7 @@ export class UsuariosController {
     @UseGuards(JwtAuthGuard)
     toggleHermandad(
         @Param('id', ParseIntPipe) id: number,
-        @Req() req: Request,
+        @Req() req: AuthRequest,
     ) {
         return this.usuariosService.toggleFavoritoHermandad(req.user!.id, id);
     }
@@ -146,7 +150,7 @@ export class UsuariosController {
     @ApiResponse({ status: 401, description: 'No autenticado' })
     @Post('favoritos/banda/:id')
     @UseGuards(JwtAuthGuard)
-    toggleBanda(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
+    toggleBanda(@Param('id', ParseIntPipe) id: number, @Req() req: AuthRequest) {
         return this.usuariosService.toggleFavoritoBanda(req.user!.id, id);
     }
 
