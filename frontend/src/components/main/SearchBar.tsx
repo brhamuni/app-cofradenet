@@ -26,7 +26,7 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
       <div className="relative flex flex-col gap-2">
         
         {/* BARRA INTEGRADA */}
-        <div className="group relative z-[110] flex items-center bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] h-14.5 md:h-18 p-1.5 md:p-2 transition-all focus-within:ring-4 focus-within:ring-cofrade-gold/10">
+        <div className="group relative z-[110] flex min-w-0 items-center bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] h-14.5 md:h-18 p-1.5 md:p-2 transition-all focus-within:ring-4 focus-within:ring-cofrade-gold/10">
 
           {/* SELECTOR PERSONALIZADO */}
           <div className="relative h-full z-[110]">
@@ -68,24 +68,25 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
           </div>
 
           {/* INPUT PRINCIPAL */}
-          <div className="flex-1 relative h-full flex items-center">
+          <div className="flex-1 relative h-full flex items-center min-w-0">
             <input
               type="text"
               value={busqueda}
               onFocus={() => setMenuAbierto(false)}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="¿Qué buscas hoy?"
-              className="w-full h-full pl-6 pr-4 bg-transparent text-lg font-bold outline-none text-gray-900 placeholder:text-gray-300"
+              className="w-full min-w-0 h-full pl-4 sm:pl-6 pr-2 sm:pr-4 bg-transparent text-base sm:text-lg font-bold outline-none text-gray-900 placeholder:text-gray-300"
             />
           </div>
 
           {/* ESTADO / LUPA */}
-          <div className="shrink-0 w-14 h-14 flex items-center justify-center">
+          <div className="shrink-0 w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center">
             {cargando ? (
-              <Loader2 className="animate-spin text-cofrade-main" size={24} />
+              <Loader2 className="animate-spin text-cofrade-main" size={22} />
             ) : (
-              <div className="w-12 h-12 bg-cofrade-main rounded-full flex items-center justify-center text-white shadow-lg shadow-cofrade-main/20">
-                <Search size={20} strokeWidth={3} />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cofrade-main rounded-full flex items-center justify-center text-white shadow-lg shadow-cofrade-main/20">
+                <Search size={18} strokeWidth={3} className="sm:hidden" />
+                <Search size={20} strokeWidth={3} className="hidden sm:block" />
               </div>
             )}
           </div>

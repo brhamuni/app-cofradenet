@@ -62,7 +62,7 @@ export default function LoginPage() {
       </div>
 
       {/* LADO DERECHO: FORMULARIO */}
-      <div className="w-full lg:w-1/2 flex items-start lg:items-center justify-center px-8 pt-6 pb-8 md:p-16 bg-cofrade-bg lg:bg-white">
+      <div className="w-full lg:w-1/2 flex items-start lg:items-center justify-center px-6 sm:px-8 pt-6 pb-24 md:pb-8 md:p-16 bg-cofrade-bg lg:bg-white">
         <div className="w-full max-w-sm space-y-8">
           <div className="text-center lg:text-left">
             <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Iniciar Sesión</h2>
@@ -107,7 +107,7 @@ export default function LoginPage() {
           <div className="text-center pt-4">
             <p className="text-gray-500 font-bold text-sm">
               ¿AÚN NO ERES COFRADE?{' '}
-              <Link href="/register" className="text-cofrade-gold hover:underline underline-offset-4">
+              <Link href="/register" className="inline-flex items-center min-h-11 text-cofrade-gold hover:underline underline-offset-4">
                 REGÍSTRATE AQUÍ
               </Link>
             </p>

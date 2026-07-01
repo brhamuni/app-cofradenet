@@ -221,14 +221,14 @@ export default function CalendarioPage() {
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
 
         {/* Header */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between gap-4">
-          <div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="min-w-0">
             <h1 className="text-2xl font-black text-gray-900 mb-1">Mi Calendario</h1>
             <p className="text-gray-500 text-sm font-semibold">
               Eventos de las hermandades y bandas que sigues
             </p>
           </div>
-          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 shrink-0 self-start sm:self-auto">
             <button
               onClick={() => setVista('lista')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all ${vista === 'lista' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}

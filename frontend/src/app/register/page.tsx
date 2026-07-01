@@ -92,7 +92,7 @@ export default function RegisterPage() {
       </div>
 
       {/* LADO DERECHO: FORMULARIO */}
-      <div className="w-full lg:w-1/2 flex items-start lg:items-center justify-center px-8 pt-6 pb-8 md:p-16 bg-cofrade-bg lg:bg-white overflow-y-auto max-h-screen">
+      <div className="w-full lg:w-1/2 flex items-start lg:items-center justify-center px-6 sm:px-8 pt-6 pb-12 md:pb-8 md:p-16 bg-cofrade-bg lg:bg-white overflow-y-auto max-h-screen">
         <div className="w-full max-w-md space-y-8 py-8">
           
           <div className="text-center lg:text-left">
@@ -140,7 +140,7 @@ export default function RegisterPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="relative group">
                   <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                   <input
@@ -168,7 +168,7 @@ export default function RegisterPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                   <input
@@ -194,7 +194,7 @@ export default function RegisterPage() {
                 <h3 className="text-[10px] font-black text-cofrade-main uppercase tracking-widest flex items-center gap-2">
                   <ArrowRight size={12} /> Información de {formData.rol}
                 </h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {formData.rol === 'banda' ? (
                     <>
                       <input
@@ -237,7 +237,7 @@ export default function RegisterPage() {
           <div className="text-center pt-2">
             <p className="text-gray-500 font-bold text-sm">
               ¿YA TIENES CUENTA?{' '}
-              <Link href="/login" className="text-cofrade-gold hover:underline underline-offset-4">
+              <Link href="/login" className="inline-flex items-center min-h-11 text-cofrade-gold hover:underline underline-offset-4">
                 INICIA SESIÓN AQUÍ
               </Link>
             </p>

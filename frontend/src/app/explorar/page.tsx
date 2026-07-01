@@ -110,7 +110,7 @@ export default function ExplorarPage() {
             </div>
             <button
               onClick={() => setShowFilters(v => !v)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all ${
+              className={`flex items-center gap-2 px-4 py-2.5 min-h-11 rounded-xl text-sm font-black transition-all ${
                 showFilters || hasActiveFilters
                   ? 'bg-white text-cofrade-main'
                   : 'bg-white/15 text-white hover:bg-white/25'

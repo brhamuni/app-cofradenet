@@ -101,7 +101,7 @@ export default function EditHermandadModal({ hermandad, isOpen, onClose }: any) 
           {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
 
           <form id="edit-hermandad-form" onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field("Nombre oficial", "nombre")}
               {field("Nombre popular", "nombrePopular")}
             </div>
@@ -118,14 +118,14 @@ export default function EditHermandadModal({ hermandad, isOpen, onClose }: any) 
               <p className="text-[10px] text-gray-400 mt-1">Separa los titulares con comas</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field("Año de fundación", "añoFundacion", "number")}
               {field("Día de salida", "diaSalida")}
             </div>
 
             {field("Templo / Sede canónica", "templo")}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field("Dirección", "direccion")}
               {field("Código postal", "codigoPostal")}
             </div>

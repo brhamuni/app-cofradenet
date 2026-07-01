@@ -91,11 +91,11 @@ export default function EditBandaModal({ banda, isOpen, onClose }: EditBandaModa
           {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm">{error}</div>}
 
           <form id="edit-banda-form" onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Nombre', 'nombre')}
               {field('Estilo musical', 'estiloMusical')}
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Localidad', 'localidad')}
               {field('Nº componentes', 'numeroComponentes', 'number')}
             </div>

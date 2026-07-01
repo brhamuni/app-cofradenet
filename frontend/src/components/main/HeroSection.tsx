@@ -45,7 +45,7 @@ export default function HeroSection({ busqueda, setBusqueda, filtro, setFiltro, 
   }, []);
 
   return (
-    <section className="relative z-50 w-full h-[55vh] md:h-[65vh] mb-6 flex items-center justify-center bg-cofrade-main">
+    <section className="relative z-50 w-full h-[55vh] md:h-[65vh] mb-6 flex items-center justify-center bg-cofrade-main overflow-hidden">
       {/* Fondo rotativo */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         {CIUDADES.map((ciudad, i) => (
@@ -53,7 +53,7 @@ export default function HeroSection({ busqueda, setBusqueda, filtro, setFiltro, 
             key={ciudad.nombre}
             src={ciudad.url}
             alt={ciudad.nombre}
-            className={`absolute inset-0 w-full h-full object-cover scale-105 transition-opacity duration-1000 ${
+            className={`absolute inset-0 w-full h-full object-cover max-w-full scale-100 sm:scale-105 transition-opacity duration-1000 ${
               i === current ? 'opacity-40' : 'opacity-0'
             }`}
           />
@@ -83,7 +83,7 @@ export default function HeroSection({ busqueda, setBusqueda, filtro, setFiltro, 
       </div>
 
       {/* Indicador de ciudad */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-[5] flex items-center gap-3">
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-[5] flex max-w-[calc(100%-2rem)] items-center gap-2 sm:gap-3 overflow-hidden">
         {CIUDADES.map((ciudad, i) => (
           <button
             key={ciudad.nombre}
@@ -98,7 +98,7 @@ export default function HeroSection({ busqueda, setBusqueda, filtro, setFiltro, 
             />
           </button>
         ))}
-        <span className="flex items-center gap-1 text-white/70 text-xs font-black tracking-widest uppercase">
+        <span className="flex items-center gap-1 text-white/70 text-[10px] sm:text-xs font-black tracking-widest uppercase truncate">
           <MapPin size={11} />
           {CIUDADES[current].nombre}
         </span>

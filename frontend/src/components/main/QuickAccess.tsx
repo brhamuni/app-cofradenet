@@ -6,11 +6,11 @@ export default function QuickAccess({ isLoggedIn }: { isLoggedIn: boolean }) {
     { href: '/mapa', icon: MapIcon, title: 'En Vivo', desc: 'Sigue los pasos', color: 'bg-red-500' },
     { href: isLoggedIn ? '/feed' : '/login', icon: Rss, title: 'El Muro', desc: 'Actualidad', color: 'bg-cofrade-main' },
     { href: '/calendario', icon: Calendar, title: 'Agenda', desc: 'No te pierdas nada', color: 'bg-cofrade-gold' },
-    { href: '/galeria', icon: ImageIcon, title: 'Galería', desc: 'Arte Sacro', color: 'bg-blue-600' },
+    { href: '/explorar', icon: ImageIcon, title: 'Galería', desc: 'Arte Sacro', color: 'bg-blue-600' },
   ];
 
   return (
-    <section className="max-w-7xl mx-auto px-6 relative z-20 mb-20">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 relative z-20 mb-20">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
         {items.map((item, index) => (
           <Link key={index} href={item.href} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50 hover:shadow-2xl hover:-translate-y-2 transition-all group">

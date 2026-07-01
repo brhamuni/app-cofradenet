@@ -93,7 +93,7 @@ function PulsingMarker({ selected }: { selected?: boolean }) {
   );
 }
 
-const SELECT_CLS = 'w-full text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-cofrade-main focus:bg-white transition-colors cursor-pointer';
+const SELECT_CLS = 'w-full text-base md:text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 min-h-11 outline-none focus:border-cofrade-main focus:bg-white transition-colors cursor-pointer';
 
 const routeLineLayer: LayerProps = {
   id: 'itinerario-line',
@@ -312,7 +312,7 @@ export default function MapaView() {
           <div className="flex gap-2 mt-3">
             <button
               onClick={() => setModo('vivo')}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-black transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-2.5 min-h-11 rounded-xl text-xs font-black transition-all ${
                 modo === 'vivo'
                   ? 'bg-cofrade-main text-white'
                   : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -326,7 +326,7 @@ export default function MapaView() {
             </button>
             <button
               onClick={() => setModo('itinerarios')}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-black transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-2.5 min-h-11 rounded-xl text-xs font-black transition-all ${
                 modo === 'itinerarios'
                   ? 'bg-cofrade-main text-white'
                   : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -517,7 +517,7 @@ export default function MapaView() {
                   <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Procesiones Activas</p>
                   <button
                     onClick={() => setFiltrosVisibles(v => !v)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-black transition-all ${filtrosVisibles ? 'bg-cofrade-main text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                    className={`flex items-center gap-1.5 px-3 py-2.5 min-h-11 rounded-xl text-xs font-black transition-all ${filtrosVisibles ? 'bg-cofrade-main text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                   >
                     <SlidersHorizontal size={11} />
                     Filtros
