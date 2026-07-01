@@ -42,6 +42,7 @@ export class SearchService {
      * - La búsqueda de hermandades incluye tanto `nombre` como `nombrePopular` (OR).
      * - Las bandas cargan la relación `ciudad` para que el frontend pueda mostrar la localidad.
      * - Las procesiones se ordenan por `fecha` ascendente y cargan la hermandad titular.
+     * - Solo se incluyen procesiones con `fecha` mayor o igual al día actual.
      * - Cada categoría está limitada a 10 resultados.
      *
      * @pre   La extensión `unaccent` debe estar instalada en PostgreSQL
@@ -68,6 +69,7 @@ export class SearchService {
         }
 
         const patron = `%${query}%`;
+        const hoy = new Date().toISOString().split('T')[0];
         const resultados: any = {
             ciudades: [],
             hermandades: [],
@@ -115,6 +117,7 @@ export class SearchService {
                 .where('unaccent(procesion.nombre) ILIKE unaccent(:patron)', {
                     patron,
                 })
+                .andWhere('procesion.fecha >= :hoy', { hoy })
                 .orderBy('procesion.fecha', 'ASC')
                 .take(10)
                 .getMany();

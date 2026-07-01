@@ -23,6 +23,14 @@ import { JwtOptionalGuard } from '@backend/auth/jwt-optional.guard';
 export class SeguimientosController {
     constructor(private readonly service: SeguimientosService) {}
 
+    @ApiOperation({ summary: 'Listar hermandades y bandas que sigo' })
+    @ApiBearerAuth('access-token')
+    @Get('mis')
+    @UseGuards(JwtAuthGuard)
+    misSeguimientos(@Req() req: any) {
+        return this.service.listarMisSeguimientos(req.user.id);
+    }
+
     // ── Hermandad ──────────────────────────────────────────────
     @ApiOperation({
         summary: 'Consultar estado de seguimiento de una hermandad',

@@ -4,6 +4,13 @@ import HeroSection from './HeroSection';
 import QuickAccess from './QuickAccess';
 import { API } from '@/lib/api';
 
+function procesionesFuturas(procesiones: any[] | undefined) {
+  const hoy = new Date().toISOString().split('T')[0];
+  return (procesiones ?? [])
+    .filter((p) => (p.fecha || '') >= hoy)
+    .sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+}
+
 export default function HomeClient() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [busqueda, setBusqueda] = useState('');
@@ -30,7 +37,11 @@ export default function HomeClient() {
     setCargando(true);
     try {
       const res = await fetch(`${API}/search?q=${encodeURIComponent(texto)}&filtro=${categoria}`);
-      setResultados(await res.json());
+      const data = await res.json();
+      setResultados({
+        ...data,
+        procesiones: procesionesFuturas(data.procesiones),
+      });
     } catch {
       setResultados(null);
     } finally {

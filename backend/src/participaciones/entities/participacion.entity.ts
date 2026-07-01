@@ -16,13 +16,13 @@ export class Participacion {
     @Column()
     anio: number;
 
-    @Column({ nullable: true })
+    @Column({ type: 'varchar', nullable: true })
     ubicacion: string;
 
-    @Column({ nullable: true })
+    @Column({ type: 'int', nullable: true })
     bandaId: number | null;
 
-    @Column({ nullable: true })
+    @Column({ type: 'varchar', nullable: true })
     nombreBanda: string | null;
 
     @ManyToOne(() => Banda, (banda) => banda.participaciones, {

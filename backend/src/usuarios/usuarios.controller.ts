@@ -28,6 +28,7 @@ interface AuthRequest extends Request {
     user: { id: number; username: string; rol: string };
 }
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { UpdatePerfilDto } from './dto/update-perfil.dto';
 import { JwtAuthGuard } from '@backend/auth/jwt-auth.guard';
 import { RolesGuard } from '@backend/auth/guards/roles.guard';
 import { Roles } from '@backend/auth/decorators/roles.decorator';
@@ -101,6 +102,43 @@ export class UsuariosController {
             originalName: file.originalname,
         });
         return this.usuariosService.updateAvatar(
+            req.user!.id,
+            this.archivosService.publicPath(archivo.id),
+        );
+    }
+
+    @ApiOperation({ summary: 'Actualizar nombre y/o contraseña del perfil' })
+    @ApiBearerAuth('access-token')
+    @Patch('perfil')
+    @UseGuards(JwtAuthGuard)
+    updatePerfil(@Req() req: AuthRequest, @Body() dto: UpdatePerfilDto) {
+        return this.usuariosService.updatePerfil(req.user!.id, dto);
+    }
+
+    @ApiOperation({ summary: 'Subir o actualizar el banner del usuario autenticado' })
+    @ApiBearerAuth('access-token')
+    @ApiConsumes('multipart/form-data')
+    @Post('perfil/banner')
+    @UseGuards(JwtAuthGuard)
+    @UseInterceptors(
+        FileInterceptor('file', {
+            storage: memoryStorage(),
+            fileFilter: (_req, file, cb) => {
+                if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+                    return cb(new BadRequestException('Solo se permiten imágenes'), false);
+                }
+                cb(null, true);
+            },
+        }),
+    )
+    async uploadBanner(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+        if (!file) throw new BadRequestException('No se ha subido ningún archivo');
+        const archivo = await this.archivosService.store({
+            buffer: file.buffer,
+            mimeType: file.mimetype,
+            originalName: file.originalname,
+        });
+        return this.usuariosService.updateBanner(
             req.user!.id,
             this.archivosService.publicPath(archivo.id),
         );

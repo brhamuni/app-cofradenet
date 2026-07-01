@@ -81,4 +81,7 @@ export class Usuario {
 
     @Column({ nullable: true, type: 'text' })
     avatar: string | null;
+
+    @Column({ nullable: true, type: 'text' })
+    banner: string | null;
 }

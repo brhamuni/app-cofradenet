@@ -151,4 +151,35 @@ export class SeguimientosService {
         ]);
         return { sigues, seguidores };
     }
+
+    /**
+     * @brief Lista hermandades y bandas que sigue el usuario autenticado.
+     */
+    async listarMisSeguimientos(usuarioId: number) {
+        const seguimientos = await this.repo.find({
+            where: { seguidorId: usuarioId },
+            relations: ['hermandad', 'hermandad.ciudad', 'banda', 'banda.ciudad'],
+            order: { fecha: 'DESC' },
+        });
+
+        const hermandades = seguimientos
+            .filter((s) => s.hermandadId && s.hermandad)
+            .map((s) => ({
+                id: s.hermandad!.id,
+                nombre: s.hermandad!.nombrePopular || s.hermandad!.nombre,
+                imagenEscudo: s.hermandad!.imagenEscudo,
+                ciudad: s.hermandad!.ciudad?.nombre ?? null,
+            }));
+
+        const bandas = seguimientos
+            .filter((s) => s.bandaId && s.banda)
+            .map((s) => ({
+                id: s.banda!.id,
+                nombre: s.banda!.nombre,
+                imagenLogo: s.banda!.imagenLogo,
+                ciudad: s.banda!.ciudad?.nombre ?? null,
+            }));
+
+        return { hermandades, bandas };
+    }
 }

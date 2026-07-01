@@ -10,9 +10,11 @@ import {
     BadRequestException,
     Injectable,
     NotFoundException,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { UpdatePerfilDto } from './dto/update-perfil.dto';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
@@ -279,8 +281,53 @@ export class UsuariosService {
                 'bandasFavoritas',
                 'ciudadResidencia',
             ],
-            select: ['id', 'username', 'nombre', 'rol', 'avatar'],
+            select: ['id', 'username', 'nombre', 'rol', 'avatar', 'banner'],
         });
+    }
+
+    /**
+     * @brief Actualiza el banner del usuario autenticado.
+     */
+    async updateBanner(userId: number, rutaImagen: string) {
+        const usuario = await this.usuariosRepo.findOneBy({ id: userId });
+        if (!usuario) throw new NotFoundException('Usuario no encontrado');
+        usuario.banner = rutaImagen;
+        return await this.usuariosRepo.save(usuario);
+    }
+
+    /**
+     * @brief Actualiza nombre y/o contraseña del perfil del usuario autenticado.
+     */
+    async updatePerfil(userId: number, dto: UpdatePerfilDto) {
+        const usuario = await this.usuariosRepo
+            .createQueryBuilder('usuario')
+            .addSelect('usuario.password')
+            .where('usuario.id = :id', { id: userId })
+            .getOne();
+
+        if (!usuario) throw new NotFoundException('Usuario no encontrado');
+
+        if (dto.nombre?.trim()) {
+            usuario.nombre = dto.nombre.trim();
+        }
+
+        if (dto.passwordNueva) {
+            if (!dto.passwordActual) {
+                throw new BadRequestException('Indica la contraseña actual');
+            }
+            const valida = await bcrypt.compare(
+                dto.passwordActual,
+                usuario.password,
+            );
+            if (!valida) {
+                throw new UnauthorizedException('La contraseña actual no es correcta');
+            }
+            const salt = await bcrypt.genSalt();
+            usuario.password = await bcrypt.hash(dto.passwordNueva, salt);
+        }
+
+        await this.usuariosRepo.save(usuario);
+        return this.getPerfil(userId);
     }
 
     /**

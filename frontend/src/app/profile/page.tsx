@@ -1,16 +1,33 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MapPin, BadgeCheck, LogOut, User, Heart } from "lucide-react";
+import Link from "next/link";
+import { MapPin, BadgeCheck, User, Music2, Church, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import EditHermandadModal from "../../components/profile/EditHermandadModal";
 import EditBandaModal from "../../components/banda/EditBandaModal";
+import EditCofradeModal from "../../components/profile/EditCofradeModal";
 import ImageUpload from "@/components/ui/ImageUpload";
+import BannerUpload from "@/components/ui/BannerUpload";
 import { API, resolveImg } from '@/lib/api';
 import { parseJwtPayload } from '@/lib/jwt';
 import api from '@/app/api/axios';
 
 type EntityType = 'hermandad' | 'banda' | 'cofrade' | null;
+
+type SeguidaBanda = {
+  id: number;
+  nombre: string;
+  imagenLogo?: string | null;
+  ciudad?: string | null;
+};
+
+type SeguidaHermandad = {
+  id: number;
+  nombre: string;
+  imagenEscudo?: string | null;
+  ciudad?: string | null;
+};
 
 const COFRADE_BANNER =
   "https://images.unsplash.com/photo-1559564484-e48b3e040ff4?q=80&w=1600&auto=format&fit=crop";
@@ -37,6 +54,51 @@ function ProfileBanner({ coverImage, variant }: { coverImage: string; variant: '
   );
 }
 
+function SeguimientoListItem({
+  href,
+  nombre,
+  imagen,
+  ciudad,
+  tipo,
+}: {
+  href: string;
+  nombre: string;
+  imagen?: string | null;
+  ciudad?: string | null;
+  tipo: 'banda' | 'hermandad';
+}) {
+  const img = resolveImg(imagen);
+  return (
+    <Link
+      href={href}
+      aria-label={`Ver perfil de ${nombre}`}
+      className="flex items-center gap-3 p-3 min-h-[56px] rounded-xl border border-transparent hover:border-gray-200 hover:bg-gray-50 active:bg-gray-100 transition-colors group"
+    >
+      <div className="w-12 h-12 rounded-full bg-cofrade-main/10 overflow-hidden shrink-0 flex items-center justify-center">
+        {img ? (
+          <img src={img} alt="" className="w-full h-full object-cover" />
+        ) : tipo === 'banda' ? (
+          <Music2 size={22} className="text-cofrade-main/50" />
+        ) : (
+          <Church size={22} className="text-cofrade-main/50" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-gray-900 truncate group-hover:text-cofrade-main transition-colors">
+          {nombre}
+        </p>
+        {ciudad && (
+          <p className="text-xs text-gray-500 font-semibold truncate">{ciudad}</p>
+        )}
+      </div>
+      <span className="text-xs font-bold text-gray-400 group-hover:text-cofrade-main shrink-0 hidden sm:inline">
+        Ver perfil
+      </span>
+      <ChevronRight size={18} className="text-gray-300 group-hover:text-cofrade-main shrink-0" />
+    </Link>
+  );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -46,6 +108,9 @@ export default function ProfilePage() {
   const [hermandadId, setHermandadId] = useState<number | null>(null);
   const [bandaId, setBandaId] = useState<number | null>(null);
   const [entityType, setEntityType] = useState<EntityType>(null);
+  const [bandasSeguidas, setBandasSeguidas] = useState<SeguidaBanda[]>([]);
+  const [hermandadesSeguidas, setHermandadesSeguidas] = useState<SeguidaHermandad[]>([]);
+  const [tabSeguimiento, setTabSeguimiento] = useState<'bandas' | 'hermandades'>('bandas');
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -99,8 +164,18 @@ export default function ProfilePage() {
           .finally(() => setCargando(false));
       } else {
         setEntityType('cofrade');
-        api.get('/usuarios/perfil')
-          .then(({ data }) => {
+        Promise.all([
+          api.get('/usuarios/perfil'),
+          api.get('/seguimientos/mis'),
+        ])
+          .then(([perfilRes, segRes]) => {
+            const data = perfilRes.data;
+            const seg = segRes.data;
+            setBandasSeguidas(seg.bandas ?? []);
+            setHermandadesSeguidas(seg.hermandades ?? []);
+            if ((seg.bandas?.length ?? 0) === 0 && (seg.hermandades?.length ?? 0) > 0) {
+              setTabSeguimiento('hermandades');
+            }
             setProfileData({
               name: data.nombre || data.username || "Usuario",
               username: "@" + (data.username || "usuario"),
@@ -109,8 +184,8 @@ export default function ProfilePage() {
                 ? `${data.ciudadResidencia.nombre}, Andalucía`
                 : 'Andalucía, España',
               avatarImage: resolveImg(data.avatar) || null,
-              coverImage: COFRADE_BANNER,
-              favoritos: (data.hermandadesFavoritas?.length ?? 0) + (data.bandasFavoritas?.length ?? 0),
+              coverImage: resolveImg(data.banner) || COFRADE_BANNER,
+              bannerRaw: data.banner,
             });
           })
           .catch(() => {
@@ -121,7 +196,7 @@ export default function ProfilePage() {
               location: 'Andalucía, España',
               avatarImage: null,
               coverImage: COFRADE_BANNER,
-              favoritos: 0,
+              bannerRaw: null,
             });
           })
           .finally(() => setCargando(false));
@@ -130,15 +205,6 @@ export default function ProfilePage() {
       setCargando(false);
     }
   }, []);
-
-  const handleLogout = async () => {
-    const refreshToken = localStorage.getItem('refresh_token');
-    try { await api.post('/auth/logout', { refresh_token: refreshToken }); } catch {}
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh_token');
-    globalThis.dispatchEvent(new Event('auth-change'));
-    router.push('/');
-  };
 
   if (cargando) {
     return (
@@ -166,10 +232,26 @@ export default function ProfilePage() {
   }
 
   const bannerVariant = entityType === 'cofrade' ? 'cofrade' : 'entity';
+  const totalSeguidos = bandasSeguidas.length + hermandadesSeguidas.length;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ProfileBanner coverImage={profileData.coverImage} variant={bannerVariant} />
+      {entityType === 'cofrade' ? (
+        <BannerUpload
+          currentImage={profileData.bannerRaw ? resolveImg(profileData.bannerRaw) : null}
+          uploadUrl="/usuarios/perfil/banner"
+          fallbackImage={COFRADE_BANNER}
+          onSuccess={(data) =>
+            setProfileData((p: any) => ({
+              ...p,
+              bannerRaw: data.banner,
+              coverImage: resolveImg(data.banner) || COFRADE_BANNER,
+            }))
+          }
+        />
+      ) : (
+        <ProfileBanner coverImage={profileData.coverImage} variant={bannerVariant} />
+      )}
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="relative flex flex-col sm:flex-row sm:justify-between sm:items-end -mt-14 sm:-mt-16 mb-6 gap-4">
@@ -210,14 +292,12 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex gap-3 sm:pb-2">
-            {entityType !== 'cofrade' && (
-              <button
-                onClick={() => setModalAbierto(true)}
-                className="px-6 py-2.5 rounded-full border border-gray-200 bg-white font-bold hover:bg-gray-50 transition-all active:scale-95 text-sm shadow-sm"
-              >
-                Editar perfil
-              </button>
-            )}
+            <button
+              onClick={() => setModalAbierto(true)}
+              className="px-6 py-2.5 rounded-full border border-gray-200 bg-white font-bold hover:bg-gray-50 transition-all active:scale-95 text-sm shadow-sm"
+            >
+              Editar perfil
+            </button>
           </div>
         </div>
 
@@ -246,21 +326,87 @@ export default function ProfilePage() {
               <MapPin size={16} className="text-gray-400 shrink-0" />
               {profileData.location}
             </div>
-            {entityType === 'cofrade' && profileData.favoritos != null && (
+            {entityType === 'cofrade' && (
               <div className="flex items-center gap-1.5">
-                <Heart size={16} className="text-cofrade-main shrink-0" />
-                {profileData.favoritos} favoritos
+                <User size={16} className="text-cofrade-main shrink-0" />
+                {totalSeguidos} {totalSeguidos === 1 ? 'seguido' : 'seguidos'}
               </div>
             )}
           </div>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-red-200 bg-white text-red-500 text-sm font-bold hover:bg-red-50 transition-all active:scale-95 mb-10 shadow-sm"
-        >
-          <LogOut size={16} /> Cerrar sesión
-        </button>
+        {entityType === 'cofrade' && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-24 sm:mb-10 overflow-hidden">
+            <div className="flex border-b border-gray-100">
+              <button
+                type="button"
+                onClick={() => setTabSeguimiento('bandas')}
+                className={`flex-1 py-3.5 text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
+                  tabSeguimiento === 'bandas'
+                    ? 'text-cofrade-main border-b-2 border-cofrade-main'
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                <Music2 size={16} />
+                Bandas ({bandasSeguidas.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTabSeguimiento('hermandades')}
+                className={`flex-1 py-3.5 text-sm font-bold transition-colors flex items-center justify-center gap-2 ${
+                  tabSeguimiento === 'hermandades'
+                    ? 'text-cofrade-main border-b-2 border-cofrade-main'
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                <Church size={16} />
+                Hermandades ({hermandadesSeguidas.length})
+              </button>
+            </div>
+
+            <div className="p-2 sm:p-3">
+              {tabSeguimiento === 'bandas' ? (
+                bandasSeguidas.length === 0 ? (
+                  <p className="text-center text-gray-400 text-sm py-8 px-4">
+                    Aún no sigues ninguna banda.{' '}
+                    <Link href="/explorar" className="text-cofrade-main font-bold hover:underline">
+                      Explorar
+                    </Link>
+                  </p>
+                ) : (
+                  bandasSeguidas.map((b) => (
+                    <SeguimientoListItem
+                      key={b.id}
+                      href={`/banda/${b.id}`}
+                      nombre={b.nombre}
+                      imagen={b.imagenLogo}
+                      ciudad={b.ciudad}
+                      tipo="banda"
+                    />
+                  ))
+                )
+              ) : hermandadesSeguidas.length === 0 ? (
+                <p className="text-center text-gray-400 text-sm py-8 px-4">
+                  Aún no sigues ninguna hermandad.{' '}
+                  <Link href="/explorar" className="text-cofrade-main font-bold hover:underline">
+                    Explorar
+                  </Link>
+                </p>
+              ) : (
+                hermandadesSeguidas.map((h) => (
+                  <SeguimientoListItem
+                    key={h.id}
+                    href={`/hermandad/${h.id}`}
+                    nombre={h.nombre}
+                    imagen={h.imagenEscudo}
+                    ciudad={h.ciudad}
+                    tipo="hermandad"
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {entityType === 'hermandad' && (
@@ -275,6 +421,16 @@ export default function ProfilePage() {
           banda={rawData || {}}
           isOpen={modalAbierto}
           onClose={() => setModalAbierto(false)}
+        />
+      )}
+      {entityType === 'cofrade' && (
+        <EditCofradeModal
+          isOpen={modalAbierto}
+          onClose={() => setModalAbierto(false)}
+          initialNombre={profileData.name}
+          onSuccess={({ nombre }) =>
+            setProfileData((p: any) => ({ ...p, name: nombre || p.name }))
+          }
         />
       )}
     </div>

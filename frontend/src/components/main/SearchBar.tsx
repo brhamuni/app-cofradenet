@@ -188,7 +188,15 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
                           {p.nombre || p.hermandad?.nombrePopular || 'Procesión'}
                         </p>
                         <p className="text-[9px] text-gray-400 font-bold tracking-widest mt-1 uppercase italic truncate">
-                          {p.diaSalida ? p.diaSalida.toUpperCase() : (p.ciudad?.nombre ? p.ciudad.nombre : 'SEMANA SANTA')}
+                          {p.fecha
+                            ? new Date(`${p.fecha}T12:00:00`).toLocaleDateString('es-ES', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })
+                            : p.diaSemana
+                              ? p.diaSemana.toUpperCase()
+                              : p.hermandad?.ciudad?.nombre || 'PRÓXIMA'}
                         </p>
                       </div>
                     </Link>
