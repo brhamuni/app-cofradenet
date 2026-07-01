@@ -73,7 +73,7 @@ function ModalEditUsuario({ usuario, onClose, onSaved }: { usuario: any; onClose
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-black text-gray-900">Editar usuario</h3>
@@ -137,7 +137,7 @@ function ModalCiudad({ ciudad, onClose, onSaved }: { ciudad: any; onClose: () =>
     onSaved();
   }
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-black text-gray-900">{esEdicion ? 'Editar ciudad' : 'Nueva ciudad'}</h3>

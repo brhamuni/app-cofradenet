@@ -36,6 +36,9 @@ interface HeroProps {
 
 export default function HeroSection({ busqueda, setBusqueda, filtro, setFiltro, resultados, cargando }: HeroProps) {
   const [current, setCurrent] = useState(0);
+  const [searchActive, setSearchActive] = useState(false);
+
+  const compactMobile = searchActive || busqueda.length >= 3;
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -45,7 +48,13 @@ export default function HeroSection({ busqueda, setBusqueda, filtro, setFiltro, 
   }, []);
 
   return (
-    <section className={`relative w-full h-[55vh] md:h-[65vh] mb-6 flex items-center justify-center bg-cofrade-main overflow-visible ${busqueda.length >= 3 ? 'z-[1100]' : 'z-50'}`}>
+    <section
+      className={`relative w-full mb-6 flex bg-cofrade-main overflow-visible transition-[height,padding] duration-300 ${
+        compactMobile
+          ? 'min-h-0 h-auto items-start pt-4 pb-6 md:h-[65vh] md:items-center md:pt-0 md:pb-0'
+          : 'h-[55vh] md:h-[65vh] items-center justify-center'
+      } ${busqueda.length >= 3 ? 'z-[1100]' : 'z-50'}`}
+    >
       {/* Fondo rotativo */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         {CIUDADES.map((ciudad, i) => (
@@ -62,15 +71,27 @@ export default function HeroSection({ busqueda, setBusqueda, filtro, setFiltro, 
       </div>
 
       {/* Contenido — por encima del indicador de ciudad del banner */}
-      <div className="relative z-30 max-w-4xl w-full px-6 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-cofrade-gold text-xs font-black tracking-widest uppercase mb-6">
-          <Sparkles size={14} /> La mayor red social cofrade
-        </div>
+      <div
+        className={`relative z-30 max-w-4xl w-full px-6 text-center transition-all duration-300 ${
+          compactMobile ? 'md:text-center' : ''
+        }`}
+      >
+        <div
+          className={`transition-all duration-300 overflow-hidden ${
+            compactMobile
+              ? 'max-h-0 opacity-0 mb-0 md:max-h-none md:opacity-100 md:mb-6'
+              : 'max-h-96 opacity-100 mb-6'
+          }`}
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-cofrade-gold text-xs font-black tracking-widest uppercase mb-6">
+            <Sparkles size={14} /> La mayor red social cofrade
+          </div>
 
-        <h1 className="text-4xl md:text-6xl lg:text-8xl font-black text-white tracking-tighter leading-[0.9] mb-6 md:mb-8 drop-shadow-2xl">
-          VIVE TU <br />
-          <span className="text-cofrade-gold">PASIÓN.</span>
-        </h1>
+          <h1 className="text-4xl md:text-6xl lg:text-8xl font-black text-white tracking-tighter leading-[0.9] mb-6 md:mb-8 drop-shadow-2xl">
+            VIVE TU <br />
+            <span className="text-cofrade-gold">PASIÓN.</span>
+          </h1>
+        </div>
 
         <SearchBar
           busqueda={busqueda}
@@ -79,11 +100,16 @@ export default function HeroSection({ busqueda, setBusqueda, filtro, setFiltro, 
           setFiltro={setFiltro}
           resultados={resultados}
           cargando={cargando}
+          onActiveChange={setSearchActive}
         />
       </div>
 
-      {/* Indicador de ciudad */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-[5] flex max-w-[calc(100%-2rem)] items-center gap-2 sm:gap-3 overflow-hidden">
+      {/* Indicador de ciudad — oculto en móvil mientras se busca */}
+      <div
+        className={`absolute bottom-5 left-1/2 -translate-x-1/2 z-[5] flex max-w-[calc(100%-2rem)] items-center gap-2 sm:gap-3 overflow-hidden transition-opacity duration-300 ${
+          compactMobile ? 'opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto' : 'opacity-100'
+        }`}
+      >
         {CIUDADES.map((ciudad, i) => (
           <button
             key={ciudad.nombre}

@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Camera, Loader2, User } from "lucide-react";
+import { Camera, Loader2, User, Trash2 } from "lucide-react";
 import { API } from "@/lib/api";
 
 interface ImageUploadProps {
   currentImage?: string | null;
   uploadUrl: string;
+  deleteUrl?: string;
   onSuccess: (data: any) => void;
   shape?: "circle" | "square";
   size?: number;
@@ -17,6 +18,7 @@ interface ImageUploadProps {
 export default function ImageUpload({
   currentImage,
   uploadUrl,
+  deleteUrl,
   onSuccess,
   shape = "square",
   size = 120,
@@ -25,6 +27,7 @@ export default function ImageUpload({
 }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,14 +60,37 @@ export default function ImageUpload({
     }
   };
 
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!deleteUrl || deleting || uploading) return;
+    if (!confirm("¿Eliminar la foto de perfil?")) return;
+
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API}${deleteUrl}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setPreview(null);
+      onSuccess(data);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const display = preview || currentImage;
   const rounded = shape === "circle" ? "rounded-full" : "rounded-2xl";
+  const busy = uploading || deleting;
+  const canDelete = Boolean(deleteUrl && display);
 
   return (
     <div
       className={`relative cursor-pointer group ${rounded} bg-gray-100 overflow-hidden border-2 border-dashed border-gray-300 hover:border-cofrade-main transition-colors ${className}`}
       style={{ width: size, height: size }}
-      onClick={() => !uploading && inputRef.current?.click()}
+      onClick={() => !busy && inputRef.current?.click()}
     >
       {display ? (
         <img src={display} alt="" className="w-full h-full object-cover" />
@@ -77,12 +103,30 @@ export default function ImageUpload({
           <Camera size={32} />
         </div>
       )}
+      {canDelete && (
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={busy}
+          title="Eliminar foto"
+          aria-label="Eliminar foto de perfil"
+          className={`absolute top-1 right-1 z-10 p-1.5 rounded-full bg-red-500 text-white shadow-md hover:bg-red-600 transition-colors ${
+            busy ? "opacity-60" : "opacity-100 md:opacity-0 md:group-hover:opacity-100"
+          }`}
+        >
+          {deleting ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Trash2 size={14} />
+          )}
+        </button>
+      )}
       <div
         className={`absolute inset-0 flex items-center justify-center ${rounded} bg-black/50 transition-opacity ${
-          uploading ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          busy ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         }`}
       >
-        {uploading ? (
+        {uploading || deleting ? (
           <Loader2 className="text-white animate-spin" size={28} />
         ) : (
           <Camera className="text-white" size={28} />

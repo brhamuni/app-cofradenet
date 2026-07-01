@@ -8,18 +8,21 @@ interface EditCofradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialNombre: string;
-  onSuccess: (data: { nombre?: string }) => void;
+  initialUsername: string;
+  onSuccess: (data: { nombre?: string; username?: string }) => void;
 }
 
 export default function EditCofradeModal({
   isOpen,
   onClose,
   initialNombre,
+  initialUsername,
   onSuccess,
 }: EditCofradeModalProps) {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [nombre, setNombre] = useState(initialNombre);
+  const [username, setUsername] = useState(initialUsername);
   const [passwordActual, setPasswordActual] = useState("");
   const [passwordNueva, setPasswordNueva] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -27,18 +30,29 @@ export default function EditCofradeModal({
   useEffect(() => {
     if (isOpen) {
       setNombre(initialNombre);
+      setUsername(initialUsername);
       setPasswordActual("");
       setPasswordNueva("");
       setPasswordConfirm("");
       setError("");
     }
-  }, [isOpen, initialNombre]);
+  }, [isOpen, initialNombre, initialUsername]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    const usernameTrim = username.trim();
+    if (usernameTrim && !/^[a-zA-Z0-9_]+$/.test(usernameTrim)) {
+      setError("El usuario solo puede contener letras, números y guiones bajos");
+      return;
+    }
+    if (usernameTrim && usernameTrim.length < 3) {
+      setError("El usuario debe tener al menos 3 caracteres");
+      return;
+    }
 
     const cambiaPassword = passwordNueva.length > 0;
     if (cambiaPassword) {
@@ -62,6 +76,9 @@ export default function EditCofradeModal({
       if (nombre.trim() && nombre.trim() !== initialNombre) {
         body.nombre = nombre.trim();
       }
+      if (usernameTrim && usernameTrim !== initialUsername) {
+        body.username = usernameTrim;
+      }
       if (cambiaPassword) {
         body.passwordActual = passwordActual;
         body.passwordNueva = passwordNueva;
@@ -73,7 +90,10 @@ export default function EditCofradeModal({
       }
 
       const { data } = await api.patch("/usuarios/perfil", body);
-      onSuccess({ nombre: data.nombre || nombre.trim() });
+      onSuccess({
+        nombre: data.nombre || nombre.trim(),
+        username: data.username || usernameTrim,
+      });
       onClose();
     } catch (err: any) {
       const msg =
@@ -89,9 +109,9 @@ export default function EditCofradeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center justify-between p-5 border-b">
           <h2 className="text-lg font-black text-gray-900">Editar perfil</h2>
           <button
@@ -103,7 +123,7 @@ export default function EditCofradeModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 pb-6 space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
               Nombre visible
@@ -115,6 +135,28 @@ export default function EditCofradeModal({
               className="w-full p-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-cofrade-main/20"
               placeholder="Tu nombre"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
+              Nombre de usuario
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">
+                @
+              </span>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+                className="w-full p-3 pl-8 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-cofrade-main/20 font-semibold"
+                placeholder="tu_usuario"
+                autoComplete="username"
+              />
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1">
+              Letras, números y guiones bajos. Mínimo 3 caracteres.
+            </p>
           </div>
 
           <div className="pt-2 border-t">

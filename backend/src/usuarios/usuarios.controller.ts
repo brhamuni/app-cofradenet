@@ -107,6 +107,15 @@ export class UsuariosController {
         );
     }
 
+    @ApiOperation({ summary: 'Eliminar el avatar del usuario autenticado' })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 200, description: 'Avatar eliminado' })
+    @Delete('perfil/avatar')
+    @UseGuards(JwtAuthGuard)
+    removeAvatar(@Req() req: AuthRequest) {
+        return this.usuariosService.removeAvatar(req.user!.id);
+    }
+
     @ApiOperation({ summary: 'Actualizar nombre y/o contraseña del perfil' })
     @ApiBearerAuth('access-token')
     @Patch('perfil')

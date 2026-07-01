@@ -296,7 +296,7 @@ export class UsuariosService {
     }
 
     /**
-     * @brief Actualiza nombre y/o contraseña del perfil del usuario autenticado.
+     * @brief Actualiza nombre, username y/o contraseña del perfil del usuario autenticado.
      */
     async updatePerfil(userId: number, dto: UpdatePerfilDto) {
         const usuario = await this.usuariosRepo
@@ -309,6 +309,19 @@ export class UsuariosService {
 
         if (dto.nombre?.trim()) {
             usuario.nombre = dto.nombre.trim();
+        }
+
+        if (dto.username?.trim()) {
+            const nuevoUsername = dto.username.trim();
+            if (nuevoUsername !== usuario.username) {
+                const existe = await this.usuariosRepo.findOneBy({
+                    username: nuevoUsername,
+                });
+                if (existe && existe.id !== userId) {
+                    throw new BadRequestException('El username ya está en uso');
+                }
+                usuario.username = nuevoUsername;
+            }
         }
 
         if (dto.passwordNueva) {
@@ -338,6 +351,17 @@ export class UsuariosService {
         if (!usuario) throw new NotFoundException('Usuario no encontrado');
         usuario.avatar = rutaImagen;
         return await this.usuariosRepo.save(usuario);
+    }
+
+    /**
+     * @brief Elimina el avatar del usuario autenticado.
+     */
+    async removeAvatar(userId: number) {
+        const usuario = await this.usuariosRepo.findOneBy({ id: userId });
+        if (!usuario) throw new NotFoundException('Usuario no encontrado');
+        usuario.avatar = null;
+        await this.usuariosRepo.save(usuario);
+        return this.getPerfil(userId);
     }
 
     /**

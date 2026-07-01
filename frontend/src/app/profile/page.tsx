@@ -179,6 +179,7 @@ export default function ProfilePage() {
             setProfileData({
               name: data.nombre || data.username || "Usuario",
               username: "@" + (data.username || "usuario"),
+              usernameHandle: data.username || "usuario",
               bio: "",
               location: data.ciudadResidencia?.nombre
                 ? `${data.ciudadResidencia.nombre}, Andalucía`
@@ -192,6 +193,7 @@ export default function ProfilePage() {
             setProfileData({
               name: payload?.username || "Usuario",
               username: "@" + (payload?.username || "usuario"),
+              usernameHandle: payload?.username || "usuario",
               bio: "",
               location: 'Andalucía, España',
               avatarImage: null,
@@ -280,8 +282,12 @@ export default function ProfilePage() {
               <ImageUpload
                 currentImage={profileData.avatarImage}
                 uploadUrl="/usuarios/perfil/avatar"
+                deleteUrl="/usuarios/perfil/avatar"
                 onSuccess={(data) =>
-                  setProfileData((p: any) => ({ ...p, avatarImage: resolveImg(data.avatar) ?? p.avatarImage }))
+                  setProfileData((p: any) => ({
+                    ...p,
+                    avatarImage: data.avatar ? resolveImg(data.avatar) : null,
+                  }))
                 }
                 shape="circle"
                 size={128}
@@ -428,8 +434,14 @@ export default function ProfilePage() {
           isOpen={modalAbierto}
           onClose={() => setModalAbierto(false)}
           initialNombre={profileData.name}
-          onSuccess={({ nombre }) =>
-            setProfileData((p: any) => ({ ...p, name: nombre || p.name }))
+          initialUsername={profileData.usernameHandle || profileData.username?.replace(/^@/, "") || ""}
+          onSuccess={({ nombre, username }) =>
+            setProfileData((p: any) => ({
+              ...p,
+              name: nombre || p.name,
+              username: username ? `@${username}` : p.username,
+              usernameHandle: username || p.usernameHandle,
+            }))
           }
         />
       )}

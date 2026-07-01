@@ -1,10 +1,83 @@
 import { Search, Loader2, MapPin, ChevronDown, Filter, Church, Music, Calendar } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
-export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, resultados, cargando }: any) {
+interface SearchBarProps {
+  busqueda: string;
+  setBusqueda: (val: string) => void;
+  filtro: string;
+  setFiltro: (val: string) => void;
+  resultados: any;
+  cargando: boolean;
+  onActiveChange?: (active: boolean) => void;
+}
+
+function isMobileViewport() {
+  return typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+}
+
+export default function SearchBar({
+  busqueda,
+  setBusqueda,
+  filtro,
+  setFiltro,
+  resultados,
+  cargando,
+  onActiveChange,
+}: SearchBarProps) {
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const filtros = ['todo', 'procesiones', 'hermandades', 'bandas'];
+
+  const scrollSearchToTop = useCallback(() => {
+    if (!isMobileViewport() || !rootRef.current) return;
+    const headerOffset = 80;
+    const top =
+      rootRef.current.getBoundingClientRect().top + window.scrollY - headerOffset;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    onActiveChange?.(inputFocused || busqueda.length > 0);
+  }, [inputFocused, busqueda.length, onActiveChange]);
+
+  useEffect(() => {
+    if (!inputFocused || !isMobileViewport()) return;
+
+    scrollSearchToTop();
+    const t1 = setTimeout(scrollSearchToTop, 150);
+    const t2 = setTimeout(scrollSearchToTop, 400);
+    const t3 = setTimeout(scrollSearchToTop, 650);
+
+    const vv = window.visualViewport;
+    const onViewportChange = () => scrollSearchToTop();
+    vv?.addEventListener('resize', onViewportChange);
+    vv?.addEventListener('scroll', onViewportChange);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      vv?.removeEventListener('resize', onViewportChange);
+      vv?.removeEventListener('scroll', onViewportChange);
+    };
+  }, [inputFocused, scrollSearchToTop]);
+
+  const handleFocus = () => {
+    if (blurTimerRef.current) {
+      clearTimeout(blurTimerRef.current);
+      blurTimerRef.current = null;
+    }
+    setMenuAbierto(false);
+    setInputFocused(true);
+    requestAnimationFrame(scrollSearchToTop);
+  };
+
+  const handleBlur = () => {
+    blurTimerRef.current = setTimeout(() => setInputFocused(false), 200);
+  };
 
   // Función para cambiar filtro y cerrar menús
   const seleccionarFiltro = (f: string) => {
@@ -25,7 +98,10 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
   const elevado = resultadosAbiertos || menuAbierto;
 
   return (
-    <div className={`relative max-w-2xl mx-auto px-4 ${elevado ? 'z-[1100]' : 'z-50'}`}>
+    <div
+      ref={rootRef}
+      className={`relative max-w-2xl mx-auto px-4 scroll-mt-20 md:scroll-mt-0 ${elevado ? 'z-[1100]' : 'z-50'}`}
+    >
       <div className="relative flex flex-col gap-2">
         
         {/* BARRA INTEGRADA */}
@@ -75,7 +151,8 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
             <input
               type="text"
               value={busqueda}
-              onFocus={() => setMenuAbierto(false)}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="¿Qué buscas hoy?"
               className="w-full min-w-0 h-full pl-4 sm:pl-6 pr-2 sm:pr-4 bg-transparent text-base sm:text-lg font-bold outline-none text-gray-900 placeholder:text-gray-300"
@@ -98,7 +175,7 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
         {/* RESULTADOS COMPACTOS Y CENTRADOS */}
         {resultadosAbiertos && (
           <div className="absolute top-[80px] left-0 right-0 bg-white rounded-[2.2rem] shadow-[0_30px_60px_rgba(0,0,0,0.18)] border border-gray-100 overflow-hidden z-[1100] animate-in fade-in slide-in-from-top-4">
-            <div className="p-2 max-h-[320px] overflow-y-auto custom-scrollbar">
+            <div className="p-2 max-h-[45dvh] md:max-h-[320px] overflow-y-auto custom-scrollbar">
               
               {/* CARGANDO */}
               {cargando && (

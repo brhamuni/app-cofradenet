@@ -81,7 +81,7 @@ function EventoModal({ evento, bandaId, onClose, onSaved }: {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-black text-gray-900">{esEdicion ? 'Editar evento' : 'Nuevo evento'}</h2>
