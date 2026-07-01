@@ -61,8 +61,8 @@ export default function HeroSection({ busqueda, setBusqueda, filtro, setFiltro, 
         <div className="absolute inset-0 bg-linear-to-t from-white via-cofrade-main/20 to-cofrade-main/60" />
       </div>
 
-      {/* Contenido */}
-      <div className="relative z-10 max-w-4xl w-full px-6 text-center">
+      {/* Contenido — por encima del indicador de ciudad del banner */}
+      <div className="relative z-30 max-w-4xl w-full px-6 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-cofrade-gold text-xs font-black tracking-widest uppercase mb-6">
           <Sparkles size={14} /> La mayor red social cofrade
         </div>
@@ -83,7 +83,7 @@ export default function HeroSection({ busqueda, setBusqueda, filtro, setFiltro, 
       </div>
 
       {/* Indicador de ciudad */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3">
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-[5] flex items-center gap-3">
         {CIUDADES.map((ciudad, i) => (
           <button
             key={ciudad.nombre}

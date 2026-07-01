@@ -22,11 +22,11 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
   const sinResultados = !cargando && !hayCiudades && !hayHermandades && !hayBandas && !hayProcesiones;
 
   return (
-    <div className="relative max-w-2xl mx-auto z-50 px-4">
+    <div className="relative max-w-2xl mx-auto z-50 px-4 isolate">
       <div className="relative flex flex-col gap-2">
         
         {/* BARRA INTEGRADA */}
-        <div className="group relative flex items-center bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] h-14.5 md:h-18 p-1.5 md:p-2 transition-all focus-within:ring-4 focus-within:ring-cofrade-gold/10">
+        <div className="group relative z-[110] flex items-center bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] h-14.5 md:h-18 p-1.5 md:p-2 transition-all focus-within:ring-4 focus-within:ring-cofrade-gold/10">
 
           {/* SELECTOR PERSONALIZADO */}
           <div className="relative h-full z-[110]">
@@ -93,7 +93,7 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
 
         {/* RESULTADOS COMPACTOS Y CENTRADOS */}
         {busqueda.length >= 3 && !menuAbierto && (
-          <div className="absolute top-[80px] left-0 right-0 bg-white rounded-[2.2rem] shadow-[0_30px_60px_rgba(0,0,0,0.18)] border border-gray-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4">
+          <div className="absolute top-[80px] left-0 right-0 bg-white rounded-[2.2rem] shadow-[0_30px_60px_rgba(0,0,0,0.18)] border border-gray-100 overflow-hidden z-[105] animate-in fade-in slide-in-from-top-4">
             <div className="p-2 max-h-[320px] overflow-y-auto custom-scrollbar">
               
               {/* CARGANDO */}
