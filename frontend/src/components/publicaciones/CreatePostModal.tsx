@@ -83,6 +83,7 @@ export default function CreatePostModal({ isOpen, onClose, onCreated, hermandadI
       if (imageFile) {
         const fd = new FormData();
         fd.append('file', imageFile);
+        fd.append('anio', String(new Date().getFullYear()));
         if (hermandadId) fd.append('hermandadId', String(hermandadId));
         if (bandaId) fd.append('bandaId', String(bandaId));
         const uploadRes = await fetch(`${API}/media/upload`, {

@@ -76,8 +76,10 @@ export class MediaController {
             originalName: file.originalname,
         });
 
+        const tagged = await this.service.applyAutoTags(dto, req.user);
+
         return this.service.create(
-            dto,
+            tagged,
             this.archivosService.publicPath(archivo.id),
             tipo,
             req.user.id,
@@ -92,7 +94,8 @@ export class MediaController {
     async addEnlace(@Body() dto: CreateMediaItemDto, @Req() req: any) {
         if (!dto.url)
             throw new BadRequestException('Se requiere la URL del enlace');
-        return this.service.create(dto, dto.url, TipoMedia.ENLACE, req.user.id);
+        const tagged = await this.service.applyAutoTags(dto, req.user);
+        return this.service.create(tagged, dto.url, TipoMedia.ENLACE, req.user.id);
     }
 
     @ApiOperation({ summary: 'Obtener media de una hermandad' })

@@ -375,7 +375,14 @@ export default function BandaProfile({ banda }: { banda: any }) {
             </div>
           )}
           {activeTab === 'multimedia' && (
-            <GaleriaMedia bandaId={banda.id} canEdit={canEdit} userId={userId} />
+            <GaleriaMedia
+              bandaId={banda.id}
+              bandaNombre={banda.nombre}
+              ciudadId={banda.ciudad?.id}
+              ciudadNombre={banda.ciudad?.nombre}
+              canEdit={canEdit}
+              userId={userId}
+            />
           )}
         </div>
       </div>

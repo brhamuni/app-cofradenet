@@ -1,33 +1,55 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { X, Upload, Link, Image, Video } from 'lucide-react';
+import { X, Upload, Link, Image, Video, Church, Music, Calendar, MapPin } from 'lucide-react';
 import { API } from '@/lib/api';
 
 interface Props {
   hermandadId?: number;
   bandaId?: number;
   procesionId?: number;
+  hermandadNombre?: string;
+  bandaNombre?: string;
+  ciudadId?: number;
+  ciudadNombre?: string;
   onClose: () => void;
   onSaved: () => void;
 }
 
 type Mode = 'archivo' | 'enlace';
 
-export default function UploadMediaModal({ hermandadId, bandaId, procesionId, onClose, onSaved }: Props) {
+function formatFechaHoy() {
+  return new Date().toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+export default function UploadMediaModal({
+  hermandadId,
+  bandaId,
+  procesionId,
+  hermandadNombre,
+  bandaNombre,
+  ciudadId: ciudadIdProp,
+  ciudadNombre,
+  onClose,
+  onSaved,
+}: Props) {
   const [mode, setMode] = useState<Mode>('archivo');
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [anio, setAnio] = useState<string>(String(new Date().getFullYear()));
-  const [ciudadId, setCiudadId] = useState('');
-  const [hermandadTag, setHermandadTag] = useState(hermandadId ? String(hermandadId) : '');
-  const [bandaTag, setBandaTag] = useState(bandaId ? String(bandaId) : '');
   const [enlaceUrl, setEnlaceUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const esEntidad = Boolean(hermandadId || bandaId);
+  const anioActual = String(new Date().getFullYear());
+  const fechaHoy = formatFechaHoy();
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -41,11 +63,12 @@ export default function UploadMediaModal({ hermandadId, bandaId, procesionId, on
   }
 
   function buildTags() {
-    const tags: Record<string, string> = {};
-    if (anio) tags.anio = anio;
-    if (ciudadId) tags.ciudadId = ciudadId;
-    if (hermandadTag) tags.hermandadId = hermandadTag;
-    if (bandaTag) tags.bandaId = bandaTag;
+    const tags: Record<string, string> = {
+      anio: anioActual,
+    };
+    if (ciudadIdProp) tags.ciudadId = String(ciudadIdProp);
+    if (hermandadId) tags.hermandadId = String(hermandadId);
+    if (bandaId) tags.bandaId = String(bandaId);
     if (procesionId) tags.procesionId = String(procesionId);
     return tags;
   }
@@ -76,7 +99,7 @@ export default function UploadMediaModal({ hermandadId, bandaId, procesionId, on
         }
       } else {
         if (!enlaceUrl.trim()) { setError('Introduce una URL'); setSaving(false); return; }
-        const body: any = { url: enlaceUrl.trim(), ...buildTags() };
+        const body: Record<string, string> = { url: enlaceUrl.trim(), ...buildTags() };
         if (titulo) body.titulo = titulo;
         if (descripcion) body.descripcion = descripcion;
 
@@ -106,7 +129,6 @@ export default function UploadMediaModal({ hermandadId, bandaId, procesionId, on
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Mode selector */}
           <div className="flex bg-gray-100 rounded-xl p-1">
             <button
               onClick={() => setMode('archivo')}
@@ -169,7 +191,45 @@ export default function UploadMediaModal({ hermandadId, bandaId, procesionId, on
             </div>
           )}
 
-          {/* Common fields */}
+          {esEntidad && (
+            <div className="rounded-xl bg-cofrade-main/5 border border-cofrade-main/15 p-4">
+              <p className="text-[10px] font-black text-cofrade-main uppercase tracking-widest mb-2">
+                Etiquetas automáticas
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white rounded-full text-[11px] font-bold text-gray-700 border border-gray-100">
+                  <Calendar size={11} className="text-cofrade-main" />
+                  {fechaHoy}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white rounded-full text-[11px] font-bold text-gray-700 border border-gray-100">
+                  <Calendar size={11} className="text-gray-400" />
+                  {anioActual}
+                </span>
+                {hermandadNombre && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-cofrade-main/10 rounded-full text-[11px] font-bold text-cofrade-main border border-cofrade-main/20">
+                    <Church size={11} />
+                    {hermandadNombre}
+                  </span>
+                )}
+                {bandaNombre && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/10 rounded-full text-[11px] font-bold text-blue-700 border border-blue-200">
+                    <Music size={11} />
+                    {bandaNombre}
+                  </span>
+                )}
+                {ciudadNombre && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white rounded-full text-[11px] font-bold text-gray-600 border border-gray-100">
+                    <MapPin size={11} />
+                    {ciudadNombre}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-gray-400 mt-2">
+                Se aplicarán al publicar la foto o vídeo.
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Título</label>
             <input
@@ -189,56 +249,6 @@ export default function UploadMediaModal({ hermandadId, bandaId, procesionId, on
               rows={2}
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-cofrade-main/20 resize-none"
             />
-          </div>
-
-          {/* Tags */}
-          <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Etiquetas</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Año</label>
-                <input
-                  type="number"
-                  value={anio}
-                  onChange={e => setAnio(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-cofrade-main/20"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">ID Ciudad</label>
-                <input
-                  type="number"
-                  value={ciudadId}
-                  onChange={e => setCiudadId(e.target.value)}
-                  placeholder="Opcional"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-cofrade-main/20"
-                />
-              </div>
-              {!hermandadId && (
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">ID Hermandad</label>
-                  <input
-                    type="number"
-                    value={hermandadTag}
-                    onChange={e => setHermandadTag(e.target.value)}
-                    placeholder="Opcional"
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-cofrade-main/20"
-                  />
-                </div>
-              )}
-              {!bandaId && (
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">ID Banda</label>
-                  <input
-                    type="number"
-                    value={bandaTag}
-                    onChange={e => setBandaTag(e.target.value)}
-                    placeholder="Opcional"
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-cofrade-main/20"
-                  />
-                </div>
-              )}
-            </div>
           </div>
 
           {error && <p className="text-xs text-red-500 font-semibold">{error}</p>}

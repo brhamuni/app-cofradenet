@@ -297,7 +297,9 @@ export class BandasController {
                 bandaId: id,
                 titulo: body.titulo,
                 descripcion: body.descripcion,
-                anio: body.anio ? Number.parseInt(body.anio, 10) : undefined,
+                anio: body.anio
+                    ? Number.parseInt(body.anio, 10)
+                    : new Date().getFullYear(),
             },
             this.archivosService.publicPath(archivo.id),
             tipo,

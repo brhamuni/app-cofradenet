@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Image, Video, Link, Trash2, X, Plus, ExternalLink } from 'lucide-react';
+import { Image, Video, Link, Trash2, X, Plus, ExternalLink, Church, Music, Calendar, MapPin } from 'lucide-react';
 import { API, resolveImg } from '@/lib/api';
 import UploadMediaModal from './UploadMediaModal';
 
@@ -13,7 +13,7 @@ interface MediaItem {
   descripcion?: string;
   anio?: number;
   autor?: { id: number; username: string };
-  hermandad?: { nombre: string };
+  hermandad?: { nombre: string; nombrePopular?: string };
   banda?: { nombre: string };
   ciudad?: { nombre: string };
   createdAt: string;
@@ -22,8 +22,64 @@ interface MediaItem {
 interface Props {
   hermandadId?: number;
   bandaId?: number;
+  hermandadNombre?: string;
+  bandaNombre?: string;
+  ciudadId?: number;
+  ciudadNombre?: string;
   canEdit?: boolean;
   userId?: number;
+}
+
+function formatFecha(iso: string) {
+  return new Date(iso).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function MediaTags({ item }: { item: MediaItem }) {
+  const tieneEtiquetas =
+    item.anio || item.hermandad?.nombre || item.banda?.nombre || item.ciudad?.nombre || item.createdAt;
+
+  if (!tieneEtiquetas) return null;
+
+  return (
+    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pointer-events-none">
+      {item.titulo && <p className="text-white text-xs font-black truncate mb-1">{item.titulo}</p>}
+      <div className="flex flex-wrap gap-1">
+        {item.createdAt && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white/20 rounded text-[9px] font-bold text-white">
+            <Calendar size={8} />
+            {formatFecha(item.createdAt)}
+          </span>
+        )}
+        {item.anio && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white/20 rounded text-[9px] font-bold text-white">
+            {item.anio}
+          </span>
+        )}
+        {item.hermandad && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-cofrade-main/80 rounded text-[9px] font-bold text-white max-w-[90%] truncate">
+            <Church size={8} />
+            {item.hermandad.nombrePopular || item.hermandad.nombre}
+          </span>
+        )}
+        {item.banda && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-500/80 rounded text-[9px] font-bold text-white max-w-[90%] truncate">
+            <Music size={8} />
+            {item.banda.nombre}
+          </span>
+        )}
+        {item.ciudad && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white/20 rounded text-[9px] font-bold text-white">
+            <MapPin size={8} />
+            {item.ciudad.nombre}
+          </span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function MediaCard({ item, onDelete, canDelete }: {
@@ -79,13 +135,7 @@ function MediaCard({ item, onDelete, canDelete }: {
         {/* Overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none" />
 
-        {/* Info bar */}
-        {(item.titulo || item.anio) && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 translate-y-full group-hover:translate-y-0 transition-transform">
-            {item.titulo && <p className="text-white text-xs font-black truncate">{item.titulo}</p>}
-            {item.anio && <p className="text-white/70 text-[10px]">{item.anio}</p>}
-          </div>
-        )}
+        <MediaTags item={item} />
 
         {/* Delete button */}
         {canDelete && (
@@ -116,7 +166,16 @@ function MediaCard({ item, onDelete, canDelete }: {
   );
 }
 
-export default function GaleriaMedia({ hermandadId, bandaId, canEdit = false, userId }: Props) {
+export default function GaleriaMedia({
+  hermandadId,
+  bandaId,
+  hermandadNombre,
+  bandaNombre,
+  ciudadId,
+  ciudadNombre,
+  canEdit = false,
+  userId,
+}: Props) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -215,6 +274,10 @@ export default function GaleriaMedia({ hermandadId, bandaId, canEdit = false, us
         <UploadMediaModal
           hermandadId={hermandadId}
           bandaId={bandaId}
+          hermandadNombre={hermandadNombre}
+          bandaNombre={bandaNombre}
+          ciudadId={ciudadId}
+          ciudadNombre={ciudadNombre}
           onClose={() => setUploadOpen(false)}
           onSaved={() => { setUploadOpen(false); fetchItems(); }}
         />

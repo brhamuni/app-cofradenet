@@ -12,15 +12,63 @@ import { RolUsuario } from '@backend/usuarios/entities/usuario.entity';
 import { ArchivosService } from '@backend/archivos/archivos.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
+import { Banda } from '@backend/bandas/entities/banda.entity';
 
 @Injectable()
 export class MediaService {
     constructor(
         @InjectRepository(MediaItem)
         private readonly mediaRepo: Repository<MediaItem>,
+        @InjectRepository(Hermandad)
+        private readonly hermandadRepo: Repository<Hermandad>,
+        @InjectRepository(Banda)
+        private readonly bandaRepo: Repository<Banda>,
         private readonly archivosService: ArchivosService,
         private readonly httpService: HttpService,
     ) {}
+
+    /**
+     * @brief Aplica año, hermandad/banda y ciudad automáticamente al subir media.
+     */
+    async applyAutoTags(
+        dto: CreateMediaItemDto,
+        user: { id: number; rol: string },
+    ): Promise<CreateMediaItemDto> {
+        const result = { ...dto };
+
+        if (!result.anio) {
+            result.anio = new Date().getFullYear();
+        }
+
+        if (user.rol === RolUsuario.HERMANDAD && !result.hermandadId) {
+            const hermandad = await this.hermandadRepo.findOne({
+                where: { usuarioId: user.id },
+                relations: ['ciudad'],
+            });
+            if (hermandad) {
+                result.hermandadId = hermandad.id;
+                if (!result.ciudadId && hermandad.ciudadId) {
+                    result.ciudadId = hermandad.ciudadId;
+                }
+            }
+        }
+
+        if (user.rol === RolUsuario.BANDA && !result.bandaId) {
+            const banda = await this.bandaRepo.findOne({
+                where: { usuarioId: user.id },
+                relations: ['ciudad'],
+            });
+            if (banda) {
+                result.bandaId = banda.id;
+                if (!result.ciudadId && banda.ciudadId) {
+                    result.ciudadId = banda.ciudadId;
+                }
+            }
+        }
+
+        return result;
+    }
 
     async create(
         dto: CreateMediaItemDto,

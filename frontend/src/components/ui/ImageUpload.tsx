@@ -87,22 +87,42 @@ export default function ImageUpload({
   const canDelete = Boolean(deleteUrl && display);
 
   return (
-    <div
-      className={`relative cursor-pointer group ${rounded} bg-gray-100 overflow-hidden border-2 border-dashed border-gray-300 hover:border-cofrade-main transition-colors ${className}`}
-      style={{ width: size, height: size }}
-      onClick={() => !busy && inputRef.current?.click()}
-    >
-      {display ? (
-        <img src={display} alt="" className="w-full h-full object-cover" />
-      ) : emptyIcon === "user" ? (
-        <div className="w-full h-full flex items-center justify-center bg-cofrade-main/10">
-          <User size={Math.round(size * 0.38)} className="text-cofrade-main/50" strokeWidth={1.75} />
+    <div className="relative shrink-0 group" style={{ width: size, height: size }}>
+      <div
+        className={`relative cursor-pointer ${rounded} bg-gray-100 overflow-hidden border-2 border-dashed border-gray-300 hover:border-cofrade-main transition-colors ${className}`}
+        style={{ width: size, height: size }}
+        onClick={() => !busy && inputRef.current?.click()}
+      >
+        {display ? (
+          <img src={display} alt="" className="w-full h-full object-cover" />
+        ) : emptyIcon === "user" ? (
+          <div className="w-full h-full flex items-center justify-center bg-cofrade-main/10">
+            <User size={Math.round(size * 0.38)} className="text-cofrade-main/50" strokeWidth={1.75} />
+          </div>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <Camera size={32} />
+          </div>
+        )}
+        <div
+          className={`absolute inset-0 z-[1] flex items-center justify-center ${rounded} bg-black/50 transition-opacity ${
+            busy ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}
+        >
+          {uploading || deleting ? (
+            <Loader2 className="text-white animate-spin" size={28} />
+          ) : (
+            <Camera className="text-white" size={28} />
+          )}
         </div>
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-gray-300">
-          <Camera size={32} />
-        </div>
-      )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="hidden"
+          onChange={handleFile}
+        />
+      </div>
       {canDelete && (
         <button
           type="button"
@@ -110,7 +130,7 @@ export default function ImageUpload({
           disabled={busy}
           title="Eliminar foto"
           aria-label="Eliminar foto de perfil"
-          className={`absolute top-1 right-1 z-10 p-1.5 rounded-full bg-red-500 text-white shadow-md hover:bg-red-600 transition-colors ${
+          className={`absolute top-0 right-0 z-[100] p-1.5 rounded-full bg-red-500 text-white shadow-lg ring-2 ring-white hover:bg-red-600 transition-colors -translate-y-1/4 translate-x-1/4 ${
             busy ? "opacity-60" : "opacity-100 md:opacity-0 md:group-hover:opacity-100"
           }`}
         >
@@ -121,24 +141,6 @@ export default function ImageUpload({
           )}
         </button>
       )}
-      <div
-        className={`absolute inset-0 flex items-center justify-center ${rounded} bg-black/50 transition-opacity ${
-          busy ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        }`}
-      >
-        {uploading || deleting ? (
-          <Loader2 className="text-white animate-spin" size={28} />
-        ) : (
-          <Camera className="text-white" size={28} />
-        )}
-      </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        className="hidden"
-        onChange={handleFile}
-      />
     </div>
   );
 }

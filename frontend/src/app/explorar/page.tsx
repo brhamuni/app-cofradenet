@@ -447,6 +447,12 @@ function MediaCard({ item, onClick, featured }: { item: MediaItem; onClick: () =
         <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
           {item.titulo && <p className="text-xs font-black line-clamp-1 mb-1">{item.titulo}</p>}
           <div className="flex flex-wrap gap-1">
+            {item.createdAt && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white/20 rounded text-[10px]">
+                <Calendar size={9} />
+                {new Date(item.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+            )}
             {item.ciudad && (
               <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white/20 rounded text-[10px]">
                 <MapPin size={9} />{item.ciudad.nombre}

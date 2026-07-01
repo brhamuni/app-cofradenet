@@ -681,7 +681,14 @@ export default function HermandadProfile({ hermandad }: { hermandad: any }) {
           )}
 
           {activeTab === 'galeria' && (
-            <GaleriaMedia hermandadId={hermandad.id} canEdit={canEdit} userId={userId} />
+            <GaleriaMedia
+              hermandadId={hermandad.id}
+              hermandadNombre={hermandad.nombrePopular || hermandad.nombre}
+              ciudadId={hermandad.ciudad?.id}
+              ciudadNombre={hermandad.ciudad?.nombre}
+              canEdit={canEdit}
+              userId={userId}
+            />
           )}
         </div>
       </div>

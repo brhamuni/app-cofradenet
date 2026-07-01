@@ -120,6 +120,11 @@ export default function ProfilePage() {
       const payload = parseJwtPayload<{ sub?: number; id?: number; rol?: string; nombre?: string; username?: string }>(token);
       const rol = payload?.rol;
 
+      if (rol === 'admin') {
+        router.replace('/admin');
+        return;
+      }
+
       if (rol === 'hermandad') {
         fetch(`${API}/hermandades/mi-hermandad`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -206,7 +211,7 @@ export default function ProfilePage() {
     } catch {
       setCargando(false);
     }
-  }, []);
+  }, [router]);
 
   if (cargando) {
     return (
@@ -257,7 +262,7 @@ export default function ProfilePage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="relative flex flex-col sm:flex-row sm:justify-between sm:items-end -mt-14 sm:-mt-16 mb-6 gap-4">
-          <div className="border-4 border-white rounded-full shadow-lg shrink-0 self-start">
+          <div className="relative z-10 border-4 border-white rounded-full shadow-lg shrink-0 self-start overflow-visible">
             {entityType === 'hermandad' && hermandadId ? (
               <ImageUpload
                 currentImage={profileData.avatarImage}

@@ -64,7 +64,9 @@ export default function UserDropdown({ onLogout, isAdmin }: { onLogout: () => vo
           <MenuLink href="/feed" icon={<Newspaper size={16} />} label="Mi Feed" onClose={close} highlight />
           <MenuLink href="/calendario" icon={<Calendar size={16} />} label="Mi Calendario" onClose={close} highlight />
           <MenuLink href="/explorar" icon={<Images size={16} />} label="Explorar" onClose={close} />
-          <MenuLink href="/profile" icon={<User size={16} />} label="Perfil" onClose={close} />
+          {!isAdmin && (
+            <MenuLink href="/profile" icon={<User size={16} />} label="Perfil" onClose={close} />
+          )}
 
           <div className="mt-2 pt-2 border-t border-gray-50">
             <button
