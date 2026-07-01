@@ -9,14 +9,24 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { API, resolveImg } from '@/lib/api';
+import ProcesionItinerarioSection from '@/components/procesion/ProcesionItinerarioSection';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface ItinerarioItem {
+interface PuntoItinerario {
   id: number;
   orden: number;
-  lugar: string;
-  hora: string;
+  nombreLugar: string;
+  latitud: number | string;
+  longitud: number | string;
+}
+
+interface ItinerarioAnual {
+  id: number;
+  anio: number;
+  horarioSalida?: string;
+  horarioEntrada?: string;
+  recorrido?: string;
 }
 
 interface Hermandad {
@@ -33,7 +43,7 @@ interface Procesion {
   horaSalida: string;
   horaEntrada?: string;
   hermandad: Hermandad;
-  itinerario: ItinerarioItem[];
+  itinerario: PuntoItinerario[];
 }
 
 interface Banda {
@@ -129,9 +139,10 @@ export default async function ProcesionPage({
 }) {
   const { id } = await params;
 
-  const [procesionRes, participacionesRes] = await Promise.all([
+  const [procesionRes, participacionesRes, itinerariosRes] = await Promise.all([
     fetch(`${API}/procesiones/${id}`, { cache: 'no-store' }),
     fetch(`${API}/procesiones/${id}/participaciones`, { cache: 'no-store' }),
+    fetch(`${API}/procesiones/${id}/itinerario`, { cache: 'no-store' }),
   ]);
 
   if (!procesionRes.ok) {
@@ -149,6 +160,17 @@ export default async function ProcesionPage({
   if (participacionesRes.ok) {
     participaciones = await participacionesRes.json();
   }
+
+  let itinerariosAnuales: ItinerarioAnual[] = [];
+  if (itinerariosRes.ok) {
+    itinerariosAnuales = await itinerariosRes.json();
+  }
+
+  const anioProcesion = Number(procesion.fecha.split('-')[0]);
+  const itinerarioTexto =
+    itinerariosAnuales.find((it) => it.anio === anioProcesion && it.recorrido?.trim()) ??
+    itinerariosAnuales.find((it) => it.recorrido?.trim()) ??
+    null;
 
   const escudoUrl = resolveImg(procesion.hermandad?.imagenEscudo);
 
@@ -230,29 +252,11 @@ export default async function ProcesionPage({
 
         {/* Card: Itinerario */}
         <SectionCard title="Itinerario">
-          {procesion.itinerario && procesion.itinerario.length > 0 ? (
-            <ol className="space-y-3">
-              {procesion.itinerario.map((punto) => (
-                <li key={punto.id} className="flex items-center gap-3">
-                  <span className="shrink-0 w-7 h-7 rounded-full bg-cofrade-main text-white text-xs font-black flex items-center justify-center">
-                    {punto.orden}
-                  </span>
-                  <MapPin size={15} className="shrink-0 text-cofrade-main" />
-                  <span className="flex-1 text-sm font-bold text-gray-800">
-                    {punto.lugar}
-                  </span>
-                  <span className="shrink-0 text-sm font-bold text-cofrade-main tabular-nums">
-                    {punto.hora}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-              <MapPin size={36} className="mb-3 opacity-40" />
-              <p className="text-sm font-bold">Itinerario no publicado aún</p>
-            </div>
-          )}
+          <ProcesionItinerarioSection
+            puntos={procesion.itinerario ?? []}
+            recorrido={itinerarioTexto?.recorrido}
+            anioItinerario={itinerarioTexto?.anio}
+          />
         </SectionCard>
 
         {/* Card: Bandas */}
