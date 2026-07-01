@@ -85,6 +85,26 @@ export class ProcesionesController {
     }
 
     @ApiOperation({
+        summary:
+            'Procesiones con itinerario visible para el usuario (hermandades seguidas)',
+    })
+    @ApiBearerAuth('access-token')
+    @ApiResponse({ status: 200, description: 'Lista de procesiones accesibles' })
+    @ApiResponse({ status: 401, description: 'No autenticado' })
+    @ApiResponse({
+        status: 403,
+        description: 'No sigues ninguna hermandad',
+    })
+    @Get('itinerarios-seguidos')
+    @UseGuards(JwtAuthGuard)
+    getItinerariosSeguidos(@Req() req: { user: { id: number; rol: RolUsuario } }) {
+        return this.procesionesService.getItinerariosParaSeguidor(
+            req.user.id,
+            req.user.rol,
+        );
+    }
+
+    @ApiOperation({
         summary: 'Obtener todas las procesiones activas con ubicación',
     })
     @ApiResponse({ status: 200, description: 'Lista de procesiones activas' })
@@ -102,10 +122,17 @@ export class ProcesionesController {
     }
 
     @ApiOperation({ summary: 'Obtener los puntos GPS del itinerario de una procesión' })
+    @ApiBearerAuth('access-token')
     @ApiResponse({ status: 200, description: 'Lista de puntos ordenados del itinerario' })
+    @ApiResponse({ status: 401, description: 'No autenticado' })
+    @ApiResponse({ status: 403, description: 'Sin permiso para ver este itinerario' })
     @Get(':id/puntos')
-    getPuntosItinerario(@Param('id', ParseIntPipe) id: number) {
-        return this.procesionesService.getPuntosItinerario(id);
+    @UseGuards(JwtAuthGuard)
+    getPuntosItinerario(
+        @Param('id', ParseIntPipe) id: number,
+        @Req() req: { user: { id: number; rol: RolUsuario } },
+    ) {
+        return this.procesionesService.getPuntosItinerario(id, req.user);
     }
 
     @ApiOperation({ summary: 'Obtener una procesión por ID' })
@@ -205,7 +232,13 @@ export class ProcesionesController {
     @Roles(RolUsuario.ADMIN, RolUsuario.HERMANDAD)
     addParticipacion(
         @Param('id', ParseIntPipe) id: number,
-        @Body() body: { bandaId: number; anio: number; ubicacion?: string },
+        @Body()
+        body: {
+            bandaId?: number;
+            nombreBanda?: string;
+            anio: number;
+            ubicacion?: string;
+        },
     ) {
         return this.procesionesService.addParticipacion(id, body);
     }

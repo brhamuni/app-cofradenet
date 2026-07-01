@@ -21,15 +21,18 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
   // Solo mostramos "Sin resultados" si hemos buscado y no hay NADA de NADA
   const sinResultados = !cargando && !hayCiudades && !hayHermandades && !hayBandas && !hayProcesiones;
 
+  const resultadosAbiertos = busqueda.length >= 3 && !menuAbierto;
+  const elevado = resultadosAbiertos || menuAbierto;
+
   return (
-    <div className="relative max-w-2xl mx-auto z-50 px-4 isolate">
+    <div className={`relative max-w-2xl mx-auto px-4 ${elevado ? 'z-[1100]' : 'z-50'}`}>
       <div className="relative flex flex-col gap-2">
         
         {/* BARRA INTEGRADA */}
-        <div className="group relative z-[110] flex min-w-0 items-center bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] h-14.5 md:h-18 p-1.5 md:p-2 transition-all focus-within:ring-4 focus-within:ring-cofrade-gold/10">
+        <div className="group relative z-[1100] flex min-w-0 items-center bg-white rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] h-14.5 md:h-18 p-1.5 md:p-2 transition-all focus-within:ring-4 focus-within:ring-cofrade-gold/10">
 
           {/* SELECTOR PERSONALIZADO */}
-          <div className="relative h-full z-[110]">
+          <div className="relative h-full z-[1100]">
             <button
               onClick={() => setMenuAbierto(!menuAbierto)}
               className="flex items-center gap-2 h-full px-3 md:px-6 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-900 transition-colors border border-gray-100"
@@ -44,8 +47,8 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
             {/* MENÚ DESPLEGABLE DE FILTROS */}
             {menuAbierto && (
               <>
-                <div className="fixed inset-0 z-[115]" onClick={() => setMenuAbierto(false)} />
-                <div className="absolute top-[120%] left-0 w-56 bg-white rounded-[2rem] shadow-[0_25px_60px_rgba(0,0,0,0.25)] border border-gray-100 py-4 z-[120] animate-in fade-in slide-in-from-top-3 duration-200">
+                <div className="fixed inset-0 z-[1105]" onClick={() => setMenuAbierto(false)} />
+                <div className="absolute top-[120%] left-0 w-56 bg-white rounded-[2rem] shadow-[0_25px_60px_rgba(0,0,0,0.25)] border border-gray-100 py-4 z-[1110] animate-in fade-in slide-in-from-top-3 duration-200">
                   <div className="px-6 pb-2 mb-2 border-bottom border-gray-50">
                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Categoría</p>
                   </div>
@@ -93,8 +96,8 @@ export default function SearchBar({ busqueda, setBusqueda, filtro, setFiltro, re
         </div>
 
         {/* RESULTADOS COMPACTOS Y CENTRADOS */}
-        {busqueda.length >= 3 && !menuAbierto && (
-          <div className="absolute top-[80px] left-0 right-0 bg-white rounded-[2.2rem] shadow-[0_30px_60px_rgba(0,0,0,0.18)] border border-gray-100 overflow-hidden z-[105] animate-in fade-in slide-in-from-top-4">
+        {resultadosAbiertos && (
+          <div className="absolute top-[80px] left-0 right-0 bg-white rounded-[2.2rem] shadow-[0_30px_60px_rgba(0,0,0,0.18)] border border-gray-100 overflow-hidden z-[1100] animate-in fade-in slide-in-from-top-4">
             <div className="p-2 max-h-[320px] overflow-y-auto custom-scrollbar">
               
               {/* CARGANDO */}

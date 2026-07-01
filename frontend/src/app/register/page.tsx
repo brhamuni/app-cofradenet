@@ -93,7 +93,7 @@ export default function RegisterPage() {
 
       {/* LADO DERECHO: FORMULARIO */}
       <div className="w-full lg:w-1/2 flex items-start lg:items-center justify-center px-6 sm:px-8 pt-6 pb-12 md:pb-8 md:p-16 bg-cofrade-bg lg:bg-white overflow-y-auto max-h-screen">
-        <div className="w-full max-w-md space-y-8 py-8">
+        <div className="w-full max-w-md space-y-6 md:space-y-8 py-6 md:py-8">
           
           <div className="text-center lg:text-left">
             <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Crear Cuenta</h2>
@@ -234,7 +234,7 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="text-center pt-2">
+          <div className="text-center -mt-3 md:mt-0">
             <p className="text-gray-500 font-bold text-sm">
               ¿YA TIENES CUENTA?{' '}
               <Link href="/login" className="inline-flex items-center min-h-11 text-cofrade-gold hover:underline underline-offset-4">

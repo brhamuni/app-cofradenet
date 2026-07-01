@@ -279,8 +279,18 @@ export class UsuariosService {
                 'bandasFavoritas',
                 'ciudadResidencia',
             ],
-            select: ['id', 'username', 'rol'],
+            select: ['id', 'username', 'nombre', 'rol', 'avatar'],
         });
+    }
+
+    /**
+     * @brief Actualiza el avatar del usuario autenticado.
+     */
+    async updateAvatar(userId: number, rutaImagen: string) {
+        const usuario = await this.usuariosRepo.findOneBy({ id: userId });
+        if (!usuario) throw new NotFoundException('Usuario no encontrado');
+        usuario.avatar = rutaImagen;
+        return await this.usuariosRepo.save(usuario);
     }
 
     /**

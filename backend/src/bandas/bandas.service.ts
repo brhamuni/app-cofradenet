@@ -60,6 +60,21 @@ export class BandasService {
     }
 
     /**
+     * @brief Busca bandas por nombre (coincidencia parcial, insensible a mayúsculas).
+     */
+    async buscar(nombre: string) {
+        const term = nombre.trim();
+        if (!term) return [];
+        return this.bandaRepo
+            .createQueryBuilder('banda')
+            .leftJoinAndSelect('banda.ciudad', 'ciudad')
+            .where('banda.nombre ILIKE :nombre', { nombre: `%${term}%` })
+            .orderBy('banda.nombre', 'ASC')
+            .take(8)
+            .getMany();
+    }
+
+    /**
      * @brief Obtiene todas las bandas pertenecientes a una ciudad concreta.
      *
      * @param {number} ciudadId - Identificador de la ciudad.
@@ -71,6 +86,20 @@ export class BandasService {
             where: { ciudadId },
             select: ['id', 'nombre', 'estiloMusical', 'imagenLogo'],
         });
+    }
+
+    /**
+     * @brief Obtiene la banda vinculada al usuario autenticado.
+     */
+    async findByUsuario(usuarioId: number) {
+        const banda = await this.bandaRepo.findOne({
+            where: { usuarioId },
+            relations: ['ciudad', 'repertorio', 'eventos', 'usuario'],
+        });
+        if (!banda) {
+            throw new NotFoundException('No se encontró banda para este usuario');
+        }
+        return banda;
     }
 
     /**
@@ -137,6 +166,16 @@ export class BandasService {
             banda.repertorio = marchas;
         }
 
+        return await this.bandaRepo.save(banda);
+    }
+
+    /**
+     * @brief Actualiza el logo de una banda.
+     */
+    async updateLogo(id: number, rutaImagen: string) {
+        const banda = await this.bandaRepo.findOneBy({ id });
+        if (!banda) throw new NotFoundException('Banda no encontrada');
+        banda.imagenLogo = rutaImagen;
         return await this.bandaRepo.save(banda);
     }
 

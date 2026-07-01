@@ -47,7 +47,9 @@ interface Participacion {
   id: number;
   anio: number;
   ubicacion?: string;
-  banda: Banda;
+  bandaId?: number | null;
+  nombreBanda?: string | null;
+  banda?: Banda | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -259,46 +261,68 @@ export default async function ProcesionPage({
             {participaciones.length > 0 ? (
               <ul className="space-y-1">
                 {participaciones.map((p) => {
+                  const tienePerfil = !!p.bandaId && !!p.banda;
+                  const nombre = p.banda?.nombre ?? p.nombreBanda ?? 'Banda';
                   const logoUrl = resolveImg(p.banda?.imagenLogo);
-                  return (
-                    <li key={p.id}>
-                      <Link
-                        href={`/banda/${p.banda.id}`}
-                        className="flex items-center gap-4 p-3 rounded-2xl hover:bg-gray-50 transition-colors group"
-                      >
-                        <div className="shrink-0 w-12 h-12 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
-                          {logoUrl ? (
-                            <img
-                              src={logoUrl}
-                              alt={p.banda.nombre}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <Music size={20} className="text-gray-400" />
-                          )}
-                        </div>
 
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-black text-gray-900 truncate">
-                            {p.banda.nombre}
+                  const content = (
+                    <>
+                      <div className="shrink-0 w-12 h-12 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
+                        {logoUrl ? (
+                          <img
+                            src={logoUrl}
+                            alt={nombre}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Music size={20} className="text-gray-400" />
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-black text-gray-900 truncate">
+                          {nombre}
+                          {!tienePerfil && (
+                            <span className="ml-1.5 text-[10px] font-bold text-gray-400 normal-case">
+                              (sin perfil)
+                            </span>
+                          )}
+                        </p>
+                        {p.banda?.estiloMusical && (
+                          <p className="text-xs text-gray-500 font-bold truncate">
+                            {p.banda.estiloMusical}
                           </p>
-                          {p.banda.estiloMusical && (
-                            <p className="text-xs text-gray-500 font-bold truncate">
-                              {p.banda.estiloMusical}
-                            </p>
-                          )}
-                          {p.ubicacion && (
-                            <p className="text-xs text-cofrade-main font-bold mt-0.5">
-                              {p.ubicacion}
-                            </p>
-                          )}
-                        </div>
+                        )}
+                        {p.ubicacion && (
+                          <p className="text-xs text-cofrade-main font-bold mt-0.5">
+                            {p.ubicacion}
+                          </p>
+                        )}
+                      </div>
 
+                      {tienePerfil && (
                         <ChevronRight
                           size={16}
                           className="shrink-0 text-gray-300 group-hover:text-cofrade-main transition-colors"
                         />
-                      </Link>
+                      )}
+                    </>
+                  );
+
+                  return (
+                    <li key={p.id}>
+                      {tienePerfil ? (
+                        <Link
+                          href={`/banda/${p.banda!.id}`}
+                          className="flex items-center gap-4 p-3 rounded-2xl hover:bg-gray-50 transition-colors group"
+                        >
+                          {content}
+                        </Link>
+                      ) : (
+                        <div className="flex items-center gap-4 p-3 rounded-2xl">
+                          {content}
+                        </div>
+                      )}
                     </li>
                   );
                 })}

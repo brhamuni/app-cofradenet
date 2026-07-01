@@ -10,17 +10,20 @@ import {
     ForbiddenException,
     Injectable,
     NotFoundException,
+    BadRequestException,
 } from '@nestjs/common';
 import { CreateProcesionDto as CreateProcesionDto } from './dto/create-procesion.dto';
 import { UpdateProcesionDto } from './dto/update-procesion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Hermandad } from '@backend/hermandades/entities/hermandad.entity';
-import { MoreThanOrEqual, Repository } from 'typeorm';
+import { Seguimiento } from '@backend/seguimientos/entities/seguimiento.entity';
+import { MoreThanOrEqual, In, Repository } from 'typeorm';
 import { Procesion } from './entities/procesion.entity';
 import { RolUsuario, Usuario } from '@backend/usuarios/entities/usuario.entity';
 import { Banda } from '@backend/bandas/entities/banda.entity';
 import { Participacion } from '@backend/participaciones/entities/participacion.entity';
 import { Itinerario } from '@backend/itinerarios/entities/itinerario.entity';
+import { PuntoItinerario } from './entities/punto-itinerario.entity';
 import { Paso } from './entities/paso.entity';
 
 @Injectable()
@@ -38,6 +41,10 @@ export class ProcesionesService {
         private readonly itinerarioRepo: Repository<Itinerario>,
         @InjectRepository(Paso)
         private readonly pasoRepo: Repository<Paso>,
+        @InjectRepository(PuntoItinerario)
+        private readonly puntoItinerarioRepo: Repository<PuntoItinerario>,
+        @InjectRepository(Seguimiento)
+        private readonly seguimientoRepo: Repository<Seguimiento>,
     ) {}
 
     /**
@@ -280,14 +287,42 @@ export class ProcesionesService {
      */
     async addParticipacion(
         procesionId: number,
-        dto: { bandaId: number; anio: number; ubicacion?: string },
+        dto: {
+            bandaId?: number;
+            nombreBanda?: string;
+            anio: number;
+            ubicacion?: string;
+        },
     ) {
         const procesion = await this.procesionRepo.findOneBy({
             id: procesionId,
         });
         if (!procesion) throw new NotFoundException('Procesión no encontrada');
-        const nueva = this.participacionRepo.create({ ...dto, procesionId });
-        return this.participacionRepo.save(nueva);
+
+        const nombreLibre = dto.nombreBanda?.trim();
+        if (!dto.bandaId && !nombreLibre) {
+            throw new BadRequestException(
+                'Indica una banda registrada o un nombre de banda',
+            );
+        }
+
+        if (dto.bandaId) {
+            const banda = await this.bandaRepo.findOneBy({ id: dto.bandaId });
+            if (!banda) throw new NotFoundException('Banda no encontrada');
+        }
+
+        const nueva = this.participacionRepo.create({
+            procesionId,
+            anio: dto.anio,
+            ubicacion: dto.ubicacion,
+            bandaId: dto.bandaId ?? null,
+            nombreBanda: dto.bandaId ? null : nombreLibre,
+        });
+        const saved = await this.participacionRepo.save(nueva);
+        return this.participacionRepo.findOne({
+            where: { id: saved.id },
+            relations: ['banda'],
+        });
     }
 
     /**
@@ -332,6 +367,99 @@ export class ProcesionesService {
         return this.itinerarioRepo.find({
             where: { procesionId },
             order: { anio: 'DESC' },
+        });
+    }
+
+    /**
+     * @brief IDs de hermandades que el usuario sigue (para acceso a itinerarios).
+     */
+    private async getHermandadIdsSeguidas(userId: number): Promise<number[]> {
+        const seguimientos = await this.seguimientoRepo.find({
+            where: { seguidorId: userId },
+            select: ['hermandadId'],
+        });
+        return [
+            ...new Set(
+                seguimientos
+                    .map((s) => s.hermandadId)
+                    .filter((id): id is number => !!id),
+            ),
+        ];
+    }
+
+    /**
+     * @brief Comprueba si el usuario puede ver el itinerario GPS de una procesión.
+     */
+    private async puedeVerItinerarioProcesion(
+        userId: number,
+        rol: RolUsuario,
+        procesionId: number,
+    ): Promise<boolean> {
+        if (rol === RolUsuario.ADMIN) return true;
+
+        const procesion = await this.procesionRepo.findOne({
+            where: { id: procesionId },
+            relations: ['hermandad'],
+        });
+        if (!procesion?.hermandad) return false;
+
+        const seguimiento = await this.seguimientoRepo.findOne({
+            where: {
+                seguidorId: userId,
+                hermandadId: procesion.hermandad.id,
+            },
+        });
+        return !!seguimiento;
+    }
+
+    /**
+     * @brief Procesiones con itinerario visible para el usuario (hermandades seguidas).
+     */
+    async getItinerariosParaSeguidor(userId: number, rol: RolUsuario) {
+        if (rol === RolUsuario.ADMIN) {
+            return this.procesionRepo.find({
+                relations: ['hermandad'],
+                order: { fecha: 'ASC', horaSalida: 'ASC' },
+            });
+        }
+
+        const hermandadIds = await this.getHermandadIdsSeguidas(userId);
+        if (hermandadIds.length === 0) {
+            throw new ForbiddenException(
+                'Debes seguir hermandades para ver itinerarios',
+            );
+        }
+
+        return this.procesionRepo.find({
+            where: { hermandad: { id: In(hermandadIds) } },
+            relations: ['hermandad'],
+            order: { fecha: 'ASC', horaSalida: 'ASC' },
+        });
+    }
+
+    /**
+     * @brief Obtiene los puntos GPS del itinerario de una procesión ordenados por posición.
+     */
+    async getPuntosItinerario(
+        procesionId: number,
+        user: Pick<Usuario, 'id' | 'rol'>,
+    ) {
+        const puede = await this.puedeVerItinerarioProcesion(
+            user.id,
+            user.rol,
+            procesionId,
+        );
+        if (!puede) {
+            throw new ForbiddenException(
+                'No sigues a la hermandad de esta procesión',
+            );
+        }
+
+        const procesion = await this.procesionRepo.findOneBy({ id: procesionId });
+        if (!procesion) throw new NotFoundException('Procesión no encontrada');
+        return this.puntoItinerarioRepo.find({
+            where: { procesion: { id: procesionId } },
+            order: { orden: 'ASC' },
         });
     }
 

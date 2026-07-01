@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, User } from "lucide-react";
 import { API } from "@/lib/api";
 
 interface ImageUploadProps {
@@ -11,6 +11,7 @@ interface ImageUploadProps {
   shape?: "circle" | "square";
   size?: number;
   className?: string;
+  emptyIcon?: "camera" | "user";
 }
 
 export default function ImageUpload({
@@ -20,6 +21,7 @@ export default function ImageUpload({
   shape = "square",
   size = 120,
   className = "",
+  emptyIcon = "camera",
 }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -66,6 +68,10 @@ export default function ImageUpload({
     >
       {display ? (
         <img src={display} alt="" className="w-full h-full object-cover" />
+      ) : emptyIcon === "user" ? (
+        <div className="w-full h-full flex items-center justify-center bg-cofrade-main/10">
+          <User size={Math.round(size * 0.38)} className="text-cofrade-main/50" strokeWidth={1.75} />
+        </div>
       ) : (
         <div className="w-full h-full flex items-center justify-center text-gray-300">
           <Camera size={32} />

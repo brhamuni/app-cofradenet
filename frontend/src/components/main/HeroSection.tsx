@@ -45,7 +45,7 @@ export default function HeroSection({ busqueda, setBusqueda, filtro, setFiltro, 
   }, []);
 
   return (
-    <section className="relative z-50 w-full h-[55vh] md:h-[65vh] mb-6 flex items-center justify-center bg-cofrade-main overflow-hidden">
+    <section className={`relative w-full h-[55vh] md:h-[65vh] mb-6 flex items-center justify-center bg-cofrade-main overflow-visible ${busqueda.length >= 3 ? 'z-[1100]' : 'z-50'}`}>
       {/* Fondo rotativo */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         {CIUDADES.map((ciudad, i) => (

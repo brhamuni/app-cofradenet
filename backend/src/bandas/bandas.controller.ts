@@ -10,6 +10,7 @@ import {
     ParseIntPipe,
     Req,
     Put,
+    Query,
     UseInterceptors,
     UploadedFile,
     BadRequestException,
@@ -66,6 +67,13 @@ export class BandasController {
     @Get()
     findAll() {
         return this.bandasService.findAll();
+    }
+
+    @ApiOperation({ summary: 'Buscar bandas por nombre' })
+    @ApiResponse({ status: 200, description: 'Lista de bandas que coinciden con la búsqueda' })
+    @Get('buscar')
+    buscar(@Query('nombre') nombre?: string) {
+        return this.bandasService.buscar(nombre ?? '');
     }
 
     @ApiOperation({ summary: 'Obtener bandas de una ciudad por ID de ciudad' })

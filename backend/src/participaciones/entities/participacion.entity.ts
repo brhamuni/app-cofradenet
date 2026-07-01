@@ -19,14 +19,18 @@ export class Participacion {
     @Column({ nullable: true })
     ubicacion: string;
 
-    @Column()
-    bandaId: number;
+    @Column({ nullable: true })
+    bandaId: number | null;
+
+    @Column({ nullable: true })
+    nombreBanda: string | null;
 
     @ManyToOne(() => Banda, (banda) => banda.participaciones, {
         onDelete: 'CASCADE',
+        nullable: true,
     })
     @JoinColumn({ name: 'bandaId' })
-    banda: Banda;
+    banda: Banda | null;
 
     @Column()
     procesionId: number;

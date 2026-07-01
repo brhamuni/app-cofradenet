@@ -8,6 +8,7 @@ import PostFeed from '../publicaciones/PostFeed';
 import FollowButton from '../seguimientos/FollowButton';
 import CompartirUbicacion from '../ubicacion/CompartirUbicacion';
 import GaleriaMedia from '../media/GaleriaMedia';
+import BandaSearchInput from '../banda/BandaSearchInput';
 import { resolveImg, API } from '@/lib/api';
 import { parseTokenFromStorage } from '@/lib/jwt';
 
@@ -42,10 +43,19 @@ interface Itinerario {
 
 interface Participacion {
   id: number;
-  bandaId: number;
+  bandaId: number | null;
+  nombreBanda?: string | null;
   anio: number;
   ubicacion?: string;
-  banda?: { id: number; nombre: string };
+  banda?: { id: number; nombre: string } | null;
+}
+
+function nombreParticipacion(p: Participacion): string {
+  return p.banda?.nombre ?? p.nombreBanda ?? 'Banda';
+}
+
+function participacionTienePerfil(p: Participacion): boolean {
+  return !!p.bandaId && !!p.banda;
 }
 
 // ─── ProcesonExpandible (admin/owner only) ────────────────────────────────────
@@ -72,7 +82,8 @@ function ProcesonExpandible({ procesion }: { procesion: any }) {
   const [partError, setPartError] = useState<string | null>(null);
   const [showAddBanda, setShowAddBanda] = useState(false);
   const [bandaForm, setBandaForm] = useState({
-    bandaId: '',
+    bandaNombre: '',
+    bandaId: null as number | null,
     ubicacion: '',
     anio: new Date().getFullYear(),
   });
@@ -166,18 +177,24 @@ function ProcesonExpandible({ procesion }: { procesion: any }) {
   }
 
   async function handleAddBanda() {
-    if (!bandaForm.bandaId.trim()) return;
+    if (!bandaForm.bandaNombre.trim()) return;
     setPartSaving(true);
     setPartError(null);
     try {
+      const body: Record<string, unknown> = {
+        anio: Number(bandaForm.anio),
+        ubicacion: bandaForm.ubicacion || undefined,
+      };
+      if (bandaForm.bandaId) {
+        body.bandaId = bandaForm.bandaId;
+      } else {
+        body.nombreBanda = bandaForm.bandaNombre.trim();
+      }
+
       const res = await fetch(`${API}/procesiones/${procesion.id}/participaciones`, {
         method: 'POST',
         headers: authHeader(),
-        body: JSON.stringify({
-          bandaId: Number(bandaForm.bandaId),
-          anio: Number(bandaForm.anio),
-          ubicacion: bandaForm.ubicacion || undefined,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -185,7 +202,7 @@ function ProcesonExpandible({ procesion }: { procesion: any }) {
       }
       const added: Participacion = await res.json();
       setParticipaciones(prev => [...prev, added]);
-      setBandaForm({ bandaId: '', ubicacion: '', anio: new Date().getFullYear() });
+      setBandaForm({ bandaNombre: '', bandaId: null, ubicacion: '', anio: new Date().getFullYear() });
       setShowAddBanda(false);
     } catch (e: any) {
       setPartError(e.message ?? 'Error al añadir banda');
@@ -356,7 +373,21 @@ function ProcesonExpandible({ procesion }: { procesion: any }) {
                           <Music size={13} className="text-cofrade-gold" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-black text-gray-900 truncate">{p.banda?.nombre ?? `Banda #${p.bandaId}`}</p>
+                          {participacionTienePerfil(p) ? (
+                            <Link
+                              href={`/banda/${p.banda!.id}`}
+                              className="text-sm font-black text-gray-900 truncate hover:text-cofrade-main transition-colors block"
+                            >
+                              {nombreParticipacion(p)}
+                            </Link>
+                          ) : (
+                            <p className="text-sm font-black text-gray-900 truncate">
+                              {nombreParticipacion(p)}
+                              <span className="ml-1.5 text-[9px] font-bold text-gray-400 uppercase tracking-wide">
+                                (sin perfil)
+                              </span>
+                            </p>
+                          )}
                           <p className="text-[11px] text-gray-500 font-semibold">{p.anio}{p.ubicacion ? ` · ${p.ubicacion}` : ''}</p>
                         </div>
                         <button onClick={() => handleDeleteParticipacion(p.id)}
@@ -373,32 +404,38 @@ function ProcesonExpandible({ procesion }: { procesion: any }) {
                 {showAddBanda && (
                   <div className="mt-3 bg-white rounded-xl border border-gray-200 p-3 space-y-3">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nueva participación</p>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="space-y-3">
                       <div>
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">ID Banda</label>
-                        <input type="number" placeholder="ID" value={bandaForm.bandaId}
-                          onChange={e => setBandaForm(f => ({ ...f, bandaId: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-cofrade-main/30" />
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Banda</label>
+                        <BandaSearchInput
+                          value={bandaForm.bandaNombre}
+                          selectedId={bandaForm.bandaId}
+                          onChange={(nombre, bandaId) =>
+                            setBandaForm(f => ({ ...f, bandaNombre: nombre, bandaId }))
+                          }
+                        />
                       </div>
-                      <div>
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Ubicación</label>
-                        <input type="text" placeholder="Ej: Detrás del paso" value={bandaForm.ubicacion}
-                          onChange={e => setBandaForm(f => ({ ...f, ubicacion: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-cofrade-main/30" />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Año</label>
-                        <input type="number" value={bandaForm.anio}
-                          onChange={e => setBandaForm(f => ({ ...f, anio: Number(e.target.value) }))}
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-cofrade-main/30" />
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Ubicación</label>
+                          <input type="text" placeholder="Ej: Detrás del paso" value={bandaForm.ubicacion}
+                            onChange={e => setBandaForm(f => ({ ...f, ubicacion: e.target.value }))}
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-cofrade-main/30" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Año</label>
+                          <input type="number" value={bandaForm.anio}
+                            onChange={e => setBandaForm(f => ({ ...f, anio: Number(e.target.value) }))}
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-cofrade-main/30" />
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={handleAddBanda} disabled={partSaving || !bandaForm.bandaId.trim()}
+                      <button onClick={handleAddBanda} disabled={partSaving || !bandaForm.bandaNombre.trim()}
                         className="bg-cofrade-main text-white rounded-xl px-4 py-2 text-xs font-black disabled:opacity-60 hover:brightness-110 transition-all">
                         {partSaving ? 'Añadiendo...' : 'Añadir'}
                       </button>
-                      <button onClick={() => { setShowAddBanda(false); setBandaForm({ bandaId: '', ubicacion: '', anio: new Date().getFullYear() }); }}
+                      <button onClick={() => { setShowAddBanda(false); setBandaForm({ bandaNombre: '', bandaId: null, ubicacion: '', anio: new Date().getFullYear() }); }}
                         className="bg-white border border-gray-200 text-gray-600 rounded-xl px-4 py-2 text-xs font-black hover:bg-gray-100 transition-all">
                         Cancelar
                       </button>

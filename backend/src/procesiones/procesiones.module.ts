@@ -9,6 +9,7 @@ import { Participacion } from '@backend/participaciones/entities/participacion.e
 import { Banda } from '@backend/bandas/entities/banda.entity';
 import { Itinerario } from '@backend/itinerarios/entities/itinerario.entity';
 import { Paso } from './entities/paso.entity';
+import { Seguimiento } from '@backend/seguimientos/entities/seguimiento.entity';
 import { UbicacionModule } from '@backend/ubicacion/ubicacion.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { UbicacionModule } from '@backend/ubicacion/ubicacion.module';
             Banda,
             Itinerario,
             Paso,
+            Seguimiento,
         ]),
         UbicacionModule,
     ],

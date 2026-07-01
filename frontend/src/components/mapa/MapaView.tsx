@@ -7,7 +7,13 @@ import { RefreshCw, Maximize2, Minimize2, SlidersHorizontal, MapPin, Navigation,
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { API } from '@/lib/api';
 import { parseTokenFromStorage } from '@/lib/jwt';
+import Link from 'next/link';
 import EstadoPasoModal from '@/components/ubicacion/EstadoPasoModal';
+
+function authHeaders(): HeadersInit {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 /* ── Types ───────────────────────────────────────────────────────────── */
 
@@ -134,6 +140,9 @@ export default function MapaView() {
 
   /* ── Modo ITINERARIOS ─────────────────────────────────────────────── */
   const [procesiones, setProcesiones] = useState<Procesion[]>([]);
+  const [puedeVerItinerarios, setPuedeVerItinerarios] = useState(false);
+  const [itinerariosCargando, setItinerariosCargando] = useState(false);
+  const [itinerariosError, setItinerariosError] = useState<string | null>(null);
   const [selectedProcesion, setSelectedProcesion] = useState<Procesion | null>(null);
   const [puntos, setPuntos] = useState<PuntoItinerario[]>([]);
   const [openWaypoint, setOpenWaypoint] = useState<PuntoItinerario | null>(null);
@@ -228,18 +237,53 @@ export default function MapaView() {
   }, [fetchActivas]);
 
   /* ── Fetch ITINERARIOS ────────────────────────────────────────────── */
-  const fetchProcesiones = useCallback(async () => {
+  const fetchProcesionesSeguidas = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    const currentUser = parseTokenFromStorage();
+    setUser(currentUser);
+
+    if (!token || !currentUser) {
+      setPuedeVerItinerarios(false);
+      setProcesiones([]);
+      setItinerariosError(null);
+      return;
+    }
+
+    setItinerariosCargando(true);
+    setItinerariosError(null);
     try {
-      const res = await fetch(`${API}/procesiones`);
-      if (res.ok) setProcesiones(await res.json());
-    } catch {}
+      const res = await fetch(`${API}/procesiones/itinerarios-seguidos`, {
+        headers: authHeaders(),
+      });
+      if (res.status === 403) {
+        setPuedeVerItinerarios(false);
+        setProcesiones([]);
+        setItinerariosError('Sigue hermandades para ver sus itinerarios en el mapa.');
+        return;
+      }
+      if (!res.ok) {
+        setPuedeVerItinerarios(false);
+        setProcesiones([]);
+        return;
+      }
+      const data: Procesion[] = await res.json();
+      setProcesiones(data);
+      setPuedeVerItinerarios(true);
+    } catch {
+      setPuedeVerItinerarios(false);
+      setProcesiones([]);
+    } finally {
+      setItinerariosCargando(false);
+    }
   }, []);
 
   const fetchPuntos = useCallback(async (procesion: Procesion) => {
     setPuntos([]);
     setOpenWaypoint(null);
     try {
-      const res = await fetch(`${API}/procesiones/${procesion.id}/puntos`);
+      const res = await fetch(`${API}/procesiones/${procesion.id}/puntos`, {
+        headers: authHeaders(),
+      });
       if (res.ok) {
         const data: PuntoItinerario[] = await res.json();
         setPuntos(data);
@@ -285,10 +329,24 @@ export default function MapaView() {
   useEffect(() => {
     setUser(parseTokenFromStorage());
     fetchActivas();
-    fetchProcesiones();
+    fetchProcesionesSeguidas();
     const iv = setInterval(fetchActivas, 15000);
     return () => clearInterval(iv);
-  }, [fetchActivas, fetchProcesiones]);
+  }, [fetchActivas, fetchProcesionesSeguidas]);
+
+  useEffect(() => {
+    const onAuthChange = () => fetchProcesionesSeguidas();
+    window.addEventListener('auth-change', onAuthChange);
+    return () => window.removeEventListener('auth-change', onAuthChange);
+  }, [fetchProcesionesSeguidas]);
+
+  useEffect(() => {
+    if (modo === 'itinerarios' && !puedeVerItinerarios) {
+      setModo('vivo');
+      setSelectedProcesion(null);
+      setPuntos([]);
+    }
+  }, [modo, puedeVerItinerarios]);
 
   useEffect(() => {
     activas.forEach(u => fetchEstados(u.procesionId));
@@ -324,17 +382,19 @@ export default function MapaView() {
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
               )}
             </button>
-            <button
-              onClick={() => setModo('itinerarios')}
-              className={`flex items-center gap-1.5 px-4 py-2.5 min-h-11 rounded-xl text-xs font-black transition-all ${
-                modo === 'itinerarios'
-                  ? 'bg-cofrade-main text-white'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              }`}
-            >
-              <Route size={11} />
-              Itinerarios
-            </button>
+            {puedeVerItinerarios && (
+              <button
+                onClick={() => setModo('itinerarios')}
+                className={`flex items-center gap-1.5 px-4 py-2.5 min-h-11 rounded-xl text-xs font-black transition-all ${
+                  modo === 'itinerarios'
+                    ? 'bg-cofrade-main text-white'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                <Route size={11} />
+                Itinerarios
+              </button>
+            )}
           </div>
         </div>
 
@@ -651,10 +711,15 @@ export default function MapaView() {
               </div>
 
               <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
-                {processed.length === 0 ? (
+                {itinerariosCargando ? (
+                  <div className="flex flex-col items-center justify-center gap-3 p-8 text-center h-40">
+                    <div className="w-6 h-6 border-2 border-cofrade-main border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm font-black text-gray-400">Cargando itinerarios...</p>
+                  </div>
+                ) : processed.length === 0 ? (
                   <div className="flex flex-col items-center justify-center gap-3 p-8 text-center h-40">
                     <Route size={28} className="text-gray-200" />
-                    <p className="text-sm font-black text-gray-400">Sin procesiones</p>
+                    <p className="text-sm font-black text-gray-400">Sin procesiones de tus hermandades</p>
                   </div>
                 ) : (
                   processed.map(p => {

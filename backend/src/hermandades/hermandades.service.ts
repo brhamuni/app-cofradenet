@@ -93,6 +93,20 @@ export class HermandadesService {
     }
 
     /**
+     * @brief Obtiene la hermandad vinculada al usuario autenticado.
+     */
+    async findByUsuario(usuarioId: number) {
+        const hermandad = await this.hermandadRepo.findOne({
+            where: { usuarioId },
+            relations: ['ciudad', 'procesiones', 'usuario'],
+        });
+        if (!hermandad) {
+            throw new NotFoundException('No se encontró hermandad para este usuario');
+        }
+        return hermandad;
+    }
+
+    /**
      * @brief Actualiza el perfil de una hermandad con verificación de permisos por rol.
      *
      * @details

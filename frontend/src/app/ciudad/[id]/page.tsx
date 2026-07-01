@@ -15,10 +15,18 @@ interface Hermandad {
 interface Procesion {
   id: number;
   nombre: string | null;
+  fecha: string | null;
   diaSemana: string | null;
   horaSalida: string | null;
   horaEntrada: string | null;
   hermandad: { id: number; nombre: string; nombrePopular?: string } | null;
+}
+
+function procesionesFuturas(procesiones: Procesion[]): Procesion[] {
+  const hoy = new Date().toISOString().split('T')[0];
+  return procesiones
+    .filter((p) => (p.fecha || '') >= hoy)
+    .sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
 }
 
 interface Ciudad {
@@ -48,7 +56,8 @@ export default async function CiudadPage({ params }: { params: Promise<{ id: str
   ]);
 
   const hermandades: Hermandad[] = hermandadesRes.ok ? await hermandadesRes.json() : [];
-  const procesiones: Procesion[] = procesionesRes.ok ? await procesionesRes.json() : [];
+  const procesionesRaw: Procesion[] = procesionesRes.ok ? await procesionesRes.json() : [];
+  const procesiones = procesionesFuturas(procesionesRaw);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -153,8 +162,8 @@ export default async function CiudadPage({ params }: { params: Promise<{ id: str
             {procesiones.length === 0 ? (
               <EmptyState
                 icon={<Calendar size={28} className="text-gray-300" />}
-                title="Sin procesiones registradas"
-                subtitle="Aún no hay procesiones para esta ciudad"
+                title="Sin procesiones próximas"
+                subtitle="No hay procesiones futuras programadas en esta ciudad"
               />
             ) : (
               <div className="flex flex-col gap-3">
